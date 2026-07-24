@@ -159,6 +159,27 @@ Approval for a plan or issue does not imply approval for these actions.
 - Stop when a task requires unavailable isolation, access, evidence, or expertise.
 - Never describe the project as secure, certified, compliant, or free of vulnerabilities because agent reviews passed.
 
+## Project commands
+
+CAreview is a standard-library Python application with no third-party
+dependencies and no build step. Run these against the exact candidate commit and
+record the real command, exit status, and relevant output as evidence — an
+agent's claim that a check passed is not evidence.
+
+| Purpose | Command |
+|---|---|
+| Run the app | `python3 server.py` (serves `http://localhost:8765`) |
+| Tests | `python3 -m unittest discover -s tests` |
+| Lint / compile | `python3 -m py_compile $(git ls-files '*.py')` |
+| Governance validation | `python3 scripts/validate_repo.py` |
+| Security review | Manual, via the milestone security-review gate in `docs/workflow.md` |
+
+These commands become live as the issues that create the corresponding files
+land. Until then, run only the governance validator. Do not add third-party
+runtime dependencies or a Node.js toolchain without a separate, approved
+decision; the stdlib-only, zero-registration constraint is a project requirement
+recorded in `project/intake/PROJECT_DESCRIPTION.md`.
+
 ## Completion standard
 
 An issue is complete only when:

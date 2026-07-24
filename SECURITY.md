@@ -4,7 +4,7 @@
 
 Do not open a public issue for a suspected vulnerability, exposed credential, or sensitive incident.
 
-For this repository, use GitHub's **Security → Report a vulnerability** private reporting flow when it is available. Otherwise, contact the repository owner privately through an agreed channel. A project created from this template must replace this paragraph with its own monitored private reporting route before release.
+For CAreview, use GitHub's **Security → Report a vulnerability** private reporting flow on the `Bartoli-co-uk/CAreview` repository. If that is unavailable, contact the repository owner (`@Jay-cli`) privately through an agreed channel rather than opening a public issue.
 
 Include only the information needed to reproduce and assess the problem:
 

@@ -103,6 +103,23 @@ def urllib_graph_transport(url: str, headers: dict[str, str]) -> tuple[int, dict
     return status, (payload if isinstance(payload, dict) else {"error": "bad_response"})
 
 
+def _control_enabled(obj: object) -> bool:
+    """True when a Graph session-control object is enabled.
+
+    Most controls carry ``isEnabled``; continuous access evaluation uses
+    ``mode`` ("disabled" means off). A present object with neither field is
+    treated as enabled.
+    """
+    if not isinstance(obj, dict):
+        return False
+    if "isEnabled" in obj:
+        return obj.get("isEnabled") is True
+    mode = obj.get("mode")
+    if isinstance(mode, str):
+        return mode.lower() != "disabled"
+    return True
+
+
 def _str_list(value: object) -> list[str]:
     """Coerce a Graph array of strings into a clean list of strings."""
     if not isinstance(value, list):
@@ -120,7 +137,10 @@ def normalize_policy(raw: dict) -> dict:
     grant = raw.get("grantControls") or {}
     session = raw.get("sessionControls") or {}
 
-    # Which session controls are present/enabled (Graph nests each as an object).
+    # Which session controls are actually ENABLED. Graph nests each control as an
+    # object that may carry ``isEnabled: false`` (present but off) or, for CAE, a
+    # ``mode`` of "disabled"; treating mere presence as enabled would misreport
+    # posture, so only enabled controls are listed.
     session_controls = [
         name
         for name in (
@@ -130,7 +150,7 @@ def normalize_policy(raw: dict) -> dict:
             "applicationEnforcedRestrictions",
             "continuousAccessEvaluation",
         )
-        if isinstance(session.get(name), dict)
+        if _control_enabled(session.get(name))
     ]
 
     return {

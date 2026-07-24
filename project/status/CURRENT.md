@@ -25,10 +25,10 @@ records described below.
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | `M1` (in progress) |
 | Active issue | `ISSUE-0003` (Graph client) — status `REPAIRING`, branch `ai/ISSUE-0003-graph-client`, Starting SHA `98a20bc` |
-| Issue repair round | Repair round 1 (Codex F-001 SSRF/token-exfil, F-002 contract, F-003 paging, F-004 metadata) |
+| Issue repair round | Repair round 2 (final; Codex F-001 session controls, F-002 endpoint tests, F-003 metadata, F-004 paging test) |
 | Candidate product commit | Branch HEAD of `ai/ISSUE-0003-graph-client` (the launcher binds the exact SHA at review time) |
 | Latest implementation handoff | `project/handoffs/ISSUE-0003-handoff.md` |
-| Latest Codex review | ISSUE-0003 round 0 `ISSUE-0003-2495c32df08e-codex.json` (BLOCKED: F-001..F-004) + response; repaired candidate pending re-review |
+| Latest Codex review | ISSUE-0003 repair-1 `ISSUE-0003-25621bb389b1-codex.json` (BLOCKED; F-001..F-004) + response; repair-2 candidate pending final review |
 | Completed issues | `ISSUE-0001` (server shell) `23e6633`; `ISSUE-0002` (device-code auth) `3c8fb869` |
 | Last human decision | `DECISION-006` (ISSUE-0002 extra round + merge); also `DECISION-005` (autonomy), `DECISION-004` (gate policy), `DECISION-003`..`001` |
 | Open blockers | None. Standing: Codex issue reviews stay `BLOCKED` on execution evidence (DECISION-004); author runs checks out-of-band |

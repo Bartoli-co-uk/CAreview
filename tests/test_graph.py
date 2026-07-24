@@ -131,6 +131,34 @@ class UrlAndInputValidationTests(unittest.TestCase):
         self.assertEqual(graph.sanitize_object_ids([good, "not-a-guid", 123, ""]), [good])
         self.assertEqual(graph.sanitize_object_ids("nope"), [])
 
+    def test_session_controls_reflect_enabled_state(self) -> None:
+        raw = {
+            "id": "s",
+            "sessionControls": {
+                "signInFrequency": {"isEnabled": False, "value": 1},
+                "persistentBrowser": {"isEnabled": True, "mode": "never"},
+                "continuousAccessEvaluation": {"mode": "disabled"},
+                "applicationEnforcedRestrictions": {"isEnabled": True},
+            },
+        }
+        self.assertEqual(
+            sorted(graph.normalize_policy(raw)["sessionControls"]),
+            ["applicationEnforcedRestrictions", "persistentBrowser"],
+        )
+
+    def test_paging_limit_raises_not_partial(self) -> None:
+        class InfinitePages:
+            def __init__(self) -> None:
+                self.n = 0
+
+            def __call__(self, url: str, headers: dict) -> tuple[int, dict]:
+                self.n += 1
+                return (200, {"value": [], "@odata.nextLink": f"https://graph.microsoft.com/v1.0/page{self.n}"})
+
+        with self.assertRaises(graph.GraphError) as ctx:
+            graph.GraphClient(transport=InfinitePages()).fetch_policies("tok")
+        self.assertEqual(ctx.exception.code, "graph_error")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,186 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T14:44:19Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f9493-f608-77c0-95ce-9eb9cd60e3d1"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "98a20bc479b55b1cdab5e8958ed3630bff0e044a",
+    "evidence": [
+      {
+        "detail": "Detached HEAD and supplied target both resolve to 25621bb389b184f8eb23b89821e530f769595647; the supplied base resolves to 98a20bc479b55b1cdab5e8958ed3630bff0e044a. The working tree remained clean.",
+        "reference": "git status --short --branch; git rev-parse HEAD; git rev-parse 98a20bc479b55b1cdab5e8958ed3630bff0e044a; git rev-parse 25621bb389b184f8eb23b89821e530f769595647",
+        "source": "command"
+      },
+      {
+        "detail": "The exact base-to-target diff changes nine allowed implementation/test/governance paths. git diff --check completed successfully.",
+        "reference": "git diff --name-status 98a20bc479b55b1cdab5e8958ed3630bff0e044a 25621bb389b184f8eb23b89821e530f769595647; git diff --check 98a20bc479b55b1cdab5e8958ed3630bff0e044a 25621bb389b184f8eb23b89821e530f769595647",
+        "source": "diff"
+      },
+      {
+        "detail": "The Graph-only unit module completed: 11 tests passed with exit 0.",
+        "reference": "python3 -m unittest tests.test_graph",
+        "source": "check"
+      },
+      {
+        "detail": "The full suite ran 46 tests but exited 1 because all 10 server integration tests were unable to bind a loopback socket in the review sandbox; 36 tests completed without reported failures before those environment errors.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Compilation could not run because the read-only checkout prevented creation of __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not complete because the sandbox offered no writable temporary directory.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "Static inspection confirms repair-round protections: HTTPS and exact graph.microsoft.com hostname validation, rejection of embedded credentials, disabled automatic redirects, cycle detection, and a 200-page bound that raises rather than returning partial data.",
+        "reference": "graph.py:47",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the normalized contract must accurately represent session controls consumed by ISSUE-0004.",
+          "Observed: normalize_policy adds every recognized session-control object to sessionControls solely when its value is a dict; it neither checks isEnabled nor preserves control settings.",
+          "A Graph object such as persistentBrowser: {\"isEnabled\": false, \"mode\": \"never\"} is therefore normalized identically to an enabled control, while signInFrequency value/type and other rule-relevant settings are discarded.",
+          "The test fixture omits isEnabled and asserts only the control name, so this semantic loss is encoded as expected behavior."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 123,
+            "path": "graph.py"
+          },
+          {
+            "line": 27,
+            "path": "tests/test_graph.py"
+          },
+          {
+            "line": 28,
+            "path": "project/handoffs/ISSUE-0003-handoff.md"
+          }
+        ],
+        "remediation": "Define and implement a session-control shape that preserves each control's enabled state and analyzer-relevant settings, or explicitly include only controls whose isEnabled value is true. Update the durable contract and normalization tests with enabled and disabled examples.",
+        "severity": "medium",
+        "title": "Session-control normalization treats disabled controls as enabled and discards their settings",
+        "verification": "Normalize fixtures containing enabled and disabled persistentBrowser/signInFrequency controls and verify the result distinguishes them and preserves every field required by ISSUE-0004; rerun the full suite."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: mocked tests demonstrate that /api/policies returns normalized policies and maps a Graph 403 to a clear structured consent response, as required by acceptance criteria 1, 3, and 4.",
+          "Observed: the only added server test exercises the unauthenticated 401 path. Success, paging-through-the-endpoint, 403 mapping, and generic Graph-error mapping are tested only at GraphClient level or not at all.",
+          "The handoff nevertheless marks the endpoint criteria met by citing test_single_page_normalizes and test_403_is_consent_required, both of which call GraphClient directly and cannot detect routing, status, or response-envelope regressions in server._policies."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 151,
+            "path": "server.py"
+          },
+          {
+            "line": 118,
+            "path": "tests/test_server.py"
+          },
+          {
+            "line": 53,
+            "path": "project/handoffs/ISSUE-0003-handoff.md"
+          }
+        ],
+        "remediation": "Add mocked endpoint tests with an in-memory token and injected Graph client for successful normalized output and 403 consent_required behavior; also cover the structured 502 path. Avoid real network access.",
+        "severity": "medium",
+        "title": "Acceptance-critical /api/policies success and consent paths lack endpoint tests",
+        "verification": "Run the endpoint tests and confirm HTTP 200 returns {policies, count}, Graph consent_required returns HTTP 403 with the actionable message, and other Graph errors return the documented structured response."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: repository records durably identify the exact repair candidate under review, as required by AGENTS.md and the prior F-004 remediation.",
+          "Observed: the issue record's Candidate SHA still names only the round-0 candidate 2495c32df08ee11a563122bde4a5fca6fe93fae1 and says repair candidates rebind at review time.",
+          "The repair handoff says Candidate SHA is \"this commit\" and CURRENT.md says branch HEAD; none records exact SHA 25621bb389b184f8eb23b89821e530f769595647. The candidate identity therefore depends on launcher context rather than repository files alone."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 9,
+            "path": "project/issues/ISSUE-0003.md"
+          },
+          {
+            "line": 17,
+            "path": "project/handoffs/ISSUE-0003-handoff.md"
+          },
+          {
+            "line": 26,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Bind repair round 1 explicitly to 25621bb389b184f8eb23b89821e530f769595647 in the issue round table and candidate metadata, handoff, and status record. A metadata-only follow-up must clearly state that the reviewed product SHA remains 25621bb389b184f8eb23b89821e530f769595647.",
+        "severity": "low",
+        "title": "Durable records still do not name the exact repair candidate",
+        "verification": "Inspect the issue, handoff, and CURRENT.md and run the governance validator; all should agree on the exact base, repair-round product SHA, review round, and next action."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: repair F-003 verification explicitly required both a repeated next link and a sequence exceeding MAX_PAGES to raise rather than return partial results.",
+          "Observed: test_paging_cycle_detected covers only the repeated-link case. No test exercises the MAX_PAGES boundary or an over-limit sequence.",
+          "The bound appears correct by inspection, but the claimed repair is not fully verified and future off-by-one changes could restore partial-success behavior."
+        ],
+        "id": "F-004",
+        "locations": [
+          {
+            "line": 189,
+            "path": "graph.py"
+          },
+          {
+            "line": 109,
+            "path": "tests/test_graph.py"
+          }
+        ],
+        "remediation": "Add a generated mocked sequence that reaches the page limit with another next link pending and assert GraphError plus no successful partial return. Also verify the precise permitted-page boundary.",
+        "severity": "low",
+        "title": "The repaired paging limit has no boundary test",
+        "verification": "Run tests for MAX_PAGES pages and MAX_PAGES plus a pending next link, confirming the documented boundary and structured error behavior."
+      }
+    ],
+    "limitations": [
+      "The mandatory full test suite did not pass in this read-only review sandbox because loopback socket binding is prohibited; all 10 server integration tests errored before their assertions.",
+      "Compilation could not be independently verified because py_compile requires filesystem writes for bytecode output.",
+      "Governance validation could not complete because its launcher smoke tests require a writable temporary directory.",
+      "The committed handoff reports successful compile, 46-test, and governance runs, but raw immutable command output bound to target SHA 25621bb389b184f8eb23b89821e530f769595647 is not committed; those statements remain author claims.",
+      "The protected live Graph fetch was not attempted, so real tenant consent behavior, response compatibility, and live paging remain unverified by design.",
+      "Redirect refusal was verified statically but lacks a transport-level test using the default urllib opener.",
+      "No test exercises malformed successful Graph payload shapes; nested non-object values can currently raise AttributeError or TypeError rather than GraphError."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "25621bb389b184f8eb23b89821e530f769595647",
+    "schema_version": "1.0",
+    "summary": "BLOCKED. Base and target identity match, the working tree is clean, Graph unit tests pass, and the prior token-exfiltration and partial-paging repairs are materially improved. However, mandatory independent full-suite, compile, and governance evidence could not complete in the read-only sandbox. Static review also found inaccurate session-control normalization, missing endpoint-level acceptance tests, incomplete exact-SHA metadata, and an untested page-limit boundary.",
+    "target_id": "ISSUE-0003"
+  },
+  "test_only": false
+}

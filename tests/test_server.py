@@ -125,6 +125,67 @@ class ServerIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.status, 401)
         self.assertEqual(json.loads(resp.read())["error"], "not_authenticated")
 
+    def _with_token(self) -> None:
+        # Inject an unexpired in-memory token without a real sign-in.
+        server.AUTH._access_token = "TESTTOKEN"
+        server.AUTH._token_expires_at = server.AUTH._clock() + 3600
+
+    def test_policies_success(self) -> None:
+        self._with_token()
+        original = server.GRAPH
+
+        class FakeGraph:
+            def fetch_policies(self, token: str) -> list[dict]:
+                return [{"id": "p1", "displayName": "x"}]
+
+        server.GRAPH = FakeGraph()
+        try:
+            resp = self._request("/api/policies", f"127.0.0.1:{self.port}")
+            body = json.loads(resp.read())
+            self.assertEqual(resp.status, 200)
+            self.assertEqual(body["count"], 1)
+            self.assertEqual(body["policies"][0]["id"], "p1")
+        finally:
+            server.GRAPH = original
+            server.AUTH.logout()
+
+    def test_policies_consent_required_403(self) -> None:
+        import graph as graph_mod
+
+        self._with_token()
+        original = server.GRAPH
+
+        class ConsentGraph:
+            def fetch_policies(self, token: str) -> list[dict]:
+                raise graph_mod.GraphError("consent_required", "need consent")
+
+        server.GRAPH = ConsentGraph()
+        try:
+            resp = self._request("/api/policies", f"127.0.0.1:{self.port}")
+            self.assertEqual(resp.status, 403)
+            self.assertEqual(json.loads(resp.read())["error"], "consent_required")
+        finally:
+            server.GRAPH = original
+            server.AUTH.logout()
+
+    def test_policies_graph_error_502(self) -> None:
+        import graph as graph_mod
+
+        self._with_token()
+        original = server.GRAPH
+
+        class BrokenGraph:
+            def fetch_policies(self, token: str) -> list[dict]:
+                raise graph_mod.GraphError("graph_error", "boom")
+
+        server.GRAPH = BrokenGraph()
+        try:
+            resp = self._request("/api/policies", f"127.0.0.1:{self.port}")
+            self.assertEqual(resp.status, 502)
+        finally:
+            server.GRAPH = original
+            server.AUTH.logout()
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,14 +1,18 @@
-# Claude handoff: ISSUE-0003, repair round 1
+# Claude handoff: ISSUE-0003, repair round 2
 
-**Repair round 1** addresses Codex round-0 findings on candidate `2495c32df08e`:
-F-001 (bearer-token exfiltration via unvalidated next links) — every URL is now
-host-validated (`is_graph_url`) before the token is attached and HTTP redirects
-are refused (`_NoRedirect`); F-003 (silent partial paging) — cycles and a
-`MAX_PAGES` bound now raise `GraphError` instead of returning a partial success;
-F-002 (break-glass contract) — the optional break-glass input is now specified
-below with `graph.sanitize_object_ids`; F-004 (stale issue metadata) — the
-duplicate Starting-SHA line is removed and the candidate SHA is bound. 46 tests
-pass. See `project/reviews/issues/ISSUE-0003-2495c32df08e-claude-response.md`.
+**Repair round 1** (candidate `25621bb389b184f8eb23b89821e530f769595647`) addressed
+Codex round-0 F-001 (token-exfil via unvalidated next links → `is_graph_url` +
+`_NoRedirect`), F-003 (silent partial paging → cycle/`MAX_PAGES` raise `GraphError`),
+F-002 (break-glass contract), F-004 (issue metadata).
+
+**Repair round 2** (this candidate) addresses Codex round-1 findings:
+F-001 session-control normalization now lists only **enabled** controls
+(`_control_enabled`, honouring `isEnabled`/CAE `mode`); F-002 adds `/api/policies`
+endpoint tests (success, `consent_required` 403, `graph_error` 502) with an
+injected Graph client and in-memory token; F-004 adds a paging-limit boundary
+test; F-003 binds the round-1 reviewed product SHA
+`25621bb389b184f8eb23b89821e530f769595647` in the records below. 51 tests pass.
+See the per-round responses under `project/reviews/issues/`.
 
 
 **Claude issue task:** `CAreview ISSUE-0003 (Graph client)`
@@ -30,7 +34,9 @@ Normalized policy contract (`graph.normalize_policy`):
 excludeGroups, includeRoles, excludeRoles, includeApplications,
 excludeApplications, clientAppTypes, includePlatforms, excludePlatforms,
 includeLocations, excludeLocations, signInRiskLevels, userRiskLevels},
-grantControls{operator, builtInControls}, sessionControls[names]`.
+grantControls{operator, builtInControls}, sessionControls[names]` — where
+`sessionControls` lists only the **enabled** controls (a control present with
+`isEnabled: false`, or CAE `mode: disabled`, is omitted).
 
 **Optional break-glass input (contract for ISSUE-0004, Codex F-002).** The
 analyzer's break-glass rule needs to know which object IDs are emergency-access

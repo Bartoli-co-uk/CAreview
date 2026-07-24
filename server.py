@@ -19,6 +19,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
+import auth
+
+# Process-wide in-memory authentication state (device-code session + token).
+AUTH = auth.AuthManager()
+
+# Reject request bodies larger than this; the JSON we accept is tiny.
+MAX_BODY_BYTES = 64 * 1024
+
 HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
 WEB_ROOT = (Path(__file__).resolve().parent / "web").resolve()
@@ -133,6 +141,71 @@ class CAReviewHandler(BaseHTTPRequestHandler):
             self._send_static(path)
             return
         self._reject(HTTPStatus.NOT_FOUND, "not found")
+
+    def _read_json_body(self) -> dict | None:
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            return None
+        if length < 0 or length > MAX_BODY_BYTES:
+            return None
+        if length == 0:
+            return {}
+        raw = self.rfile.read(length)
+        try:
+            value = json.loads(raw.decode("utf-8"))
+        except (UnicodeError, json.JSONDecodeError):
+            return None
+        return value if isinstance(value, dict) else None
+
+    def do_POST(self) -> None:  # noqa: N802 (http.server API)
+        if not host_allowed(self.headers.get("Host"), self.port):
+            self._reject(HTTPStatus.FORBIDDEN, "invalid host")
+            return
+        # State-changing endpoints require a same-origin request (CSRF / cross-site
+        # defence layered on top of the Host allowlist).
+        if not origin_allowed(self.headers.get("Origin"), self.port):
+            self._reject(HTTPStatus.FORBIDDEN, "invalid origin")
+            return
+        path = urlsplit(self.path).path
+        body = self._read_json_body()
+        if body is None:
+            self._reject(HTTPStatus.BAD_REQUEST, "invalid request body")
+            return
+        try:
+            if path == "/api/auth/start":
+                self._auth_start(body)
+                return
+            if path == "/api/auth/poll":
+                self._auth_poll(body)
+                return
+            if path == "/api/auth/logout":
+                AUTH.logout()
+                self._send_json(HTTPStatus.OK, {"state": "signed_out"})
+                return
+        except Exception:  # noqa: BLE001 — never leak an internal error/stack to the client
+            self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"state": "error", "error": "internal_error"})
+            return
+        self._reject(HTTPStatus.NOT_FOUND, "not found")
+
+    def _auth_start(self, body: dict) -> None:
+        tenant = body.get("tenant") or auth.DEFAULT_TENANT
+        if not isinstance(tenant, str):
+            self._reject(HTTPStatus.BAD_REQUEST, "invalid tenant")
+            return
+        try:
+            result = AUTH.start(tenant)
+        except auth.AuthError as exc:
+            self._send_json(HTTPStatus.BAD_GATEWAY, {"state": "error", "error": str(exc)})
+            return
+        self._send_json(HTTPStatus.OK, result)
+
+    def _auth_poll(self, body: dict) -> None:
+        handle = body.get("handle")
+        if not isinstance(handle, str) or not handle:
+            self._reject(HTTPStatus.BAD_REQUEST, "missing handle")
+            return
+        self._send_json(HTTPStatus.OK, AUTH.poll(handle))
 
     def log_message(self, *args: object) -> None:
         # Silence default stderr access logging; never log request contents,

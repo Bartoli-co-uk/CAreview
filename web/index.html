@@ -17,8 +17,19 @@
   <main>
     <section id="signin" class="card">
       <h2>Sign in</h2>
-      <p>Device-code sign-in is added in a later step. This is the server shell.</p>
-      <button id="signin-btn" type="button" disabled>Sign in (coming soon)</button>
+      <p>Sign in to your Microsoft Entra tenant to read Conditional Access policies.</p>
+      <label class="tenant">Tenant
+        <input id="tenant" type="text" value="organizations"
+               autocomplete="off" spellcheck="false">
+      </label>
+      <button id="signin-btn" type="button">Sign in</button>
+      <button id="signout-btn" type="button" hidden>Sign out</button>
+      <div id="devicecode" class="devicecode" hidden>
+        <p>To sign in, open <a id="dc-link" href="#" target="_blank" rel="noopener noreferrer">the Microsoft sign-in page</a>
+           and enter the code:</p>
+        <p class="code" id="dc-code"></p>
+      </div>
+      <p id="auth-status" class="badge" hidden></p>
     </section>
 
     <section id="status" class="card">

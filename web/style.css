@@ -61,4 +61,26 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .badge.ok { background: rgba(53, 194, 107, 0.15); color: var(--ok); }
 .badge.error { background: rgba(255, 107, 107, 0.15); color: var(--error); }
 
+.tenant { display: block; color: var(--muted); font-size: 0.85rem; margin-bottom: 0.75rem; }
+.tenant input {
+  display: block;
+  margin-top: 0.25rem;
+  padding: 0.4rem 0.5rem;
+  width: 100%;
+  max-width: 320px;
+  background: #0f1626;
+  border: 1px solid #26314a;
+  border-radius: 6px;
+  color: var(--text);
+}
+#signout-btn { background: #26314a; color: var(--text); }
+.devicecode { margin-top: 0.75rem; }
+.devicecode .code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.6rem;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  margin: 0.25rem 0;
+}
+
 footer { color: var(--muted); font-size: 0.85rem; padding-bottom: 2rem; }

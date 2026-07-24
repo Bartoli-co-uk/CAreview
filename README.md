@@ -6,11 +6,11 @@ security best practice, and flags configuration weaknesses. It is inspired by
 [`Jhope188/ca-policy-analyzer`](https://github.com/Jhope188/ca-policy-analyzer)
 but runs entirely on your own machine.
 
-> **Status: in development (MVP).** The local server shell exists: `python3
-> server.py` serves the UI and a `/api/health` endpoint on the loopback
-> interface. Device-code **sign-in** and **policy analysis** are not implemented
-> yet (the Sign-in button is disabled) — they arrive in later issues. Work is
-> built one reviewed issue at a time under the workflow described below.
+> **Status: in development (MVP).** The local server and **device-code sign-in**
+> exist: `python3 server.py` serves the UI, a `/api/health` endpoint, and the
+> `/api/auth/*` sign-in flow on the loopback interface. **Policy fetch and
+> analysis** are not implemented yet — they arrive in later issues. Work is built
+> one reviewed issue at a time under the workflow described below.
 
 ## Design goals
 
@@ -41,10 +41,11 @@ of the MVP.
 python3 server.py            # serves http://127.0.0.1:8765 (override with CAREVIEW_PORT)
 ```
 
-Open the URL to see the shell and a live server-health check. *Sign in* is
-disabled until the device-code auth issue lands; once it does, you will click it,
-approve a device code at `microsoft.com/devicelogin`, and (with admin consent to
-`Policy.Read.All`) the app will list and score your Conditional Access policies.
+Open the URL to see the shell and a live server-health check, then click *Sign
+in*: enter your tenant, approve the device code shown at
+`microsoft.com/devicelogin`, and you are signed in. Fetching and scoring your
+Conditional Access policies (with admin consent to `Policy.Read.All`) lands in
+later issues.
 
 ## Verify it (offline)
 

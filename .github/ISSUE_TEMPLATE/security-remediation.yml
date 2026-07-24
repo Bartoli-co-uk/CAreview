@@ -1,0 +1,33 @@
+name: Security remediation
+description: Track an already-disclosed security finding without exposing private details.
+title: "[Security remediation]: "
+body:
+  - type: markdown
+    attributes:
+      value: Do not disclose a new vulnerability here. Follow SECURITY.md first and use this form only when public tracking is safe.
+  - type: input
+    id: finding
+    attributes:
+      label: Sanitized finding reference
+      description: Use an internal identifier or safe report link, not exploit details.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Approved remediation scope
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification and review required
+      description: State how the fix will be tested and which reviews must rerun.
+    validations:
+      required: true
+  - type: input
+    id: owner
+    attributes:
+      label: Human owner
+    validations:
+      required: true

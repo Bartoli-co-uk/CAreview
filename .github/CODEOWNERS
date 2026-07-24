@@ -1,0 +1,16 @@
+# Replace this identity after creating a project from the template.
+* @Jay-cli
+
+# Workflow and governance changes require explicit owner review.
+/.github/ @Jay-cli
+/.claude/ @Jay-cli
+/.codex/ @Jay-cli
+/AGENTS.md @Jay-cli
+/CLAUDE.md @Jay-cli
+/START_HERE.md @Jay-cli
+/ROADMAP.md @Jay-cli
+/SECURITY.md @Jay-cli
+/docs/ @Jay-cli
+/prompts/ @Jay-cli
+/project/templates/ @Jay-cli
+/scripts/ @Jay-cli

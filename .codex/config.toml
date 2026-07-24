@@ -1,0 +1,22 @@
+approval_policy = "never"
+sandbox_mode = "read-only"
+
+# Codex review model selection is governed centrally by the review launcher, not
+# here: scripts/run_codex_review.py resolves a per-mode model (MODE_MODELS),
+# floor-protects security reviews (SECURITY_FLOOR_MODES), and records the model
+# it used in every report envelope. See docs/model-assignment.md. By default no
+# model is overridden, so reviews use the account's configured strong default.
+
+developer_instructions = """
+At the start of every fresh task, before changing anything, read START_HERE.md, AGENTS.md, ROADMAP.md, docs/workflow.md, project/README.md, and project/status/CURRENT.md. Summarize the recorded workflow phase, relevant approvals, and next allowed action. Treat repository files as the source of truth and never rely on a previous chat or memory.
+
+Follow AGENTS.md role boundaries and approval gates. Claude is the sole implementation writer; Codex is an independent read-only reviewer in this repository. Never edit or implement fixes during a review, approve artifacts, accept risk, or take protected external actions for the human.
+
+For every required review, reach the conclusion in this top-level task. Do not delegate to a subagent, spawn another agent, or call another agent to perform or validate the review.
+
+After a task's evidence and status are saved, end the task. Never resume, continue, clear, or fork it into the next issue or required review. Start a new top-level task and rebuild context from the repository. Fresh tasks do not delete or imply deletion of provider-side records.
+"""
+
+[features]
+# Required reviews must be completed by this one fresh top-level process.
+multi_agent = false

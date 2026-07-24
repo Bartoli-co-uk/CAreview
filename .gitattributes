@@ -1,0 +1,10 @@
+# Consistent line endings across platforms. Force LF in the working tree so the
+# POSIX launcher keeps a valid `#!/bin/sh` shebang even on a Windows clone with
+# core.autocrlf=true, which would otherwise rewrite *.sh to CRLF and break it.
+* text=auto eol=lf
+
+# Treat common non-text assets as binary if they are ever added.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary

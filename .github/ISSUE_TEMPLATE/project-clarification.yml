@@ -1,0 +1,33 @@
+name: Project clarification
+description: Record a material question or ambiguity that requires a human decision.
+title: "[Decision]: "
+body:
+  - type: markdown
+    attributes:
+      value: Do not include credentials or other sensitive data.
+  - type: input
+    id: context
+    attributes:
+      label: Context
+      description: Link the brief, roadmap item, issue, or review that raised this question.
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Decision needed
+      description: State one concrete question and why it blocks progress.
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Options and consequences
+      description: Present the viable choices neutrally, including risks and evidence.
+    validations:
+      required: true
+  - type: textarea
+    id: recommendation
+    attributes:
+      label: Recommendation
+      description: Optional recommendation; the human remains the decision-maker.

@@ -1,0 +1,16 @@
+{
+  "autoMemoryEnabled": false,
+  "permissions": {
+    "allow": [
+      "Bash(./scripts/run-codex-review.sh plan *)",
+      "Bash(./scripts/run-codex-review.sh issue *)",
+      "Bash(./scripts/run-codex-review.sh milestone-general *)",
+      "Bash(./scripts/run-codex-review.sh milestone-security *)",
+      "PowerShell(.\\scripts\\run-codex-review.ps1 plan *)",
+      "PowerShell(.\\scripts\\run-codex-review.ps1 issue *)",
+      "PowerShell(.\\scripts\\run-codex-review.ps1 milestone-general *)",
+      "PowerShell(.\\scripts\\run-codex-review.ps1 milestone-security *)"
+    ],
+    "defaultMode": "default"
+  }
+}

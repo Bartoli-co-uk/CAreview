@@ -1,0 +1,39 @@
+name: Defect
+description: Report a reproducible non-sensitive defect in the skeleton or project.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: Security vulnerabilities and exposed secrets must be reported privately under SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: Affected commit or version
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include safe commands and redacted output.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system and relevant tool versions.
+    validations:
+      required: true

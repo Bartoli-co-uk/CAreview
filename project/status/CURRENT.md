@@ -25,15 +25,15 @@ records described below.
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | `M1` (in progress) |
 | Active issue | `ISSUE-0004` (analyzer) — status `REPAIRING`, branch `ai/ISSUE-0004-analyzer`, Starting SHA `e94ef5a` |
-| Issue repair round | Repair round 2 (Codex F-001 execution evidence, F-002 evaluability enforcement, F-003 this stale status) |
-| Candidate product commit | Branch HEAD of `ai/ISSUE-0004-analyzer` (the launcher binds the exact SHA at review time) |
+| Issue repair round | Repair round 5 (over the DECISION-007 budget); ⛔ human decision requested before further rounds |
+| Candidate product commit | Branch HEAD of `ai/ISSUE-0004-analyzer` at commit fixing F-002 nested-path validation (the launcher binds the exact SHA at review time) |
 | Latest implementation handoff | `project/handoffs/ISSUE-0004-handoff.md` |
-| Latest Codex review | ISSUE-0004 repair-1 `ISSUE-0004-5065a80db86a-codex.json` (BLOCKED; F-001 execution, F-002 evaluability model, F-003 this status) |
+| Latest Codex review | ISSUE-0004 repair-4 `ISSUE-0004-a7ec63010bd5-codex.json` (BLOCKED; F-001 repair-limit exceeded, F-002 nested-path validation now fixed, F-003 stale records, F-004 execution) |
 | Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e` |
 | Last human decision | `DECISION-007` (raised repair budget); also `DECISION-006`..`001` |
 | Open blockers | None. Standing: Codex issue reviews stay `BLOCKED` on execution evidence (DECISION-004); author runs checks out-of-band |
 | Next required actor | Claude (implement ISSUE-0004 autonomously per DECISION-005) |
-| Next permitted action | ISSUE-0004 repair round 3 in progress (MFA coverage fix, F-003); the recurring F-002 evaluability-model disagreement is being presented to the human for a final decision before further review |
+| Next permitted action | ISSUE-0004 has used 5 repair rounds, exceeding the DECISION-007 budget (~4). All substantive code findings are now fixed (F-002/F-003 from round 4 addressed). ⛔ Human decides: authorize one final confirming review + merge, or accept current state as a residual and merge without a further round |
 | Actions not yet permitted | Merge without a clean review, publication, deployment, live tenant auth/fetch, or any protected action |
 
 When this repository is adopted for a project, replace the values above and add

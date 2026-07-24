@@ -1,0 +1,205 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T15:38:30Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f94c5-bc64-71e2-aaee-486916d630ea"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "e94ef5abad6e95ec899a7bca04e30e9dc3dbea81",
+    "evidence": [
+      {
+        "detail": "Detached checkout was clean and HEAD exactly matched the launcher target.",
+        "reference": "git status --short --branch; git rev-parse HEAD",
+        "source": "command"
+      },
+      {
+        "detail": "Base and target commits resolved exactly to the launcher-supplied identities.",
+        "reference": "git rev-parse e94ef5abad6e95ec899a7bca04e30e9dc3dbea81; git rev-parse a7ec63010bd53b0409d1cbbde62b1cbdcda74b9e",
+        "source": "command"
+      },
+      {
+        "detail": "The exact base-to-target diff changes 18 files with 1,565 insertions and 17 deletions, including analyzer.py, rules.py, server.py, tests, fixtures, README, and governance records.",
+        "reference": "git diff --stat e94ef5abad6e95ec899a7bca04e30e9dc3dbea81 a7ec63010bd53b0409d1cbbde62b1cbdcda74b9e",
+        "source": "diff"
+      },
+      {
+        "detail": "Analyzer and Graph tests independently passed: 31 tests ran successfully.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_analyzer tests.test_graph",
+        "source": "check"
+      },
+      {
+        "detail": "The required full suite ran 73 tests but failed with 17 errors because the sandbox forbids loopback socket binding.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "The required compile check failed because py_compile could not create __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not complete because the read-only environment provided no writable temporary directory.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "No whitespace errors were found in the exact diff, and checks did not dirty the checkout.",
+        "reference": "git diff --check e94ef5abad6e95ec899a7bca04e30e9dc3dbea81 a7ec63010bd53b0409d1cbbde62b1cbdcda74b9e; git status --short",
+        "source": "check"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Expected: AGENTS.md limits issue work to at most two repair rounds, states that lower-level records cannot weaken that gate, and requires an exact human decision after exhaustion.",
+          "Observed: the target commit subject identifies repair round 4, while project/status/CURRENT.md calls it round 2 and says round 3 is in progress. DECISION-007 attempts to establish approximately four rounds as a standing lower-level policy, which cannot override AGENTS.md.",
+          "The issue record itself still states a maximum of two repair rounds."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 28,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 36,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 87,
+            "path": "project/issues/ISSUE-0004.md"
+          },
+          {
+            "line": 13,
+            "path": "project/decisions/DECISION-007-repair-budget.md"
+          }
+        ],
+        "remediation": "Stop the issue workflow and obtain a current, explicit human decision resolving the exhausted binding repair limit for this exact candidate, or restore a workflow state consistent with AGENTS.md. Synchronize all records to the actual round and candidate.",
+        "severity": "high",
+        "title": "Candidate exceeds the binding repair limit and records contradictory round state",
+        "verification": "Confirm from committed records alone that the exact candidate, actual round, governing decision, blockers, and next permitted action are consistent with AGENTS.md."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: acceptance criterion 6 and DECISION-008 require generic enforcement of every declared field path, marking a rule not evaluable if a required field is missing or undeclared in the normalized contract.",
+          "Observed: _field_declared_in_contract splits a path and checks only its top-level component. Therefore conditions.thisFieldDoesNotExist is accepted because conditions exists, even though the nested field does not.",
+          "The committed test explicitly asserts this incorrect behavior by expecting _missing_requirements to return an empty list for conditions.thisFieldDoesNotExist."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 23,
+            "path": "analyzer.py"
+          },
+          {
+            "line": 160,
+            "path": "tests/test_analyzer.py"
+          },
+          {
+            "line": 30,
+            "path": "project/decisions/DECISION-008-issue0004-evaluability-model.md"
+          }
+        ],
+        "remediation": "Validate complete dotted paths against the normalized contract rather than only top-level keys. Preserve or expose evidence completeness if absent/malformed source fields must differ from valid empty values, and test representative missing nested requirements.",
+        "severity": "high",
+        "title": "Generic requires enforcement ignores missing nested fields",
+        "verification": "Add tests where conditions.thisFieldDoesNotExist and other invalid nested declarations are reported missing, then verify dependent rules become not_evaluable and are excluded from scoring."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: CURRENT.md must accurately identify the current gate, exact candidate, blockers, decision, and next permitted action; the handoff and issue round table must match the reviewed candidate.",
+          "Observed: CURRENT.md says repair round 2 while its next action says round 3 is in progress; the commit identifies round 4. It names DECISION-007 as the latest decision although DECISION-008 is committed.",
+          "The handoff remains titled repair round 2, reports 68 tests, and its acceptance mapping reports 62 tests, while the current suite discovers 73 tests.",
+          "DECISION-008 contains the placeholder timestamp 2026-07-24T15:XX:XXZ, so it is not an exact approval record."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 28,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 33,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 36,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 1,
+            "path": "project/handoffs/ISSUE-0004-handoff.md"
+          },
+          {
+            "line": 54,
+            "path": "project/handoffs/ISSUE-0004-handoff.md"
+          },
+          {
+            "line": 66,
+            "path": "project/handoffs/ISSUE-0004-handoff.md"
+          },
+          {
+            "line": 7,
+            "path": "project/decisions/DECISION-008-issue0004-evaluability-model.md"
+          }
+        ],
+        "remediation": "Update CURRENT.md, the issue round table, handoff, and DECISION-008 with truthful exact candidate/round/check metadata and a real UTC decision time. Record the actual blocker and next permitted action.",
+        "severity": "medium",
+        "title": "Durable workflow and evidence records are stale and internally inconsistent",
+        "verification": "A fresh reader should be able to reconstruct the exact candidate, actual repair round, latest decision/review, check count, blockers, and next action without chat context."
+      },
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the required full test and compile checks must execute successfully against the exact candidate; the launcher explicitly forbids PASS when evidence is missing or execution fails.",
+          "Observed: the full suite ran 73 tests but ended with 17 PermissionError failures when server tests attempted loopback binding.",
+          "Observed: py_compile failed because the sandbox could not create __pycache__; governance validation also failed because no writable temporary directory was available.",
+          "The narrower analyzer and Graph suite passed 31 tests, but it does not replace the required full-suite and compile evidence."
+        ],
+        "id": "F-004",
+        "locations": [
+          {
+            "line": 56,
+            "path": "project/issues/ISSUE-0004.md"
+          }
+        ],
+        "remediation": "Run the required full test and compile commands against this exact commit in an environment permitting loopback sockets and temporary bytecode output, and retain the real command output as commit-bound evidence. Then launch a fresh review.",
+        "severity": "medium",
+        "title": "Required execution evidence could not be independently completed",
+        "verification": "Both python3 -m unittest discover -s tests and python3 -m py_compile $(git ls-files '*.py') must exit 0 against the exact reviewed candidate."
+      }
+    ],
+    "limitations": [
+      "The read-only sandbox prevents loopback socket binding, bytecode creation, and temporary-directory creation, so the full suite, compile check, and governance validator could not complete successfully.",
+      "Live Microsoft authentication and Graph fetching were not performed; they are protected actions and outside this issue's automated acceptance evidence.",
+      "Static inspection supports deterministic scoring, severity sorting, heuristic labeling, in-memory break-glass handling, and sanitized fixtures, but those observations do not replace failed required checks.",
+      "Residual rule-quality risk remains: the starter predicates are heuristic and do not establish compliance or complete tenant security coverage."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "a7ec63010bd53b0409d1cbbde62b1cbdcda74b9e",
+    "schema_version": "1.0",
+    "summary": "BLOCKED. Target identity and diff scope are exact, and 31 analyzer/Graph tests passed independently. However, mandatory full-suite and compile evidence could not complete in the restricted environment. The candidate also exceeds the binding two-round issue limit, has contradictory/stale governance records, and its purported generic required-field enforcement checks only top-level keys, leaving missing nested requirements unenforced.",
+    "target_id": "ISSUE-0004"
+  },
+  "test_only": false
+}

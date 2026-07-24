@@ -22,11 +22,16 @@ _REFERENCE_POLICY = graph.normalize_policy({})
 
 
 def _field_declared_in_contract(field_path: str) -> bool:
-    """True when ``field_path``'s top-level key exists in the normalized
-    policy contract (per ``graph.normalize_policy``), i.e. it can never be
-    absent on a real policy — only empty."""
-    top = field_path.split(".", 1)[0]
-    return top in _REFERENCE_POLICY
+    """True when the FULL dotted ``field_path`` resolves within the normalized
+    policy contract (per ``graph.normalize_policy``), i.e. every segment is a
+    real, guaranteed-present key — so the field can never be absent on a real
+    policy, only empty. Checks the whole path, not just the top-level key."""
+    node = _REFERENCE_POLICY
+    for segment in field_path.split("."):
+        if not isinstance(node, dict) or segment not in node:
+            return False
+        node = node[segment]
+    return True
 
 
 def _missing_requirements(rule: rules.Rule, ctx: dict) -> list[str]:

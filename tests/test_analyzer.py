@@ -154,10 +154,19 @@ class AnalyzerTests(unittest.TestCase):
         correctly reported not_evaluable."""
         bogus = rules.Rule(
             "bogus-rule", "Bogus", "low", 1, "x", "x",
-            ["conditions.thisFieldDoesNotExist"],
+            ["conditions.thisFieldDoesNotExist"],  # top-level exists, nested segment does not
             lambda policies, ctx: (rules.PASS, []),
         )
-        self.assertEqual(analyzer._missing_requirements(bogus, {}), [])  # top-level "conditions" IS in the contract
+        self.assertEqual(
+            analyzer._missing_requirements(bogus, {}), ["conditions.thisFieldDoesNotExist"]
+        )
+
+        real_nested = rules.Rule(
+            "real-nested-rule", "Real nested", "low", 1, "x", "x",
+            ["conditions.includeRoles"],  # a genuinely valid nested path
+            lambda policies, ctx: (rules.PASS, []),
+        )
+        self.assertEqual(analyzer._missing_requirements(real_nested, {}), [])
 
         bogus2 = rules.Rule(
             "bogus-rule-2", "Bogus 2", "low", 1, "x", "x",
@@ -179,16 +188,14 @@ class AnalyzerTests(unittest.TestCase):
         produced by normalize_policy) can be genuinely absent, which is exactly
         what `analyzer.analyze` gates on.
         """
-        empty_policy = graph.normalize_policy({})
         for rule in rules.RULES:
             for field_path in rule.requires:
                 if field_path in rules.EXTERNAL_INPUTS:
                     continue
-                top = field_path.split(".", 1)[0]
-                self.assertIn(
-                    top, empty_policy,
+                self.assertTrue(
+                    analyzer._field_declared_in_contract(field_path),
                     f"{rule.id} declares policy field {field_path!r}, "
-                    "but normalize_policy does not guarantee it",
+                    "but normalize_policy does not guarantee the full nested path",
                 )
 
 

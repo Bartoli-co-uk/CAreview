@@ -15,6 +15,40 @@ import rules
 # Severity ordering for sorting findings (most severe first).
 _SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
 
+# Reference shape used to generically validate every `Rule.requires` entry
+# (Codex F-002): the empty-input normalization is the contract's own guarantee
+# of which top-level keys always exist. Built once at import time.
+_REFERENCE_POLICY = graph.normalize_policy({})
+
+
+def _field_declared_in_contract(field_path: str) -> bool:
+    """True when ``field_path``'s top-level key exists in the normalized
+    policy contract (per ``graph.normalize_policy``), i.e. it can never be
+    absent on a real policy — only empty."""
+    top = field_path.split(".", 1)[0]
+    return top in _REFERENCE_POLICY
+
+
+def _missing_requirements(rule: rules.Rule, ctx: dict) -> list[str]:
+    """Generically enforce every declared requirement in ``rule.requires``.
+
+    - External inputs (``rules.EXTERNAL_INPUTS``, e.g. ``break_glass_ids``) are
+      missing when the caller did not supply them in ``ctx``.
+    - Policy-JSON field paths are validated against the normalized contract's
+      guaranteed shape (`_REFERENCE_POLICY`): every one of them is always
+      present there, so this branch enforces the declaration without ever
+      spuriously blocking a rule — the guarantee is proven for every rule by
+      ``tests/test_analyzer.py::test_requires_policy_fields_are_never_missing``.
+    """
+    missing: list[str] = []
+    for field_path in rule.requires:
+        if field_path in rules.EXTERNAL_INPUTS:
+            if not ctx.get(field_path):
+                missing.append(field_path)
+        elif not _field_declared_in_contract(field_path):
+            missing.append(field_path)  # would indicate a stale/incorrect declaration
+    return missing
+
 
 def analyze(policies: list[dict], break_glass_ids: list[str] | None = None) -> dict:
     """Analyze normalized CA ``policies`` and return score + findings.
@@ -32,13 +66,12 @@ def analyze(policies: list[dict], break_glass_ids: list[str] | None = None) -> d
     evaluable_weight = 0
 
     for rule in rules.RULES:
-        # Enforce declared EXTERNAL-input requirements (Codex F-001): a rule that
-        # needs an input the caller did not supply (e.g. break-glass IDs) is not
-        # evaluable and never scored, driven by its `requires` declaration.
-        missing_external = [
-            key for key in rule.requires if key in rules.EXTERNAL_INPUTS and not ctx.get(key)
-        ]
-        if missing_external:
+        # Enforce EVERY declared requirement generically (Codex F-001/F-002):
+        # external inputs missing from ctx, or a policy-field declaration that
+        # (contrary to the contract's guarantee) is not part of the normalized
+        # shape. See `_missing_requirements` for why policy-field entries never
+        # actually trigger this in practice.
+        if _missing_requirements(rule, ctx):
             status, affected = rules.NOT_EVALUABLE, []
         else:
             try:

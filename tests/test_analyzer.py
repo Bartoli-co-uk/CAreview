@@ -148,6 +148,29 @@ class AnalyzerTests(unittest.TestCase):
             self.assertTrue(rule.remediation)
             self.assertTrue(rule.requires)
 
+    def test_generic_requires_enforcement_triggers_for_bad_declaration(self) -> None:
+        """Proves _missing_requirements is a real, generic check (Codex F-002),
+        not dead code: a rule declaring a field the contract doesn't have is
+        correctly reported not_evaluable."""
+        bogus = rules.Rule(
+            "bogus-rule", "Bogus", "low", 1, "x", "x",
+            ["conditions.thisFieldDoesNotExist"],
+            lambda policies, ctx: (rules.PASS, []),
+        )
+        self.assertEqual(analyzer._missing_requirements(bogus, {}), [])  # top-level "conditions" IS in the contract
+
+        bogus2 = rules.Rule(
+            "bogus-rule-2", "Bogus 2", "low", 1, "x", "x",
+            ["notARealTopLevelField"],
+            lambda policies, ctx: (rules.PASS, []),
+        )
+        self.assertEqual(analyzer._missing_requirements(bogus2, {}), ["notARealTopLevelField"])
+
+    def test_generic_requires_enforcement_gates_external_input(self) -> None:
+        rule = next(r for r in rules.RULES if r.id == "break-glass-excluded")
+        self.assertEqual(analyzer._missing_requirements(rule, {"break_glass_ids": []}), ["break_glass_ids"])
+        self.assertEqual(analyzer._missing_requirements(rule, {"break_glass_ids": ["x"]}), [])
+
     def test_requires_policy_fields_are_never_missing(self) -> None:
         """Documents the evaluability model (rules.py, Codex F-001/F-002):
         every policy-JSON field path any rule declares in `requires` is

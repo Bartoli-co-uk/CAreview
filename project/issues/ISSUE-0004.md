@@ -1,12 +1,12 @@
 # ISSUE-0004: Analyzer engine, rule set, and scoring
 
-**Status:** `PLANNED`
+**Status:** `REVIEWING`
 **Milestone:** `M1`
 **Approved roadmap:** `ROADMAP.md` version `3` at `125d74f6d4bfe85f1a727293064d0887f2d121c7`
 **Dependencies:** `ISSUE-0003`
 **Branch:** `ai/ISSUE-0004-analyzer`
-**Starting SHA:** `[set at implementation start]`
-**Candidate SHA:** `Not created`
+**Starting SHA:** `e94ef5abad6e95ec899a7bca04e30e9dc3dbea81`
+**Candidate SHA:** `this commit (branch HEAD); launcher binds the exact SHA`
 
 ## Objective
 

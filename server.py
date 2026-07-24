@@ -19,6 +19,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
+import analyzer
 import auth
 import graph
 
@@ -143,6 +144,9 @@ class CAReviewHandler(BaseHTTPRequestHandler):
         if path == "/api/policies":
             self._policies()
             return
+        if path == "/api/analysis":
+            self._analysis()
+            return
         if path in STATIC_FILES:
             self._send_static(path)
             return
@@ -166,6 +170,25 @@ class CAReviewHandler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.BAD_GATEWAY, {"error": "graph_error", "message": "unexpected error"})
             return
         self._send_json(HTTPStatus.OK, {"policies": policies, "count": len(policies)})
+
+    def _analysis(self) -> None:
+        token = AUTH.get_token()
+        if not token:
+            self._send_json(HTTPStatus.UNAUTHORIZED, {"error": "not_authenticated"})
+            return
+        try:
+            policies = GRAPH.fetch_policies(token)
+        except graph.GraphError as exc:
+            status = {
+                "not_authenticated": HTTPStatus.UNAUTHORIZED,
+                "consent_required": HTTPStatus.FORBIDDEN,
+            }.get(exc.code, HTTPStatus.BAD_GATEWAY)
+            self._send_json(status, {"error": exc.code, "message": str(exc)})
+            return
+        except Exception:  # noqa: BLE001 — never leak an internal error/stack to the client
+            self._send_json(HTTPStatus.BAD_GATEWAY, {"error": "graph_error", "message": "unexpected error"})
+            return
+        self._send_json(HTTPStatus.OK, analyzer.analyze(policies))
 
     def _read_json_body(self) -> dict | None:
         try:

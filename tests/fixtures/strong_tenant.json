@@ -1,0 +1,75 @@
+[
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "displayName": "Block legacy authentication",
+    "state": "enabled",
+    "conditions": {
+      "clientAppTypes": ["exchangeActiveSync", "other"],
+      "applications": {"includeApplications": ["All"]},
+      "users": {"includeUsers": ["All"]}
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["block"]}
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000002",
+    "displayName": "Require MFA for administrators",
+    "state": "enabled",
+    "conditions": {
+      "users": {"includeRoles": ["62e90394-69f5-4237-9190-012177145e10"]},
+      "applications": {"includeApplications": ["All"]}
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["mfa"]}
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000003",
+    "displayName": "Require MFA for all users",
+    "state": "enabled",
+    "conditions": {
+      "users": {"includeUsers": ["All"], "excludeUsers": ["11111111-1111-1111-1111-111111111111"]},
+      "applications": {"includeApplications": ["All"]}
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["mfa"]}
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000004",
+    "displayName": "Require compliant device",
+    "state": "enabled",
+    "conditions": {
+      "users": {"includeUsers": ["All"]},
+      "applications": {"includeApplications": ["All"]}
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["compliantDevice"]}
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000005",
+    "displayName": "Sign-in risk policy",
+    "state": "enabled",
+    "conditions": {
+      "signInRiskLevels": ["high"],
+      "users": {"includeUsers": ["All"]},
+      "applications": {"includeApplications": ["All"]}
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["mfa"]}
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000006",
+    "displayName": "User risk policy",
+    "state": "enabled",
+    "conditions": {
+      "userRiskLevels": ["high"],
+      "users": {"includeUsers": ["All"]},
+      "applications": {"includeApplications": ["All"]}
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["passwordChange"]}
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000007",
+    "displayName": "Session controls",
+    "state": "enabled",
+    "conditions": {
+      "users": {"includeUsers": ["All"]},
+      "applications": {"includeApplications": ["All"]}
+    },
+    "sessionControls": {"signInFrequency": {"isEnabled": true, "value": 8}}
+  }
+]

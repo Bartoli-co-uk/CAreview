@@ -1,0 +1,12 @@
+[
+  {
+    "id": "00000000-0000-0000-0000-0000000000a1",
+    "displayName": "MFA for all users (report-only)",
+    "state": "enabledForReportingButNotEnforced",
+    "conditions": {
+      "users": {"includeUsers": ["All"]},
+      "applications": {"includeApplications": ["All"]}
+    },
+    "grantControls": {"operator": "OR", "builtInControls": ["mfa"]}
+  }
+]

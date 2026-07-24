@@ -186,6 +186,37 @@ class ServerIntegrationTests(unittest.TestCase):
             server.GRAPH = original
             server.AUTH.logout()
 
+    def test_analysis_unauthenticated_401(self) -> None:
+        server.AUTH.logout()
+        resp = self._request("/api/analysis", f"127.0.0.1:{self.port}")
+        self.assertEqual(resp.status, 401)
+
+    def test_analysis_success(self) -> None:
+        self._with_token()
+        original = server.GRAPH
+
+        class FakeGraph:
+            def fetch_policies(self, token: str) -> list[dict]:
+                # One enabled block-legacy-auth policy → some score, no crash.
+                return [{
+                    "id": "p", "displayName": "block legacy", "state": "enabled",
+                    "conditions": {"clientAppTypes": ["other"], "includeUsers": ["All"]},
+                    "grantControls": {"operator": "OR", "builtInControls": ["block"]},
+                    "sessionControls": [],
+                }]
+
+        server.GRAPH = FakeGraph()
+        try:
+            resp = self._request("/api/analysis", f"127.0.0.1:{self.port}")
+            body = json.loads(resp.read())
+            self.assertEqual(resp.status, 200)
+            self.assertIn("score", body)
+            self.assertIn("findings", body)
+            self.assertTrue(body["scoreIsHeuristic"])
+        finally:
+            server.GRAPH = original
+            server.AUTH.logout()
+
 
 if __name__ == "__main__":
     unittest.main()

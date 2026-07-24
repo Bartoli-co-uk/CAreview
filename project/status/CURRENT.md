@@ -1,6 +1,6 @@
 <!-- claudex-state
-stage: IMPLEMENTATION
-active_issue: none
+stage: ISSUE_REVIEW
+active_issue: ISSUE-0004
 active_milestone: none
 -->
 
@@ -17,17 +17,17 @@ records described below.
 
 | Field | Current value |
 |---|---|
-| Stage | `IMPLEMENTATION` |
+| Stage | `ISSUE_REVIEW` |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v1; APPROVED (DECISION-001) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (binds `179a023`) |
 | Roadmap | `ROADMAP.md` v3; APPROVED (DECISION-003, binds `125d74f`) |
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | `M1` (in progress) |
-| Active issue | None — ISSUE-0003 COMPLETE and merged |
+| Active issue | `ISSUE-0004` (analyzer) — status `REVIEWING`, branch `ai/ISSUE-0004-analyzer`, Starting SHA `e94ef5a` |
 | Issue repair round | None |
 | Candidate product commit | Branch HEAD of `ai/ISSUE-0003-graph-client` (the launcher binds the exact SHA at review time) |
-| Latest implementation handoff | `project/handoffs/ISSUE-0003-handoff.md` |
+| Latest implementation handoff | `project/handoffs/ISSUE-0004-handoff.md` |
 | Latest Codex review | ISSUE-0003 final `ISSUE-0003-065675e53ee8-codex.json` — no product-code defect (DECISION-004/007) |
 | Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e` |
 | Last human decision | `DECISION-007` (raised repair budget); also `DECISION-006`..`001` |

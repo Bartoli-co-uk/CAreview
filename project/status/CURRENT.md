@@ -1,5 +1,5 @@
 <!-- claudex-state
-stage: BRIEF_DRAFTING
+stage: BRIEF_REVIEW
 active_issue: none
 active_milestone: none
 -->
@@ -17,9 +17,9 @@ records described below.
 
 | Field | Current value |
 |---|---|
-| Stage | `BRIEF_DRAFTING` |
+| Stage | `BRIEF_REVIEW` |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
-| Project brief | Drafting in progress |
+| Project brief | `project/brief/PROJECT_BRIEF.md` v1; DRAFT, awaiting human approval |
 | Brief approval | Not recorded |
 | Roadmap | Template only; not approved |
 | Roadmap approval | Not recorded |
@@ -31,8 +31,8 @@ records described below.
 | Latest Codex review | None |
 | Last human decision | None |
 | Open blockers | None |
-| Next required actor | Claude (drafting brief), then Human (brief approval) |
-| Next permitted action | Claude drafts `project/brief/PROJECT_BRIEF.md` from the template, commits it, and stops for the human to approve the exact brief commit. No roadmap or implementation work until that approval is recorded |
+| Next required actor | Human (brief approval) |
+| Next permitted action | Human reviews `project/brief/PROJECT_BRIEF.md` v1 and records approval or rejection of this exact commit (answering the four questions in the brief). On approval, a fresh Claude planning task drafts the roadmap. No roadmap or implementation work until approval is recorded |
 | Actions not yet permitted | Roadmap approval, implementation, review of product code, merge, publication, deployment, or any protected action |
 
 When this repository is adopted for a project, replace the values above and add

@@ -182,6 +182,22 @@ class LifecycleTests(unittest.TestCase):
         self.assertNotEqual(result.get("state"), "success")
         self.assertFalse(mgr.is_authenticated())
 
+    def test_inflight_start_after_logout_does_not_recreate_session(self) -> None:
+        # logout() during a start()'s device-code call must win: the stale start
+        # detects supersession and refuses to install its session (F-001 round 2).
+        clock = FakeClock()
+        holder: dict = {}
+
+        def transport(url: str, data: bytes) -> tuple[int, dict]:
+            holder["mgr"].logout()  # logout during the device-code network call
+            return DEVICE_OK
+
+        mgr = auth.AuthManager(transport=transport, clock=clock)
+        holder["mgr"] = mgr
+        with self.assertRaises(auth.AuthError):
+            mgr.start()
+        self.assertIsNone(mgr._session)
+
     def test_network_error_during_poll_is_transient(self) -> None:
         clock = FakeClock()
         mgr, _ = manager([DEVICE_OK, (0, {"error": "network_error"})], clock)

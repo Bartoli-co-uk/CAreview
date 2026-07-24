@@ -150,6 +150,10 @@ class AuthManager:
         # the same session object is still current (identity check), so a logout or
         # a superseding start during the call cannot be overwritten by a stale poll.
         self._lock = threading.RLock()
+        # Monotonic lifecycle counter: every start() and logout() bumps it, so an
+        # in-flight start whose network call overlaps a newer start or a logout can
+        # detect that it is stale and refuse to install its session.
+        self._generation = 0
         self._session: _Session | None = None
         self._access_token: str | None = None
         self._token_expires_at: float = 0.0
@@ -157,6 +161,9 @@ class AuthManager:
     # -- sign-in lifecycle ------------------------------------------------
     def start(self, tenant: str = DEFAULT_TENANT) -> dict:
         """Begin a device-code sign-in, superseding any prior session."""
+        with self._lock:
+            self._generation += 1
+            generation = self._generation
         url, data = build_devicecode_request(tenant, self.client_id, self.scopes)
         status, payload = self._transport(url, data)
         if status != 200 or "device_code" not in payload or "user_code" not in payload:
@@ -167,6 +174,9 @@ class AuthManager:
         except (TypeError, ValueError):
             raise AuthError("malformed device code response")
         with self._lock:
+            # A newer start() or a logout() during the network call wins.
+            if generation != self._generation:
+                raise AuthError("superseded")
             now = self._clock()
             session = _Session(
                 handle=secrets.token_urlsafe(18),
@@ -240,6 +250,7 @@ class AuthManager:
     def logout(self) -> None:
         """Clear any pending session and token from memory."""
         with self._lock:
+            self._generation += 1  # invalidate any in-flight start()
             self._session = None
             self._access_token = None
             self._token_expires_at = 0.0

@@ -6,11 +6,14 @@ security best practice, and flags configuration weaknesses. It is inspired by
 [`Jhope188/ca-policy-analyzer`](https://github.com/Jhope188/ca-policy-analyzer)
 but runs entirely on your own machine.
 
-> **Status: in development (MVP).** The local server and **device-code sign-in**
-> exist: `python3 server.py` serves the UI, a `/api/health` endpoint, and the
-> `/api/auth/*` sign-in flow on the loopback interface. **Policy fetch and
-> analysis** are not implemented yet — they arrive in later issues. Work is built
-> one reviewed issue at a time under the workflow described below.
+> **Status: MVP feature-complete; milestone review pending.** `python3
+> server.py` serves the full flow: device-code sign-in, fetching and
+> normalizing your Conditional Access policies, the 0–100 heuristic analysis,
+> and the rendered UI (score, findings, per-policy cards) — all on the loopback
+> interface, with no Node.js and no third-party Python packages. Click **"View
+> a sample analysis"** to see it without signing in. The final documentation
+> issue and the M1 milestone's four-review gate (see
+> [`docs/workflow.md`](docs/workflow.md)) are still pending human acceptance.
 
 ## Design goals
 
@@ -71,6 +74,25 @@ tenant for policy-existence rules — is reported **not evaluable** and excluded
 both the numerator and denominator, so missing evidence is never scored as pass or
 fail. Each rule's severity, weight, and required fields are documented in `rules.py`.
 Break-glass IDs can be supplied locally (in memory only) via `POST /api/breakglass`.
+
+## End-to-end walkthrough
+
+1. `python3 server.py` (or `CAREVIEW_PORT=8888 python3 server.py` for a different port).
+2. Open `http://127.0.0.1:8765/` (or the port you chose in step 1) — the health
+   badge should read "ok".
+3. Click **Sign in**, optionally edit the tenant (`organizations` by default),
+   and follow the on-screen device code at `microsoft.com/devicelogin`.
+4. Once signed in, the page automatically fetches your Conditional Access
+   policies and renders the score, findings, and one flow card per policy.
+5. Click **Sign out** at any point to clear the in-memory token and analysis.
+6. Prefer not to sign in? Click **"View a sample analysis"** on the status card
+   at any time — it loads the committed `web/sample-data.json` (sanitized, no
+   real tenant data) through the same rendering path.
+
+No step intentionally persists application state, tokens, or tenant data;
+closing the process discards it all. (This does not claim the Python
+interpreter, OS, or verification commands perform zero disk I/O generally —
+only that CAreview itself writes none of your tenant data or credentials.)
 
 ## How this project is built — governance
 
@@ -157,6 +179,18 @@ network, and it does not prove the process was followed.
   hard security boundary or a certification. A local user or agent can bypass it.
 - Device-code tokens live only in the running process's memory; never commit
   tokens, client secrets, tenant data, or policy exports.
+- **Known, accepted residual risks (recorded in `ROADMAP.md`):**
+  - **RISK-001** — a tenant may block first-party device-code sign-in or
+    withhold `Policy.Read.All` consent; the app-registration fallback is
+    deferred, not part of the MVP.
+  - **RISK-002** — the local API has no authentication beyond binding to
+    `127.0.0.1` plus a Host/Origin allowlist (defends against DNS-rebinding and
+    cross-site requests); another process on the same machine under the same
+    user could still reach it while a token is in memory. Acceptable for a
+    single-user local tool; do not run on a shared or multi-user host.
+  - **RISK-004** — the 0–100 score is a documented **heuristic**, weighted
+    across a starter rule set (`rules.py`); it is not a compliance
+    certification or a substitute for professional assessment.
 - See [`SECURITY.md`](SECURITY.md) for private vulnerability reporting and
   [`docs/security-boundaries.md`](docs/security-boundaries.md) for operating
   boundaries.

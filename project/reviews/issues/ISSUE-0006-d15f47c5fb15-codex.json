@@ -1,0 +1,142 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T16:19:29Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f94ea-d9a9-76c0-83df-99c525c5c785"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "4e8e999ef2204ee7089726b205f5895dc73b38b0",
+    "evidence": [
+      {
+        "detail": "Detached checkout HEAD exactly matches the launcher-bound target SHA and the working tree is clean.",
+        "reference": "git rev-parse HEAD; git status --short --branch",
+        "source": "command"
+      },
+      {
+        "detail": "Both supplied commit objects exist. The explicit base-to-target diff changes README.md and ISSUE-0006 governance records, with no product source or test changes.",
+        "reference": "git cat-file -e <SHA>^{commit}; git diff --name-status 4e8e999ef2204ee7089726b205f5895dc73b38b0 d15f47c5fb15f4c929dae603afbc622baaeea428",
+        "source": "diff"
+      },
+      {
+        "detail": "The target is a parentless isolated snapshot, so ancestry cannot establish its relationship to the supplied base; review scope used the explicit two-tree diff.",
+        "reference": "git show -s --format='%H %P %s' d15f47c5fb15f4c929dae603afbc622baaeea428; git merge-base --is-ancestor 4e8e999ef2204ee7089726b205f5895dc73b38b0 d15f47c5fb15f4c929dae603afbc622baaeea428",
+        "source": "limitation"
+      },
+      {
+        "detail": "The exact base-to-target diff passes whitespace/error validation.",
+        "reference": "git diff --check 4e8e999ef2204ee7089726b205f5895dc73b38b0 d15f47c5fb15f4c929dae603afbc622baaeea428",
+        "source": "check"
+      },
+      {
+        "detail": "README documents the run and offline verification commands, corrected alternate-port handling, end-to-end flow, heuristic-score caveat, and RISK-001/002/004 without changing product behavior.",
+        "reference": "README.md:41",
+        "source": "file"
+      },
+      {
+        "detail": "Unit-test execution discovered all 80 tests, but exited 1 because the sandbox prohibited loopback socket binding for 19 server integration tests; 61 tests completed without errors.",
+        "reference": "python3 -m unittest discover -s tests (exit 1; 19 PermissionError errors)",
+        "source": "check"
+      },
+      {
+        "detail": "Compilation exited 1 because the read-only checkout prohibited creation of __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py') (exit 1)",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation exited 1 because no writable temporary directory was available.",
+        "reference": "python3 scripts/validate_repo.py (exit 1)",
+        "source": "check"
+      },
+      {
+        "detail": "The handoff reports successful author-side compile, 80-test, governance, clean-clone, and server-health checks, but contains summarized claims rather than independently inspectable raw output bound to the launcher target.",
+        "reference": "project/handoffs/ISSUE-0006-handoff.md:47",
+        "source": "file"
+      },
+      {
+        "detail": "CURRENT.md names e95edf2b4cb5b3e420846e10cd340eeaa9158bec as the exact commit awaiting review while directing the launcher to review the current HEAD, which is d15f47c5fb15f4c929dae603afbc622baaeea428; the e95edf2 object is unavailable in this checkout.",
+        "reference": "project/status/CURRENT.md:29",
+        "source": "file"
+      },
+      {
+        "detail": "CURRENT.md claims the e95edf2 review has a response, but the repository contains only its Codex JSON report and no corresponding Claude response record.",
+        "reference": "project/status/CURRENT.md:31",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Expected: ISSUE-0006 acceptance criteria require independently verifiable compile, unittest, governance, clean-checkout, and application-run evidence against the reviewed candidate.",
+          "Observed: unittest exited 1 after 80 tests because 19 tests could not bind loopback sockets; py_compile exited 1 because bytecode output was prohibited; governance validation exited 1 because no writable temporary directory existed; the application walkthrough could not be executed.",
+          "The handoff records successful author-side runs, but those summaries are not independently inspectable raw command evidence. The sandbox failures do not establish a product defect."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 47,
+            "path": "project/handoffs/ISSUE-0006-handoff.md"
+          }
+        ],
+        "remediation": "Provide durable raw command or CI evidence bound to the exact reviewed candidate, or apply DECISION-004 through the documented human-controlled gate outside this review. No product-source repair is implied by the sandbox failures.",
+        "severity": "medium",
+        "title": "Required execution evidence cannot be independently verified",
+        "verification": "In an environment permitting loopback sockets, bytecode output, and temporary files, run the exact compile, unittest, governance, fresh-clone, and documented application checks against the chosen candidate SHA; preserve commit identity, commands, exit statuses, and relevant raw output."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the durable current-state index must identify one exact candidate and one unambiguous next review action.",
+          "Observed: CURRENT.md line 29 says e95edf2b4cb5b3e420846e10cd340eeaa9158bec is awaiting review of that exact SHA, while line 36 instructs review of current HEAD, which the launcher bound as d15f47c5fb15f4c929dae603afbc622baaeea428.",
+          "The e95edf2 object is unavailable in this isolated checkout, preventing comparison of the claimed metadata-only delta, and the target commit has no parent from which that delta can be established.",
+          "CURRENT.md line 31 also says the e95edf2 report has a response, but no corresponding response file exists."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 29,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 31,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 36,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Reconcile the durable records to distinguish the reviewed product SHA from the metadata-only SHA, name the exact SHA the next launcher invocation must review, and remove or add evidence for the nonexistent response claim. Because the recorded repair budget is already exceeded, obtain any required human authorization before another repair.",
+        "severity": "medium",
+        "title": "Current-state record identifies conflicting review candidates and missing evidence",
+        "verification": "From a fresh isolated checkout, confirm CURRENT.md consistently names the product candidate, metadata commit, exact next review target, and available response artifacts; ensure every referenced commit and response is present and inspectable."
+      }
+    ],
+    "limitations": [
+      "The target is a parentless isolated snapshot and the supplied base is not its ancestor; both trees and their explicit diff were available, but commit ancestry could not validate base identity.",
+      "The referenced product commit e95edf2b4cb5b3e420846e10cd340eeaa9158bec is absent, so the claim that d15f47c5fb15f4c929dae603afbc622baaeea428 is metadata-only relative to it could not be verified.",
+      "The read-only, socket-restricted environment prevented successful execution of all required checks. These environmental failures do not demonstrate a product regression.",
+      "Live Microsoft authentication and Graph fetching were not attempted because they are protected, tenant-specific actions.",
+      "No browser-based walkthrough or clean-clone run was possible in this environment."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "d15f47c5fb15f4c929dae603afbc622baaeea428",
+    "schema_version": "1.0",
+    "summary": "BLOCKED. The README changes appear substantively accurate and no product source changed, but required execution evidence cannot be independently verified. The durable status record also conflicts over whether e95edf2 or the launcher-bound d15f47c target is awaiting review, references an unavailable commit, and claims a response artifact that is absent.",
+    "target_id": "ISSUE-0006"
+  },
+  "test_only": false
+}

@@ -1,0 +1,152 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T16:09:46Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f94e2-b8f2-7a52-bf0c-df58bdf81a97"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "4e8e999ef2204ee7089726b205f5895dc73b38b0",
+    "evidence": [
+      {
+        "detail": "HEAD exactly matches the launcher-supplied target SHA; the working tree is detached and clean.",
+        "reference": "git status --short --branch; git rev-parse HEAD",
+        "source": "command"
+      },
+      {
+        "detail": "The exact base-to-target diff changes README.md and issue governance records; no product code changed.",
+        "reference": "git diff --stat 4e8e999ef2204ee7089726b205f5895dc73b38b0 30a75c425bf1930f558ee1b90926a1f7f3ac11b0",
+        "source": "diff"
+      },
+      {
+        "detail": "Independent tests ran 80 tests but failed with 19 errors because the review sandbox forbids loopback socket binding.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Independent compile verification failed because the read-only checkout forbids creation of __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Independent governance validation could not complete because no writable temporary directory was available.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The handoff reports successful out-of-band clean-checkout checks: compile exit 0, 80 tests passed, governance passed, server health OK, and sample data HTTP 200. These are committed author claims without preserved raw command output and cannot replace independently executable evidence under the review rules.",
+        "reference": "project/handoffs/ISSUE-0006-handoff.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the mandatory compile, tests, governance, and clean-checkout evidence must be independently verifiable against the exact candidate.",
+          "Observed: tests failed with 19 PermissionError errors caused by prohibited socket binding; compile failed when __pycache__ could not be written; governance validation failed because no writable temporary directory exists.",
+          "The committed handoff summarizes successful author-side execution but does not preserve raw output sufficient for independent verification."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 20,
+            "path": "project/handoffs/ISSUE-0006-handoff.md"
+          }
+        ],
+        "remediation": "Rerun this fresh review in an environment that permits the required local socket, bytecode, and temporary-file operations, or supply durable commit-bound raw check evidence acceptable under the repository's evidence policy.",
+        "severity": "medium",
+        "title": "Required execution evidence cannot be independently verified",
+        "verification": "Against SHA 30a75c425bf1930f558ee1b90926a1f7f3ac11b0, successfully run the exact compile, unittest, and governance commands plus the documented clean-checkout walkthrough, recording commands, outputs, and exit statuses."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the documented alternate-port walkthrough should direct the user to the selected port.",
+          "Observed: step 1 offers CAREVIEW_PORT=8888, but step 2 unconditionally directs the user to 127.0.0.1:8765.",
+          "server.py reads CAREVIEW_PORT and binds that selected port."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 78,
+            "path": "README.md"
+          }
+        ],
+        "remediation": "Make step 2 explicitly use port 8888 when the alternate command is selected, or describe the URL as matching the selected CAREVIEW_PORT.",
+        "severity": "low",
+        "title": "Alternate-port walkthrough points to the wrong URL",
+        "verification": "Start with CAREVIEW_PORT=8888 and follow the revised walkthrough verbatim; verify the documented URL returns the UI and reports health OK."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the clean-checkout walkthrough should accurately describe filesystem effects.",
+          "Observed: README states that no step writes anything to disk, while running Python normally creates __pycache__ bytecode files for imported local modules; the required py_compile verification also explicitly writes bytecode.",
+          "The independent compile attempt confirms the write by failing on __pycache__ in the read-only checkout."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 88,
+            "path": "README.md"
+          }
+        ],
+        "remediation": "Narrow the statement to application state, tokens, and tenant data not being intentionally persisted; do not claim that the Python process or verification commands perform no disk writes.",
+        "severity": "low",
+        "title": "Walkthrough incorrectly claims that no step writes to disk",
+        "verification": "Review the revised wording against a fresh clone after running the server and verification commands; confirm it accurately distinguishes transient Python artifacts from application/token persistence."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: CURRENT.md should identify the current ISSUE_REVIEW gate and its actual next actor/action.",
+          "Observed: the state block and table say ISSUE_REVIEW for ISSUE-0006, but the next required actor remains Claude and the next permitted action says to start and implement ISSUE-0006, actions already completed by this candidate.",
+          "This contradicts the same file's active-issue status REVIEWING and linked ISSUE-0006 handoff."
+        ],
+        "id": "F-004",
+        "locations": [
+          {
+            "line": 29,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 30,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Update the next actor and permitted action to the fresh Codex review of the exact ISSUE-0006 candidate, followed by the policy-governed response to its outcome.",
+        "severity": "medium",
+        "title": "Current-state record gives a stale next actor and action",
+        "verification": "Read project/status/CURRENT.md alone and confirm its stage, active issue, next actor, and next permitted action consistently describe the ISSUE-0006 review gate."
+      }
+    ],
+    "limitations": [
+      "The checkout is shallow/grafted, so the target commit's parent ancestry and merge-base relationship to the supplied base cannot be established locally, although both objects exist and the exact two-object diff is readable.",
+      "The sandbox prohibits local socket binding, bytecode writes, and temporary-directory creation, preventing independent execution of all required checks.",
+      "Live Microsoft tenant sign-in and Graph fetch were not attempted because they are protected actions and are explicitly outside the M1 evidence requirement."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "30a75c425bf1930f558ee1b90926a1f7f3ac11b0",
+    "schema_version": "1.0",
+    "summary": "BLOCKED: target identity and diff were inspected, but mandatory checks cannot be independently executed in this read-only sandbox. The documentation also contains an incorrect alternate-port URL and an overbroad no-disk-write claim, while CURRENT.md is stale about the next actor/action.",
+    "target_id": "ISSUE-0006"
+  },
+  "test_only": false
+}

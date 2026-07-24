@@ -1,10 +1,12 @@
-# Claude handoff: ISSUE-0002, repair round 1
+# Claude handoff: ISSUE-0002, repair round 3 (final)
 
-**Repair history:** round 0 candidate `536f11cb7a9f` → Codex `CHANGES_REQUIRED`
-(F-001 concurrency race on token state, F-002 uncaught network/malformed errors);
-repair round 1 adds an `AuthManager` lock with a current-session identity check
-and full transport-error normalization. See
-`project/reviews/issues/ISSUE-0002-536f11cb7a9f-claude-response.md`.
+**Repair history (reviewed product SHA of this handoff: `3c8fb869b01fa91278cc4468408ad3b8a321b9bd`):**
+- Round 0 `536f11cb7a9f` → `CHANGES_REQUIRED` (F-001 token concurrency race, F-002 uncaught network/malformed errors).
+- Repair 1 `4b30e05f6219` → `BLOCKED` (added `AuthManager` lock + current-session identity check + transport-error normalization; Codex then flagged in-flight `start()` clobber).
+- Repair 2 `752cd75a8770` → `BLOCKED` (generation guard on `start()`; Codex then flagged non-immediate supersession + README).
+- Repair 3 `3c8fb869b01f` (this candidate, authorized by DECISION-006): a new `start()` immediately clears the old session/token; README "Run it" wording fixed. **34 tests pass.** Codex round-3 review: no further product-code defect; BLOCKED only on the execution-evidence limitation (DECISION-004).
+
+See the per-round Codex reports and responses under `project/reviews/issues/`.
 
 
 **Claude issue task:** `CAreview ISSUE-0002 (device-code auth)`
@@ -70,7 +72,7 @@ protected action).
 | Check | Exact command | Actual result/exit | Evidence limitation |
 |---|---|---|---|
 | Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 | none |
-| Tests | `python3 -m unittest discover -s tests` | 32 passed, exit 0 | none |
+| Tests | `python3 -m unittest discover -s tests` | 34 passed, exit 0 | none |
 | Manual origin | `curl -X POST … /api/auth/logout` with/without Origin | no-origin 403; same-origin `{"state":"signed_out"}` | none |
 | Governance | `python3 scripts/validate_repo.py` | passes (out-of-band; sandbox cannot per DECISION-004) | none |
 

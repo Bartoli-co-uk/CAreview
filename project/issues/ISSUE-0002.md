@@ -1,6 +1,6 @@
 # ISSUE-0002: Device-code authentication
 
-**Status:** `REPAIRING`
+**Status:** `COMPLETE`
 **Milestone:** `M1`
 **Approved roadmap:** `ROADMAP.md` version `3` at `125d74f6d4bfe85f1a727293064d0887f2d121c7`
 **Dependencies:** `ISSUE-0001` (COMPLETE)
@@ -101,7 +101,7 @@ expired, denied, success, expiry, logout, concurrency).
 | 0 | `ISSUE-0002-handoff.md` | `536f11cb7a9f…` | py_compile 0; 27 tests pass; validator pass; manual origin OK | `ISSUE-0002-536f11cb7a9f-codex.json` | CHANGES_REQUIRED (F-001 concurrency, F-002 error handling) |
 | 1 (repair) | `ISSUE-0002-handoff.md` | `4b30e05f6219…` | py_compile 0; 32 tests pass; validator pass | `ISSUE-0002-4b30e05f6219-codex.json` | BLOCKED (F-001 in-flight start; execution evidence) |
 | 2 (repair) | `ISSUE-0002-handoff.md` | `752cd75a8770…` | py_compile 0; 33 tests pass; validator pass | `ISSUE-0002-752cd75a8770-codex.json` | BLOCKED (F-001 immediate supersession; F-002 README advisory) |
-| 3 (repair, authorized) | `ISSUE-0002-handoff.md` | repair-3 candidate (launcher binds SHA) | py_compile 0; 34 tests pass; validator pass | pending final review | pending |
+| 3 (repair, authorized) | `ISSUE-0002-handoff.md` | `3c8fb869b01f…` | py_compile 0; 34 tests pass; validator pass | `ISSUE-0002-3c8fb869b01f-codex.json` | BLOCKED — no product-code defect; execution-evidence only (merged per DECISION-004/006) |
 
 Two repair rounds are the default; `DECISION-006` authorized one extra round for
 ISSUE-0002 to resolve F-001/F-002. Per `DECISION-004`, a `BLOCKED` outcome whose
@@ -109,8 +109,8 @@ only basis is the execution-evidence limitation is acceptable and the human merg
 
 ## Completion
 
-- Final reviewed product SHA: `[SHA]`
-- Human advance/merge decision: `[path]`
-- Merge/result SHA: `[SHA or N/A]`
-- Residual risks or follow-up: `[list]`
-- Status record updated: `[commit/path]`
+- Final reviewed product SHA: `3c8fb869b01fa91278cc4468408ad3b8a321b9bd`
+- Human advance/merge decision: `DECISION-005` (autonomous cadence) + `DECISION-006` (extra round then merge)
+- Merge/result SHA: merged into `main` (see merge commit)
+- Residual risks or follow-up: none outstanding; live tenant sign-in remains a protected action (not exercised); RISK-002 unauthenticated loopback API accepted
+- Status record updated: this commit + `project/status/CURRENT.md`

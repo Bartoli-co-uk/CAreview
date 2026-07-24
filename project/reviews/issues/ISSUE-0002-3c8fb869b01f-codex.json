@@ -1,0 +1,122 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T14:30:51Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f9487-e9a0-7343-af05-f2fcce9cc199"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "eb0490c7b7126dda7a573ef6a6bfbbf3de2398fe",
+    "evidence": [
+      {
+        "detail": "Detached HEAD exactly matched the launcher target, the base commit resolved exactly, and `git status --short --branch` showed no working-tree changes.",
+        "reference": "git status --short --branch; git rev-parse HEAD; git rev-parse eb0490c7b7126dda7a573ef6a6bfbbf3de2398fe",
+        "source": "command"
+      },
+      {
+        "detail": "The exact base-to-target diff contains 17 changed files: the device-code implementation, UI/API integration, tests, documentation, and governance records.",
+        "reference": "git diff --name-status eb0490c7b7126dda7a573ef6a6bfbbf3de2398fe 3c8fb869b01fa91278cc4468408ad3b8a321b9bd",
+        "source": "diff"
+      },
+      {
+        "detail": "The isolated authentication suite completed successfully: 20 tests ran and passed.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_auth",
+        "source": "check"
+      },
+      {
+        "detail": "The complete test command ran 34 tests, but nine server integration tests errored because the read-only review sandbox denied binding a loopback socket.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "The required compile command could not create `__pycache__` in the read-only checkout and exited nonzero.",
+        "reference": "python3 -B -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not create its temporary directory in this read-only environment and exited nonzero.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The implementation immediately clears the existing session and token before requesting a replacement device code, and generation checks prevent stale in-flight starts from reinstalling state.",
+        "reference": "auth.py:162",
+        "source": "file"
+      },
+      {
+        "detail": "The handoff records author-reported successful checks, but labels itself repair round 1 and reports 32 tests while the reviewed candidate is repair round 3 and currently discovers 34 tests.",
+        "reference": "project/handoffs/ISSUE-0002-handoff.md:1",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Expected: independently executed full tests, compile, and governance validation must succeed against the exact target commit before a review can pass.",
+          "Observed: the authentication-only suite passed 20 tests, but the complete suite ended with nine socket-bind errors; compile failed because bytecode output was denied; governance validation failed because no writable temporary directory was available.",
+          "The author-reported successful results in project/handoffs/ISSUE-0002-handoff.md are claims rather than independently reproducible evidence in this review environment.",
+          "AGENTS.md requires BLOCKED whenever non-security evidence cannot be verified, and the launcher binding explicitly forbids PASS when execution fails."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 68,
+            "path": "project/handoffs/ISSUE-0002-handoff.md"
+          }
+        ],
+        "remediation": "Rerun a fresh read-only Codex review in an environment that permits the required checks to bind loopback sockets and create disposable bytecode/temporary files, while preserving the exact reviewed SHA. Do not change product code solely to accommodate this review sandbox.",
+        "severity": "medium",
+        "title": "Required candidate checks cannot be independently verified",
+        "verification": "At the unchanged target SHA, run `python3 -m unittest discover -s tests`, `python3 -m py_compile $(git ls-files '*.py')`, and `python3 scripts/validate_repo.py`; record exit status 0 and relevant output for each."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the latest implementation handoff should accurately describe the current candidate and its verification evidence.",
+          "Observed: its heading says repair round 1, its history stops at the first repair, and it reports 32 tests, while project/status/CURRENT.md identifies repair round 3 and the current suite discovers 34 tests.",
+          "The stale handoff is linked as the latest implementation handoff by project/status/CURRENT.md."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 1,
+            "path": "project/handoffs/ISSUE-0002-handoff.md"
+          },
+          {
+            "line": 30,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Update the ISSUE-0002 handoff to describe repair round 3, include the complete repair history, and record check results for the exact final candidate. Ensure CURRENT.md continues to link the corrected handoff.",
+        "severity": "low",
+        "title": "Latest handoff is stale for the repair-round-3 candidate",
+        "verification": "Confirm the handoff's repair round, candidate identity, changed files, test count, and check evidence all match the final reviewed commit and current suite."
+      }
+    ],
+    "limitations": [
+      "The sandbox prohibited loopback socket binding, so nine server integration tests and the running application could not be exercised.",
+      "The read-only filesystem prevented `py_compile` from writing bytecode and prevented governance validation from creating temporary files.",
+      "No real Microsoft tenant sign-in was attempted; it is an explicitly protected action and an accepted residual evidence gap for this issue.",
+      "Static inspection found no additional substantive implementation defect, but successful end-to-end execution remains unverified."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "3c8fb869b01fa91278cc4468408ad3b8a321b9bd",
+    "schema_version": "1.0",
+    "summary": "BLOCKED. Target identity and static implementation review are sound, and all 20 isolated authentication tests pass. The mandatory full test, compile, and governance checks cannot succeed in this read-only sandbox, and the committed handoff is stale for repair round 3. No further product-code defect was identified.",
+    "target_id": "ISSUE-0002"
+  },
+  "test_only": false
+}

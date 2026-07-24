@@ -1,12 +1,12 @@
 # ISSUE-0001: Local HTTP server + static UI shell + health endpoint
 
-**Status:** `PLANNED`
+**Status:** `REPAIRING`
 **Milestone:** `M1`
 **Approved roadmap:** `ROADMAP.md` version `3` at `125d74f6d4bfe85f1a727293064d0887f2d121c7`
 **Dependencies:** `None`
 **Branch:** `ai/ISSUE-0001-server-shell`
-**Starting SHA:** `[set at implementation start]`
-**Candidate SHA:** `Not created`
+**Starting SHA:** `840b8ffe3f1a2c9d2b5c36d9f0046a4cde1f5eab`
+**Candidate SHA:** `this commit (branch HEAD); the launcher records the full SHA`
 
 ## Objective
 
@@ -77,10 +77,14 @@ later issues can add auth, Graph, and analysis behind a stable shell.
 
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
-| 0 | `[path]` | `[SHA]` | `[path/summary]` | `[path]` | `[outcome]` |
+| 0 | `ISSUE-0001-handoff.md` | `5a239c3225b6…` | py_compile 0; 9 tests pass; validator pass; manual curl OK | `ISSUE-0001-5a239c3225b6-codex.json` | BLOCKED (F-001 README, F-002 status, F-003 bind; execution gaps) |
+| 1 (repair) | `ISSUE-0001-handoff.md` | `f1a9db0be692…` | py_compile 0; 10 tests pass; validator pass; manual curl OK | `ISSUE-0001-f1a9db0be692-codex.json` | BLOCKED (no code defect; F-001 execution + record hygiene F-002/F-003, F-004 whitespace) |
+| 2 (repair) | `ISSUE-0001-handoff.md` | repair-round-2 candidate (launcher binds SHA) | py_compile 0; 10 tests pass; validator pass; manual curl OK | pending final review | pending |
 
-Maximum two repair rounds; every Codex review is a fresh ephemeral read-only
-process against the named SHA.
+Maximum two repair rounds (both used); every Codex review is a fresh ephemeral
+read-only process against the named SHA. Per `DECISION-004`, a `BLOCKED` outcome
+whose only basis is the execution-evidence limitation (no substantive finding) is
+acceptable, and the human makes the merge decision.
 
 ## Completion
 

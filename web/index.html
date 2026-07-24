@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <title>CAreview — Conditional Access policy analyzer</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <h1>CAreview</h1>
+    <p class="tagline">Local Conditional Access policy analyzer</p>
+  </header>
+
+  <main>
+    <section id="signin" class="card">
+      <h2>Sign in</h2>
+      <p>Device-code sign-in is added in a later step. This is the server shell.</p>
+      <button id="signin-btn" type="button" disabled>Sign in (coming soon)</button>
+    </section>
+
+    <section id="status" class="card">
+      <h2>Server status</h2>
+      <p>Health check: <span id="health" class="badge">checking…</span></p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Runs locally. Your policies and tokens stay on this machine.</p>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>

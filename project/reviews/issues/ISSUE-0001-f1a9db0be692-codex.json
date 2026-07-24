@@ -1,0 +1,188 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T12:45:49Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f9427-ea8e-7363-939b-8a3ca2320f8b"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "840b8ffe3f1a2c9d2b5c36d9f0046a4cde1f5eab",
+    "evidence": [
+      {
+        "detail": "The clean detached checkout HEAD exactly matches the supplied target SHA; the supplied base and target commits both resolve, and the working tree is clean.",
+        "reference": "git status --short --branch; git rev-parse HEAD; git rev-parse 840b8ffe3f1a2c9d2b5c36d9f0046a4cde1f5eab; git rev-parse f1a9db0be692d3adf04b474a1f24d6358c70ea1f",
+        "source": "command"
+      },
+      {
+        "detail": "Reviewed the exact base-to-target diff, including the server, UI shell, tests, README, issue record, status record, handoff, and prior review record.",
+        "reference": "git diff 840b8ffe3f1a2c9d2b5c36d9f0046a4cde1f5eab..f1a9db0be692d3adf04b474a1f24d6358c70ea1f",
+        "source": "diff"
+      },
+      {
+        "detail": "The unit-test command ran 10 tests: five helper tests passed and all five integration tests errored because the sandbox prohibited binding a loopback socket. Exit status 1.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "The required compile command could not complete because Python attempted to create scripts/__pycache__ in the read-only checkout. Exit status 1.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "The governance validator could not complete because no writable temporary directory was available. Exit status 1.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The required manual server-and-curl check could not be performed because socket binding is prohibited in the review sandbox.",
+        "reference": "python3 server.py; curl -s localhost:8765/api/health",
+        "source": "limitation"
+      },
+      {
+        "detail": "Static inspection found a loopback-only server factory, exact Host allowlisting, an Origin helper, explicit static routes, WEB_ROOT containment, and no authentication, Graph access, token handling, third-party dependencies, or outbound network calls.",
+        "reference": "server.py",
+        "source": "file"
+      },
+      {
+        "detail": "The diff hygiene check found trailing whitespace in the implementation plan.",
+        "reference": "git diff --check 840b8ffe3f1a2c9d2b5c36d9f0046a4cde1f5eab..f1a9db0be692d3adf04b474a1f24d6358c70ea1f",
+        "source": "check"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the issue's required compile, test, and manual-run checks execute successfully against the exact reviewed SHA, with independently verifiable results.",
+          "Observed: tests exited 1 after five socket-binding errors; compile exited 1 because bytecode output was prohibited; the manual run was unavailable; governance validation also exited 1 because no writable temporary directory exists.",
+          "AGENTS.md requires BLOCKED when non-security evidence is missing or cannot be verified and explicitly forbids PASS when execution failed."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 51,
+            "path": "project/issues/ISSUE-0001.md"
+          },
+          {
+            "line": 51,
+            "path": "project/handoffs/ISSUE-0001-handoff.md"
+          }
+        ],
+        "remediation": "Provide a review environment that preserves the read-only candidate while allowing isolated writable bytecode/temp output and loopback sockets, or obtain an exact human decision changing the evidence gate. Then rerun every required check against this exact commit. Author-reported out-of-band results alone are not independent review evidence.",
+        "severity": "high",
+        "title": "Required execution evidence is unavailable",
+        "verification": "Run the exact compile and unittest commands successfully, start server.py and verify /api/health with curl, and record commands, outputs, exit statuses, and reviewed SHA."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the claudex-state block and human-readable status table remain synchronized so a fresh task can reconstruct the current gate.",
+          "Observed: lines 1-4 declare ISSUE_REPAIR, while line 20 declares ISSUE_REVIEW. The issue itself says REPAIRING, line 27 says REVIEWING, and line 35 says the repaired candidate still needs committing even though the launcher is already reviewing commit f1a9db0be692d3adf04b474a1f24d6358c70ea1f.",
+          "CURRENT.md explicitly instructs that its state block be synchronized with the table."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 2,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 20,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 27,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 35,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Update CURRENT.md and the issue status to one accurate stage for the committed candidate, name the exact candidate SHA, and state the actual next permitted action. Any documentation change invalidates this review and requires a fresh review.",
+        "severity": "medium",
+        "title": "Durable workflow status remains internally contradictory",
+        "verification": "Confirm the claudex-state block, status table, issue status, candidate SHA, actor, and next action all describe the same gate; rerun governance validation and launch a fresh review of the resulting commit."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the durable handoff and issue round table identify this repaired candidate and its evidence exactly, as required by the repository's review-binding rules.",
+          "Observed: the handoff is still titled round 0 and uses a placeholder instead of f1a9db0be692d3adf04b474a1f24d6358c70ea1f; the issue round table remains entirely placeholder text; CURRENT.md calls this repair round 1.",
+          "The handoff reports 9 tests, while the reviewed test suite contains 10 tests. This makes the claimed evidence stale or at least insufficiently bound to the reviewed candidate."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 1,
+            "path": "project/handoffs/ISSUE-0001-handoff.md"
+          },
+          {
+            "line": 6,
+            "path": "project/handoffs/ISSUE-0001-handoff.md"
+          },
+          {
+            "line": 54,
+            "path": "project/handoffs/ISSUE-0001-handoff.md"
+          },
+          {
+            "line": 78,
+            "path": "project/issues/ISSUE-0001.md"
+          }
+        ],
+        "remediation": "Record the correct repair round, exact candidate SHA, exact check evidence, prior review, and disposition in the handoff and issue round table. Ensure the test count and results correspond to that SHA.",
+        "severity": "medium",
+        "title": "Repair handoff is stale and not bound to the reviewed candidate",
+        "verification": "Inspect the updated records for an exact SHA and consistent round/evidence identity, then rerun checks and a fresh Codex review against the new commit."
+      },
+      {
+        "blocking": false,
+        "classification": "ADVISORY",
+        "confidence": "high",
+        "evidence": [
+          "git diff --check identifies trailing whitespace at line 40.",
+          "Expected: the candidate diff is free of whitespace errors; observed: one trailing space remains after “tested.”"
+        ],
+        "id": "F-004",
+        "locations": [
+          {
+            "line": 40,
+            "path": "project/handoffs/ISSUE-0001-plan.md"
+          }
+        ],
+        "remediation": "Remove the trailing whitespace as part of the next documentation repair.",
+        "severity": "low",
+        "title": "Implementation plan contains trailing whitespace",
+        "verification": "Run git diff --check against the issue base and confirm it produces no output and exits 0."
+      }
+    ],
+    "limitations": [
+      "The sandbox prohibits loopback socket binding, so the HTTP integration tests and manual server check could not be independently verified.",
+      "The read-only checkout prevents the specified py_compile command from writing __pycache__.",
+      "No writable temporary directory is available, preventing the governance validator from completing.",
+      "The handoff's out-of-band check claims are author claims rather than independently reproduced evidence and are not precisely bound to the reviewed SHA.",
+      "Static inspection did not reveal a product-code correctness or security defect, but runtime behavior cannot be accepted without the missing execution evidence.",
+      "Live authentication and Microsoft Graph behavior are outside ISSUE-0001 scope and were not tested."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "f1a9db0be692d3adf04b474a1f24d6358c70ea1f",
+    "schema_version": "1.0",
+    "summary": "The exact candidate and base identities are confirmed, and static inspection found a coherent, scoped loopback server shell. The review is BLOCKED because the required compile, integration, manual-run, and governance evidence cannot execute in this read-only/socket-restricted environment. The repaired candidate also retains contradictory workflow state and stale placeholder-bound handoff records, plus a minor whitespace defect. Any correction creates a new candidate and requires fresh checks and review.",
+    "target_id": "ISSUE-0001"
+  },
+  "test_only": false
+}

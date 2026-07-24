@@ -117,6 +117,26 @@ class AnalyzerTests(unittest.TestCase):
             self.assertTrue(rule.remediation)
             self.assertTrue(rule.requires)
 
+    def test_requires_policy_fields_are_never_missing(self) -> None:
+        """Documents the evaluability model (rules.py, Codex F-001/F-002):
+        every policy-JSON field path any rule declares in `requires` is
+        guaranteed present (possibly empty) by `graph.normalize_policy`, even for
+        a maximally malformed input. Only `rules.EXTERNAL_INPUTS` entries (never
+        produced by normalize_policy) can be genuinely absent, which is exactly
+        what `analyzer.analyze` gates on.
+        """
+        empty_policy = graph.normalize_policy({})
+        for rule in rules.RULES:
+            for field_path in rule.requires:
+                if field_path in rules.EXTERNAL_INPUTS:
+                    continue
+                top = field_path.split(".", 1)[0]
+                self.assertIn(
+                    top, empty_policy,
+                    f"{rule.id} declares policy field {field_path!r}, "
+                    "but normalize_policy does not guarantee it",
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

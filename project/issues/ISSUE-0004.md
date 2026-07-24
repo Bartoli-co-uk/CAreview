@@ -82,7 +82,8 @@ findings, fully unit-tested against committed sanitized fixtures.
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
 | 0 | `ISSUE-0004-handoff.md` | `f211f62ab4d9…` | py_compile 0; 62 tests pass; validator pass | `ISSUE-0004-f211f62ab4d9-codex.json` | BLOCKED (F-001 evaluability, F-002 overly-broad rule, F-003 API input, F-004 break-glass, F-005 docs) |
-| 1 (repair) | `ISSUE-0004-handoff.md` | repair-1 candidate (launcher binds SHA) | py_compile 0; 67 tests pass; validator pass | pending re-review | pending |
+| 1 (repair) | `ISSUE-0004-handoff.md` | `5065a80db86a…` | py_compile 0; 67 tests pass; validator pass | `ISSUE-0004-5065a80db86a-codex.json` | BLOCKED (F-001 execution, F-002 evaluability, F-003 status) |
+| 2 (repair, DECISION-007) | `ISSUE-0004-handoff.md` | repair-2 candidate (launcher binds SHA) | py_compile 0; 68 tests pass; validator pass | pending final review | pending |
 
 Maximum two repair rounds; every Codex review is a fresh ephemeral read-only
 process against the named SHA.

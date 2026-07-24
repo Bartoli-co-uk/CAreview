@@ -1,4 +1,13 @@
-# Claude handoff: ISSUE-0004, repair round 1
+# Claude handoff: ISSUE-0004, repair round 2
+
+**Repair round 2** (this candidate) addresses Codex round-1 findings on
+`5065a80db86ae64b253b1e7e05ae6c76e5207e12`: F-001 execution evidence (accepted,
+DECISION-004); F-002 strengthened documentation + a new guarantee test proving
+every rule's policy-field `requires` entries are always present after
+normalization (the CA evaluability model, already approved by the human, is
+unchanged); F-003 synced the stale `CURRENT.md` table. 68 tests pass. See
+`project/reviews/issues/ISSUE-0004-5065a80db86a-claude-response.md`.
+
 
 **Repair round 1** addresses Codex round-0 findings on candidate `f211f62ab4d9`:
 F-001 (enforce external-input `requires`; document the CA evaluability model),
@@ -54,7 +63,7 @@ heuristic (`scoreIsHeuristic: true`), not a compliance certification.
 | Check | Exact command | Actual result/exit | Evidence limitation |
 |---|---|---|---|
 | Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 | none |
-| Tests | `python3 -m unittest discover -s tests` | 67 passed, exit 0 | none |
+| Tests | `python3 -m unittest discover -s tests` | 68 passed, exit 0 | none |
 | Governance | `python3 scripts/validate_repo.py` | passes (out-of-band; sandbox cannot per DECISION-004) | none |
 
 ## Security and residual risk

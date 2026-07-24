@@ -25,10 +25,10 @@ records described below.
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | `M1` (in progress) |
 | Active issue | `ISSUE-0004` (analyzer) — status `REPAIRING`, branch `ai/ISSUE-0004-analyzer`, Starting SHA `e94ef5a` |
-| Issue repair round | None |
-| Candidate product commit | Branch HEAD of `ai/ISSUE-0003-graph-client` (the launcher binds the exact SHA at review time) |
+| Issue repair round | Repair round 2 (Codex F-001 execution evidence, F-002 evaluability enforcement, F-003 this stale status) |
+| Candidate product commit | Branch HEAD of `ai/ISSUE-0004-analyzer` (the launcher binds the exact SHA at review time) |
 | Latest implementation handoff | `project/handoffs/ISSUE-0004-handoff.md` |
-| Latest Codex review | ISSUE-0003 final `ISSUE-0003-065675e53ee8-codex.json` — no product-code defect (DECISION-004/007) |
+| Latest Codex review | ISSUE-0004 repair-1 `ISSUE-0004-5065a80db86a-codex.json` (BLOCKED; F-001 execution, F-002 evaluability model, F-003 this status) |
 | Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e` |
 | Last human decision | `DECISION-007` (raised repair budget); also `DECISION-006`..`001` |
 | Open blockers | None. Standing: Codex issue reviews stay `BLOCKED` on execution evidence (DECISION-004); author runs checks out-of-band |

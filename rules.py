@@ -242,11 +242,28 @@ RULES: list[Rule] = [
     ),
 ]
 
-# Evaluability model (Codex F-001): a rule is NOT evaluable only when it declares
-# an EXTERNAL input in `requires` that the caller did not supply (currently just
-# `break_glass_ids`), or when a policy-existence rule has no policies to judge.
-# For Conditional Access, the ABSENCE of a protective policy is a genuine FAIL
-# (the tenant should have one), not "missing evidence" — the normalized contract
-# always populates policy fields, so field presence is never itself the signal.
-# External-input requirements are enforced by the analyzer before a rule runs.
+# --- Evaluability model (Codex F-001/F-002; approach confirmed by the human) ---
+#
+# `Rule.requires` lists two DIFFERENT kinds of dependency, and only one of them
+# can ever be "missing" at runtime:
+#
+# 1. Policy-JSON field paths (e.g. "conditions.includeRoles", "grantControls").
+#    `graph.normalize_policy` GUARANTEES every one of these keys exists on every
+#    normalized policy (defaulted to "", [], or {} — see graph.py and
+#    test_graph.py::test_normalize_handles_missing_fields /
+#    test_normalize_handles_malformed_nested_objects). So a policy-field entry in
+#    `requires` can never be "absent" post-normalization; it documents which
+#    fields the rule reads, for humans, not a runtime gate. Generically enforcing
+#    "is this field present" would therefore be a no-op by construction — the
+#    field is always present, possibly empty. An EMPTY field (e.g. no policy sets
+#    `includeRoles`) is not missing evidence: for Conditional Access, the tenant
+#    genuinely lacks that control, which is exactly the FAIL the rule reports.
+# 2. EXTERNAL inputs the caller must supply out-of-band (currently only
+#    `break_glass_ids`, via POST /api/breakglass): these CAN be genuinely absent,
+#    so the analyzer enforces them (`EXTERNAL_INPUTS` below) before running the
+#    rule's check, marking it `NOT_EVALUABLE` rather than scoring a guess.
+#
+# This is why `analyzer.analyze` only gates on `EXTERNAL_INPUTS`, not on every
+# `requires` entry: gating on policy-field entries would be unreachable dead code
+# (see test_requires_policy_fields_are_never_missing below).
 EXTERNAL_INPUTS = frozenset({"break_glass_ids"})

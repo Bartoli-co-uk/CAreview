@@ -1,0 +1,186 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T15:21:50Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f94b6-bba1-7520-8e74-1ee7844f3470"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "e94ef5abad6e95ec899a7bca04e30e9dc3dbea81",
+    "evidence": [
+      {
+        "detail": "HEAD exactly matched the launcher-supplied target SHA; the working tree was clean.",
+        "reference": "git rev-parse HEAD; git status --porcelain=v1",
+        "source": "command"
+      },
+      {
+        "detail": "The reviewed snapshot was compared directly with the supplied base commit.",
+        "reference": "git diff e94ef5abad6e95ec899a7bca04e30e9dc3dbea81..5065a80db86ae64b253b1e7e05ae6c76e5207e12",
+        "source": "diff"
+      },
+      {
+        "detail": "The required test command ran 67 tests but ended with 17 errors because the read-only environment prohibited loopback socket binding.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "The required compile command could not create __pycache__, so no successful candidate-bound compile result was obtained.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not create a temporary directory in the read-only environment.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The committed handoff states that compile exited 0, 67 tests passed, and governance validation passed, but it contains only author-recorded claims rather than independently verifiable raw command output.",
+        "reference": "project/handoffs/ISSUE-0004-handoff.md:52",
+        "source": "file"
+      },
+      {
+        "detail": "The issue requires every rule with absent required evidence to be not evaluable and requires the incomplete fixture to prove that behavior.",
+        "reference": "project/issues/ISSUE-0004.md:23",
+        "source": "file"
+      },
+      {
+        "detail": "The implementation checks only requirements listed in EXTERNAL_INPUTS; declared policy-field requirements are not checked.",
+        "reference": "analyzer.py:34",
+        "source": "file"
+      },
+      {
+        "detail": "Normalization replaces missing or malformed policy fields with empty defaults, erasing the distinction between absent evidence and a valid empty value.",
+        "reference": "graph.py:139",
+        "source": "file"
+      },
+      {
+        "detail": "The incomplete fixture is an empty policy list, and its test checks only two rules; it does not exercise a policy missing a declared required field.",
+        "reference": "tests/test_analyzer.py:74",
+        "source": "file"
+      },
+      {
+        "detail": "The committed current-state index still identifies an ISSUE-0003 branch as the candidate, says repair round None, names ISSUE-0003 as the latest review, and says the next action is to start ISSUE-0004.",
+        "reference": "project/status/CURRENT.md:28",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Expected: both required checks produce successful, candidate-bound execution evidence before review can pass.",
+          "Observed: the test suite ended with 17 PermissionError failures, and compilation could not write __pycache__. The handoff's successful results are author assertions without attached raw output.",
+          "Repository review rules explicitly require BLOCKED when execution evidence is missing or cannot be verified."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 46,
+            "path": "project/issues/ISSUE-0004.md"
+          },
+          {
+            "line": 52,
+            "path": "project/handoffs/ISSUE-0004-handoff.md"
+          }
+        ],
+        "remediation": "Run the exact compile and test commands against 5065a80db86ae64b253b1e7e05ae6c76e5207e12 in an environment that permits bytecode/temp-file creation and loopback sockets, then preserve concrete command, exit-status, and relevant-output evidence for a fresh review.",
+        "severity": "high",
+        "title": "Required candidate-bound checks could not be verified",
+        "verification": "Confirm both required commands exit 0 against the exact reviewed candidate and that the recorded evidence names its full SHA."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: each rule's declared required data-contract fields govern evaluability; absent evidence must yield not_evaluable and be excluded from scoring.",
+          "Observed: analyzer.py checks only requirements that appear in rules.EXTERNAL_INPUTS. Policy-field requirements such as conditions.signInRiskLevels and sessionControls are never inspected.",
+          "graph.normalize_policy coerces missing or malformed fields to empty values, so the analyzer cannot determine whether source evidence was absent.",
+          "The empty incomplete fixture does not prove per-rule missing-field behavior; most rules are scored as failures on that fixture."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 34,
+            "path": "analyzer.py"
+          },
+          {
+            "line": 245,
+            "path": "rules.py"
+          },
+          {
+            "line": 139,
+            "path": "graph.py"
+          },
+          {
+            "line": 74,
+            "path": "tests/test_analyzer.py"
+          }
+        ],
+        "remediation": "Preserve field-presence/evidence metadata through normalization or otherwise supply an evaluability contract that distinguishes absent/malformed evidence from valid empty values. Enforce every Rule.requires entry generically before invoking its check. Replace or extend the incomplete fixture with policies missing representative declared fields and assert those specific rules are not evaluable and excluded from the denominator.",
+        "severity": "high",
+        "title": "Declared policy-field requirements do not control evaluability",
+        "verification": "Add tests showing that removal or malformation of each required evidence category marks only dependent rules not_evaluable, produces no corresponding finding, and excludes their weights from the score."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: CURRENT.md is the authoritative current-state index and accurately names the gate, candidate, repair round, blockers, and next permitted action.",
+          "Observed: it names ISSUE-0003's branch as the candidate, says the repair round is None, identifies ISSUE-0003 as the latest review, reports no blockers, and instructs Claude to start ISSUE-0004 even though the reviewed commit is ISSUE-0004 repair round 1.",
+          "AGENTS.md requires stale or contradictory current-state records to be repaired before proceeding."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 28,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 29,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 31,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 34,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 35,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Update the committed state index to identify ISSUE-0004 repair round 1, the exact candidate SHA, current review/evidence state, actual blockers, responsible next actor, and next permitted action. Keep the machine-readable state and table synchronized.",
+        "severity": "medium",
+        "title": "Authoritative workflow status is stale and contradictory",
+        "verification": "A fresh reader should be able to derive the exact active issue, candidate, repair round, blockers, and next action solely from project/status/CURRENT.md and its linked records."
+      }
+    ],
+    "limitations": [
+      "The sandbox is read-only and prohibits loopback socket binding, bytecode-cache creation, and temporary-directory creation; therefore the prescribed checks could not complete successfully here.",
+      "No independently generated successful check log bound to the exact target SHA was present in the reviewed tree.",
+      "The target snapshot has no recorded parent commit in this isolated checkout, so ancestry to the supplied base could not be established; review scope used the explicit two-commit diff supplied by the launcher.",
+      "No live Microsoft tenant access was attempted; this issue is designed for offline fixture verification."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "5065a80db86ae64b253b1e7e05ae6c76e5207e12",
+    "schema_version": "1.0",
+    "summary": "BLOCKED: required candidate-bound execution evidence could not be reproduced, the implementation still does not enforce declared policy-field evaluability, and the authoritative current-state record is stale. Static inspection otherwise confirmed heuristic labeling, severity sorting, sanitized fixtures, break-glass API wiring, and the overly-broad block predicate.",
+    "target_id": "ISSUE-0004"
+  },
+  "test_only": false
+}

@@ -1,17 +1,31 @@
-# Claude handoff: ISSUE-0001, round 0
+# Claude handoff: ISSUE-0001, repair round 2
 
 **Claude issue task:** `CAreview ISSUE-0001 (server shell)`
 **Approved issue:** `project/issues/ISSUE-0001.md` at `840b8ffe3f1a2c9d2b5c36d9f0046a4cde1f5eab`
-**Starting SHA:** `840b8ffe3f1a2c9d2b5c36d9f0046a4cde1f5eab`
-**Candidate SHA:** `recorded in the review-request commit (branch ai/ISSUE-0001-server-shell HEAD)`
-**Created at:** `2026-07-24T12:32:57Z`
+**Starting SHA (base):** `840b8ffe3f1a2c9d2b5c36d9f0046a4cde1f5eab`
+**Reviewed candidates:** round 1 `5a239c3225b6a7a190fccf6eb2ffa9b4efdc9bf6`; round 2 `f1a9db0be692d3adf04b474a1f24d6358c70ea1f`
+**This repaired candidate:** branch `ai/ISSUE-0001-server-shell` HEAD (the launcher records the exact SHA at review time)
+**Created at:** `2026-07-24T12:46:57Z`
 
 ## Outcome
 
 Implemented the standard-library server shell: a loopback-bound HTTP server that
 serves the static UI and `/api/health`, enforces a Host-header loopback allowlist
-(DNS-rebinding defence), and provides a tested Origin helper for later
-state-changing endpoints. No auth, Graph, or analysis logic added.
+(DNS-rebinding defence), enforces loopback-only bind addresses, and provides a
+tested Origin helper for later state-changing endpoints. No auth, Graph, or
+analysis logic added.
+
+## Review and repair history
+
+- Round 1 review (`5a239c3`): BLOCKED — F-001 README stale, F-002 CURRENT.md
+  contradiction, F-003 build_server non-loopback bind (advisory) + execution gaps.
+- Repair 1 → candidate `f1a9db0`: fixed README, synced status, added loopback-bind
+  guard + test (10 tests).
+- Round 2 review (`f1a9db0`): BLOCKED — no code defect found; F-001 execution
+  evidence (accepted via DECISION-004), F-002 residual CURRENT.md table/stage
+  mismatch, F-003 stale handoff, F-004 whitespace.
+- Repair 2 (this candidate): synced CURRENT.md fully, rewrote this handoff, removed
+  whitespace, updated the issue round table.
 
 ## Changed files
 
@@ -44,16 +58,16 @@ state-changing endpoints. No auth, Graph, or analysis logic added.
 | Loopback-only bind | `HOST="127.0.0.1"`; `build_server` | met |
 | Host allowlist rejects non-loopback | `host_allowed`; `test_bad_host_rejected`, `test_missing_host_rejected` | met |
 | Origin helper provided + tested | `origin_allowed`; `test_origin_allowed` | met |
-| Tests cover health + accepted/rejected Hosts | `tests/test_server.py` (9 tests) | met |
+| Tests cover health + accepted/rejected Hosts | `tests/test_server.py` (10 tests) | met |
 
 ## Verification requested and observed
 
 | Check | Exact command | Actual result/exit | Evidence limitation |
 |---|---|---|---|
 | Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 | none |
-| Tests | `python3 -m unittest discover -s tests` | 9 passed, exit 0 | none |
+| Tests | `python3 -m unittest discover -s tests` | 10 passed, exit 0 | none |
 | Manual run | `CAREVIEW_PORT=8799 python3 server.py` + curl | health `{"status":"ok"}`; root 200; bad Host 403 | none |
-| Governance | `python3 scripts/validate_repo.py` | passes (run out-of-band; Codex sandbox cannot, per F-004) | none |
+| Governance | `python3 scripts/validate_repo.py` | passes (run out-of-band; Codex sandbox cannot execute checks, per DECISION-004) | none |
 
 The reviewer or CI must independently confirm required checks; this handoff is not
 test authority.
@@ -73,7 +87,10 @@ test authority.
 ## Review request
 
 - Base SHA: `840b8ffe3f1a2c9d2b5c36d9f0046a4cde1f5eab`
-- Head SHA: `recorded at the review-request commit`
+- Head SHA: this repaired candidate's commit (branch HEAD; the launcher binds the
+  exact SHA — it cannot be embedded in the commit that contains this handoff).
 - Review command: `./scripts/run-codex-review.sh issue ISSUE-0001 <BASE-SHA> <HEAD-SHA>`
-- Areas needing special attention: Host/Origin allowlist correctness; static-path
-  containment; that nothing sensitive is logged.
+- Gate policy: per `DECISION-004`, the review is static; the author's out-of-band
+  checks above are the execution evidence and the human makes the merge decision.
+- Areas needing special attention: Host/Origin allowlist correctness; loopback-only
+  bind guard; static-path containment; that nothing sensitive is logged.

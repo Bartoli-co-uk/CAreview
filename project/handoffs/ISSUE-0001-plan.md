@@ -37,7 +37,7 @@
 
 ## Risks and rollback
 
-- Risk: over-strict Host check breaks local use → include all loopback forms with port; tested. 
+- Risk: over-strict Host check breaks local use → include all loopback forms with port; tested.
 - Rollback: revert the branch; no shared state.
 
 ## Stop conditions

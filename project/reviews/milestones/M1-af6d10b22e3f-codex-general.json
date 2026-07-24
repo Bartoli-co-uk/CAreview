@@ -1,0 +1,112 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T22:27:39Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f963c-90a8-7051-9db1-4a16f67b82f2"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "The isolated checkout is clean, detached, and its HEAD exactly matches the launcher target.",
+        "reference": "git status --short --branch; git rev-parse HEAD => af6d10b22e3f90367a572ca50d743953a15b4daf",
+        "source": "command"
+      },
+      {
+        "detail": "The milestone record identifies 6311a11a48a0a7e51e83a14ca4081d431cb46698 as the frozen product commit while explaining that the launcher targets a later metadata-only HEAD whose product files are claimed to be byte-identical.",
+        "reference": "project/milestones/M1.md:5",
+        "source": "file"
+      },
+      {
+        "detail": "The checkout is grafted and lacks the 6311a11a commit object, so the claimed tree identity between the frozen product commit and af6d10b cannot be independently compared.",
+        "reference": "git diff 6311a11a48a0a7e51e83a14ca4081d431cb46698..af6d10b22e3f90367a572ca50d743953a15b4daf => fatal: Invalid revision range",
+        "source": "command"
+      },
+      {
+        "detail": "The repository records approved brief v1 and roadmap v3, all six M1 issues complete, and the one permitted general-remediation cycle used for the validator correction.",
+        "reference": "project/status/CURRENT.md; project/brief/PROJECT_BRIEF.md; ROADMAP.md; project/decisions/DECISION-011-milestone-validator-fix.md",
+        "source": "file"
+      },
+      {
+        "detail": "The target tree contains the complete stdlib application, analyzer rules, sanitized fixtures, UI, operational documentation, and 83 discovered tests covering authentication, Graph paging/normalization, analysis, HTTP endpoints, and UI sink safety.",
+        "reference": "auth.py; graph.py; analyzer.py; rules.py; server.py; web/; tests/; README.md",
+        "source": "file"
+      },
+      {
+        "detail": "The independent test command discovered 83 tests, but 22 HTTP integration tests errored because the read-only review sandbox denied loopback socket binding; the remaining 61 tests completed without reported failures.",
+        "reference": "python3 -m unittest discover -s tests => exit 1, FAILED (errors=22), PermissionError during socket.bind",
+        "source": "check"
+      },
+      {
+        "detail": "Compilation could not run to completion because py_compile attempted to create __pycache__ in the read-only checkout.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py') => exit 1, Operation not permitted: __pycache__",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not run to completion because the read-only environment supplied no writable temporary directory.",
+        "reference": "python3 scripts/validate_repo.py => exit 1, FileNotFoundError: No usable temporary directory",
+        "source": "check"
+      },
+      {
+        "detail": "Committed milestone evidence reports 83 tests passed, compilation clean, and governance validation passed after the remediation, but the current reviewer could not reproduce those complete results.",
+        "reference": "project/milestones/M1.md:27",
+        "source": "file"
+      },
+      {
+        "detail": "Live tenant authentication/fetch and live browser rendering were not performed; the roadmap treats live tenant access as protected and non-gating, while the browser gap remains a documented residual limitation.",
+        "reference": "project/milestones/M1.md:30",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Review policy requires BLOCKED when required checks fail to execute or candidate identity cannot be independently verified.",
+          "The target checkout omits the declared frozen product commit, preventing verification that af6d10b has byte-identical product content.",
+          "Tests, compilation, and governance validation all exited nonzero because of review-environment restrictions; therefore the committed passing evidence could not be independently confirmed."
+        ],
+        "id": "GEN-001",
+        "locations": [
+          {
+            "line": 5,
+            "path": "project/milestones/M1.md"
+          },
+          {
+            "line": 27,
+            "path": "project/milestones/M1.md"
+          }
+        ],
+        "remediation": "Provide a fresh read-only review checkout that includes both 6311a11a and af6d10b commit objects, permits a tree comparison, provides a writable temporary/cache location, and permits loopback socket binding. Rerun the exact test, compile, and governance commands against af6d10b without changing the candidate.",
+        "severity": "high",
+        "title": "Candidate identity and required checks cannot be independently verified",
+        "verification": "Confirm git diff --exit-code 6311a11a..af6d10b for product paths exits 0, then confirm the full 83-test suite, py_compile, and scripts/validate_repo.py each exit 0 in the fresh read-only review environment."
+      }
+    ],
+    "limitations": [
+      "The launcher supplied no base commit.",
+      "The curated checkout is grafted and contains only the target commit, preventing ancestry and frozen-product tree verification.",
+      "Filesystem restrictions prevented bytecode-cache and temporary-directory creation.",
+      "Network restrictions prevented loopback socket binding, so 22 HTTP integration tests and a manual server smoke test could not execute.",
+      "No browser was available for accessibility or live rendering inspection.",
+      "No protected live Entra sign-in or Graph fetch was attempted; this is explicitly non-gating for M1."
+    ],
+    "mode": "milestone-general",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "af6d10b22e3f90367a572ca50d743953a15b4daf",
+    "schema_version": "1.0",
+    "summary": "The target tree appears to implement and document the approved M1 scope with broad unit and integration coverage, but this review is blocked. The isolated checkout cannot prove equivalence to the separately named frozen product commit, and all three required independent checks exited nonzero due to sandbox restrictions. Repository-recorded passing evidence cannot substitute for independently executable, commit-bound verification under the binding review rules.",
+    "target_id": "M1"
+  },
+  "test_only": false
+}

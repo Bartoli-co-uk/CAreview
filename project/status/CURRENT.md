@@ -1,5 +1,5 @@
 <!-- claudex-state
-stage: ISSUE_REVIEW
+stage: ISSUE_REPAIR
 active_issue: ISSUE-0006
 active_milestone: none
 -->
@@ -17,14 +17,14 @@ records described below.
 
 | Field | Current value |
 |---|---|
-| Stage | `ISSUE_REVIEW` |
+| Stage | `ISSUE_REPAIR` |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v1; APPROVED (DECISION-001) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (binds `179a023`) |
 | Roadmap | `ROADMAP.md` v3; APPROVED (DECISION-003, binds `125d74f`) |
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | `M1` (in progress) |
-| Active issue | `ISSUE-0006` (docs + E2E) — status `REVIEWING`, branch `ai/ISSUE-0006-docs-verification`, Starting SHA `4e8e999` |
+| Active issue | `ISSUE-0006` (docs + E2E) — status `REPAIRING`, branch `ai/ISSUE-0006-docs-verification`, Starting SHA `4e8e999` |
 | Issue repair round | None |
 | Candidate product commit | `main` at the ISSUE-0005 merge; reviewed product SHA `3dc059f` |
 | Latest implementation handoff | `project/handoffs/ISSUE-0006-handoff.md` |
@@ -32,8 +32,8 @@ records described below.
 | Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e`; `ISSUE-0004` `9f3885b`; `ISSUE-0005` `3dc059f` |
 | Last human decision | `DECISION-009` (ISSUE-0004 final round); also `DECISION-008` (evaluability model), `DECISION-007`..`001` |
 | Open blockers | None. Standing: Codex issue reviews stay `BLOCKED` on execution evidence (DECISION-004); author runs checks out-of-band |
-| Next required actor | Claude (implement ISSUE-0006 autonomously per DECISION-005) |
-| Next permitted action | Start `ISSUE-0006` (docs finalization + E2E verification) on branch `ai/ISSUE-0006-docs-verification` from `main`; verify README from a clean-checkout perspective, run full checks, Codex review, merge under DECISION-004/005/007 — then present M1 for the milestone gate |
+| Next required actor | Claude (repair ISSUE-0006 candidate F-002/F-003/F-004, then run a fresh Codex review) |
+| Next permitted action | Commit the repaired ISSUE-0006 candidate, run `./scripts/run-codex-review.sh issue ISSUE-0006 4e8e999… <HEAD>`; if BLOCKED only on execution evidence with no substantive finding, merge under DECISION-004/005/007 — then present M1 for the milestone gate |
 | Actions not yet permitted | Merge without a clean review, publication, deployment, live tenant auth/fetch, or any protected action |
 
 When this repository is adopted for a project, replace the values above and add

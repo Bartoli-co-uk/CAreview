@@ -1,4 +1,10 @@
-# Claude handoff: ISSUE-0006, round 0
+# Claude handoff: ISSUE-0006, repair round 1
+
+**Repair round 1** addresses Codex round-0 findings on candidate `30a75c425bf1`:
+F-002 (alternate-port walkthrough URL), F-003 (narrow the no-disk-write claim),
+F-004 (stale `CURRENT.md` next-action). No product code changed. See
+`project/reviews/issues/ISSUE-0006-30a75c425bf1-claude-response.md`.
+
 
 **Claude issue task:** `CAreview ISSUE-0006 (docs + E2E verification)`
 **Approved issue:** `project/issues/ISSUE-0006.md` at `4e8e999ef2204ee7089726b205f5895dc73b38b0`

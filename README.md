@@ -75,7 +75,8 @@ Break-glass IDs can be supplied locally (in memory only) via `POST /api/breakgla
 ## End-to-end walkthrough
 
 1. `python3 server.py` (or `CAREVIEW_PORT=8888 python3 server.py` for a different port).
-2. Open `http://127.0.0.1:8765/` — the health badge should read "ok".
+2. Open `http://127.0.0.1:8765/` (or the port you chose in step 1) — the health
+   badge should read "ok".
 3. Click **Sign in**, optionally edit the tenant (`organizations` by default),
    and follow the on-screen device code at `microsoft.com/devicelogin`.
 4. Once signed in, the page automatically fetches your Conditional Access
@@ -85,7 +86,10 @@ Break-glass IDs can be supplied locally (in memory only) via `POST /api/breakgla
    at any time — it loads the committed `web/sample-data.json` (sanitized, no
    real tenant data) through the same rendering path.
 
-No step writes anything to disk; closing the process discards all state.
+No step intentionally persists application state, tokens, or tenant data;
+closing the process discards it all. (This does not claim the Python
+interpreter, OS, or verification commands perform zero disk I/O generally —
+only that CAreview itself writes none of your tenant data or credentials.)
 
 ## How this project is built — governance
 

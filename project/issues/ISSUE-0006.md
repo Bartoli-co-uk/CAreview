@@ -1,6 +1,6 @@
 # ISSUE-0006: Documentation finalization and end-to-end verification
 
-**Status:** `REVIEWING`
+**Status:** `REPAIRING`
 **Milestone:** `M1`
 **Approved roadmap:** `ROADMAP.md` version `3` at `125d74f6d4bfe85f1a727293064d0887f2d121c7`
 **Dependencies:** `ISSUE-0001`, `ISSUE-0002`, `ISSUE-0003`, `ISSUE-0004`, `ISSUE-0005`
@@ -68,7 +68,8 @@ be frozen for its four reviews.
 
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
-| 0 | `[path]` | `[SHA]` | `[path/summary]` | `[path]` | `[outcome]` |
+| 0 | `ISSUE-0006-handoff.md` | `30a75c425bf1…` | py_compile 0; 80 tests pass; validator pass | `ISSUE-0006-30a75c425bf1-codex.json` | BLOCKED (F-002 port URL, F-003 disk-write claim, F-004 status) |
+| 1 (repair) | `ISSUE-0006-handoff.md` | repair-1 candidate (launcher binds SHA) | py_compile 0; 80 tests pass; validator pass | pending final review | pending |
 
 Maximum two repair rounds; every Codex review is a fresh ephemeral read-only
 process against the named SHA.

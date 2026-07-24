@@ -6,11 +6,14 @@ security best practice, and flags configuration weaknesses. It is inspired by
 [`Jhope188/ca-policy-analyzer`](https://github.com/Jhope188/ca-policy-analyzer)
 but runs entirely on your own machine.
 
-> **Status: MVP complete.** `python3 server.py` serves the full flow: device-code
-> sign-in, fetching and normalizing your Conditional Access policies, the 0–100
-> heuristic analysis, and the rendered UI (score, findings, per-policy cards) —
-> all on the loopback interface, with no Node.js and no third-party Python
-> packages. Click **"View a sample analysis"** to see it without signing in.
+> **Status: MVP feature-complete; milestone review pending.** `python3
+> server.py` serves the full flow: device-code sign-in, fetching and
+> normalizing your Conditional Access policies, the 0–100 heuristic analysis,
+> and the rendered UI (score, findings, per-policy cards) — all on the loopback
+> interface, with no Node.js and no third-party Python packages. Click **"View
+> a sample analysis"** to see it without signing in. The final documentation
+> issue and the M1 milestone's four-review gate (see
+> [`docs/workflow.md`](docs/workflow.md)) are still pending human acceptance.
 
 ## Design goals
 

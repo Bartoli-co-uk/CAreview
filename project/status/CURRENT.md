@@ -25,15 +25,15 @@ records described below.
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | `M1` (in progress) |
 | Active issue | `ISSUE-0006` (docs + E2E) — status `REPAIRING`, branch `ai/ISSUE-0006-docs-verification`, Starting SHA `4e8e999` |
-| Issue repair round | Repair round 1 (Codex F-002 port URL, F-003 disk-write claim, F-004 status) |
+| Issue repair round | Repair round 2 (final; Codex F-002 status staleness, F-003 README overclaim) |
 | Candidate product commit | Branch HEAD of `ai/ISSUE-0006-docs-verification` (the launcher binds the exact SHA at review time) |
 | Latest implementation handoff | `project/handoffs/ISSUE-0006-handoff.md` |
-| Latest Codex review | ISSUE-0006 round 0 `ISSUE-0006-30a75c425bf1-codex.json` (BLOCKED: F-002..F-004) + response; repair-1 candidate pending re-review |
+| Latest Codex review | ISSUE-0006 repair-1 `ISSUE-0006-cc98f4e616af-codex.json` (BLOCKED; F-002 status, F-003 README) + response; repair-2 candidate pending final review |
 | Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e`; `ISSUE-0004` `9f3885b`; `ISSUE-0005` `3dc059f` |
 | Last human decision | `DECISION-009` (ISSUE-0004 final round); also `DECISION-008` (evaluability model), `DECISION-007`..`001` |
 | Open blockers | None. Standing: Codex issue reviews stay `BLOCKED` on execution evidence (DECISION-004); author runs checks out-of-band |
-| Next required actor | Claude (repair ISSUE-0006 candidate F-002/F-003/F-004, then run a fresh Codex review) |
-| Next permitted action | Commit the repaired ISSUE-0006 candidate, run `./scripts/run-codex-review.sh issue ISSUE-0006 4e8e999… <HEAD>`; if BLOCKED only on execution evidence with no substantive finding, merge under DECISION-004/005/007 — then present M1 for the milestone gate |
+| Next required actor | Claude (final repair for ISSUE-0006 F-002/F-003, then run a fresh Codex review) |
+| Next permitted action | Commit the repair-2 candidate, run `./scripts/run-codex-review.sh issue ISSUE-0006 4e8e999… <HEAD>`; if BLOCKED only on execution evidence with no substantive finding, merge under DECISION-004/005/007 — then present M1 for the four-review milestone gate |
 | Actions not yet permitted | Merge without a clean review, publication, deployment, live tenant auth/fetch, or any protected action |
 
 When this repository is adopted for a project, replace the values above and add

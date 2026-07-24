@@ -69,7 +69,8 @@ be frozen for its four reviews.
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
 | 0 | `ISSUE-0006-handoff.md` | `30a75c425bf1…` | py_compile 0; 80 tests pass; validator pass | `ISSUE-0006-30a75c425bf1-codex.json` | BLOCKED (F-002 port URL, F-003 disk-write claim, F-004 status) |
-| 1 (repair) | `ISSUE-0006-handoff.md` | repair-1 candidate (launcher binds SHA) | py_compile 0; 80 tests pass; validator pass | pending final review | pending |
+| 1 (repair) | `ISSUE-0006-handoff.md` | `cc98f4e616af…` | py_compile 0; 80 tests pass; validator pass | `ISSUE-0006-cc98f4e616af-codex.json` | BLOCKED (F-002 status staleness, F-003 README overclaim) |
+| 2 (repair, DECISION-007) | `ISSUE-0006-handoff.md` | repair-2 candidate (launcher binds SHA) | py_compile 0; 80 tests pass; validator pass | pending final review | pending |
 
 Maximum two repair rounds; every Codex review is a fresh ephemeral read-only
 process against the named SHA.

@@ -1,0 +1,147 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T16:13:38Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f94e5-c920-7e42-8d94-263047951f87"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "4e8e999ef2204ee7089726b205f5895dc73b38b0",
+    "evidence": [
+      {
+        "detail": "Detached checkout HEAD exactly matches the launcher-bound target SHA; the working tree was clean.",
+        "reference": "git rev-parse HEAD; git status --short --branch",
+        "source": "command"
+      },
+      {
+        "detail": "The supplied base exists and the exact base-to-target diff contains six documentation/workflow files and no product source changes.",
+        "reference": "git diff --stat 4e8e999ef2204ee7089726b205f5895dc73b38b0..cc98f4e616af13b182fc96966c8445daa5bcdc75",
+        "source": "diff"
+      },
+      {
+        "detail": "The supplied base is not an ancestor of the target. Review scope therefore used the launcher's explicit two-tree diff rather than a linear commit range.",
+        "reference": "git merge-base --is-ancestor 4e8e999ef2204ee7089726b205f5895dc73b38b0 cc98f4e616af13b182fc96966c8445daa5bcdc75",
+        "source": "limitation"
+      },
+      {
+        "detail": "The repaired walkthrough correctly directs alternate-port users to the port selected in the preceding step, and the persistence statement is limited to CAreview tenant data and credentials.",
+        "reference": "README.md:77",
+        "source": "file"
+      },
+      {
+        "detail": "Independent unittest execution ran 80 tests but exited 1 because all 19 socket-based server tests were denied loopback binding by the review sandbox; the remaining 61 tests passed.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Independent compilation exited 1 because the read-only checkout denied creation of __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Independent governance validation exited 1 because no writable temporary directory was available.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The committed handoff reports successful out-of-band compile, 80-test, governance, and clean-checkout runs, but these are author-recorded claims rather than independently reproducible command output in this review.",
+        "reference": "project/handoffs/ISSUE-0006-handoff.md:39",
+        "source": "file"
+      },
+      {
+        "detail": "The exact diff passed git diff --check.",
+        "reference": "git diff --check 4e8e999ef2204ee7089726b205f5895dc73b38b0..cc98f4e616af13b182fc96966c8445daa5bcdc75",
+        "source": "check"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Expected: acceptance criteria 1 and 2 require independently verifiable clean-checkout, compile, and unittest evidence against cc98f4e616af13b182fc96966c8445daa5bcdc75.",
+          "Observed: unittest exited 1 after 80 tests with 19 PermissionError failures caused by prohibited socket binding; py_compile exited 1 because __pycache__ could not be written; governance validation exited 1 because no writable temporary directory exists.",
+          "The handoff records successful author runs, but the review prompt and AGENTS.md require author claims to be treated as claims unless supported by independently available command evidence."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 39,
+            "path": "project/handoffs/ISSUE-0006-handoff.md"
+          }
+        ],
+        "remediation": "Preserve the author’s exact-SHA check record and provide independently inspectable raw command or CI evidence bound to cc98f4e616af13b182fc96966c8445daa5bcdc75, or apply the already recorded DECISION-004 human gate policy outside this review. No source repair is implied by the sandbox failures.",
+        "severity": "medium",
+        "title": "Required execution evidence cannot be independently verified",
+        "verification": "Run the four ISSUE-0006 checks in an environment permitting loopback sockets, bytecode output, and temporary directories; record exact SHA, commands, exit codes, and relevant raw output."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: CURRENT.md must name the current gate and next permitted action from repository state alone.",
+          "Observed: lines 29-31 say the repair-1 candidate exists and is pending re-review, while lines 35-36 still instruct Claude to repair and commit that candidate before invoking review.",
+          "This repeats the stale-state defect that the repair claims to resolve and can send a fresh task backward into already completed work."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 35,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 36,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Update the next actor/action to the fresh Codex re-review of the already committed repair-1 candidate. Bind the candidate to its exact SHA where the workflow permits, and describe the subsequent DECISION-004/005 handling conditionally on the new report.",
+        "severity": "medium",
+        "title": "Current-state index still points to the completed repair step",
+        "verification": "Read CURRENT.md from a fresh context and confirm its candidate, latest-review, next-actor, and next-action fields consistently identify re-review of cc98f4e616af13b182fc96966c8445daa5bcdc75 as the immediate step."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: user-facing status should distinguish implemented functionality from workflow and milestone completion.",
+          "Observed: README declares “MVP complete,” while project/status/CURRENT.md records ISSUE-0006 as REPAIRING, its review pending, and M1 still in progress; ROADMAP.md requires all six issues and four milestone reviews before M1 completion.",
+          "The wording therefore claims completion before the repository's own definition of done has been met."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 9,
+            "path": "README.md"
+          }
+        ],
+        "remediation": "Describe the feature set as implemented while explicitly stating that ISSUE-0006 and the M1 review/acceptance gates remain pending, or defer the “MVP complete” label until those gates are recorded.",
+        "severity": "medium",
+        "title": "README prematurely declares the MVP complete",
+        "verification": "Confirm README status agrees with CURRENT.md, ISSUE-0006 state, and the M1 definition of done without implying human or milestone acceptance."
+      }
+    ],
+    "limitations": [
+      "The read-only, socket-restricted review environment prevented successful execution of all required checks; these failures do not independently demonstrate a product defect.",
+      "Live Microsoft authentication and Graph fetching were not attempted because they are protected actions requiring separate tenant-specific human approval.",
+      "The supplied base and target are not in an ancestor relationship, so review identity is based on the exact explicit base-to-target tree diff.",
+      "No browser-based interactive walkthrough was possible because the sandbox prohibits binding the local HTTP server."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "cc98f4e616af13b182fc96966c8445daa5bcdc75",
+    "schema_version": "1.0",
+    "summary": "BLOCKED. The alternate-port and persistence-wording repairs are correct, and the diff contains no product-code changes, but required checks cannot be independently verified in this sandbox. Two substantive documentation/governance inconsistencies remain: CURRENT.md still directs a fresh task to redo the completed repair, and README declares the MVP complete before ISSUE-0006 and the M1 gates are complete.",
+    "target_id": "ISSUE-0006"
+  },
+  "test_only": false
+}

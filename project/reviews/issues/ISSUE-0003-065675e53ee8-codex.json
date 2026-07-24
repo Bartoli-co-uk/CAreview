@@ -1,0 +1,127 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T14:57:08Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f949f-eb64-78a2-8f72-a6f85de99b28"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "98a20bc479b55b1cdab5e8958ed3630bff0e044a",
+    "evidence": [
+      {
+        "detail": "Detached HEAD exactly matches the launcher target; the base resolves exactly; the worktree was clean before and after review.",
+        "reference": "git rev-parse HEAD; git rev-parse 98a20bc479b55b1cdab5e8958ed3630bff0e044a; git status --short",
+        "source": "command"
+      },
+      {
+        "detail": "The exact base-to-target diff adds the Graph client, policies endpoint, tests, and issue governance records across 14 files.",
+        "reference": "git diff --stat 98a20bc479b55b1cdab5e8958ed3630bff0e044a..065675e53ee8de5a7b9fb48542aa4ba970712a59",
+        "source": "diff"
+      },
+      {
+        "detail": "Static inspection found paging bounds and cycle detection, exact-host HTTPS validation, redirect refusal, defensive nested-object normalization, structured Graph errors, and no policy/token persistence or logging in the candidate changes.",
+        "reference": "graph.py; server.py",
+        "source": "file"
+      },
+      {
+        "detail": "The independently runnable non-socket test subset passed: 34 tests, exit 0. The exact command was PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_graph tests.test_auth.",
+        "reference": "tests/test_graph.py; tests/test_auth.py",
+        "source": "check"
+      },
+      {
+        "detail": "The full required suite ran 52 tests but exited 1 because all 13 server integration tests were denied loopback socket binding by the review sandbox; 39 tests completed before those environment errors.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "The required compile check exited 1 because the read-only checkout denied creation of __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation exited 1 because the sandbox provided no writable temporary directory.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The candidate records author-reported out-of-band evidence of 52 passing tests, successful compilation, and successful governance validation, but those claims are not independent reviewer execution evidence.",
+        "reference": "project/handoffs/ISSUE-0003-handoff.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "AGENTS.md states that issue work permits at most two repair rounds, that tighter limits remain binding, and that reaching a limit blocks for an exact human decision.",
+          "The candidate identifies itself as repair round 3 in project/issues/ISSUE-0003.md, project/status/CURRENT.md, and project/handoffs/ISSUE-0003-handoff.md.",
+          "DECISION-007 attempts to establish approximately four repair rounds as a standing policy. This conflicts with the higher-authority AGENTS.md rule that lower-level records may not weaken a safety gate.",
+          "DECISION-004 and DECISION-005 independently retain the two-repair-round limit."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 1,
+            "path": "project/decisions/DECISION-007-repair-budget.md"
+          },
+          {
+            "line": 100,
+            "path": "project/issues/ISSUE-0003.md"
+          },
+          {
+            "line": 25,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Stop the issue workflow and obtain a current, explicit human decision that resolves the conflict with the binding two-round limit for this exact candidate, or restore a workflow state consistent with AGENTS.md. Do not treat DECISION-007's standing four-round policy as overriding AGENTS.md.",
+        "severity": "high",
+        "title": "Repair round 3 conflicts with the binding issue repair limit",
+        "verification": "Verify that the authoritative instructions and committed status consistently authorize review and disposition of exact candidate 065675e53ee8de5a7b9fb48542aa4ba970712a59 without weakening the repository's repair-limit gate."
+      },
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "The required full test command exited 1: 13 server integration tests could not bind a loopback socket under the review sandbox.",
+          "The required py_compile command exited 1 because the checkout is read-only.",
+          "The governance validator exited 1 because no writable temporary directory was available.",
+          "Repository review rules require BLOCKED when execution evidence cannot be independently verified. DECISION-004 permits the human to disposition this recurring limitation downstream but does not turn author claims into reviewer evidence."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 76,
+            "path": "project/handoffs/ISSUE-0003-handoff.md"
+          }
+        ],
+        "remediation": "Use the documented DECISION-004 human gate with the exact out-of-band results bound to this target SHA, or provide a review environment where the required checks can run independently.",
+        "severity": "medium",
+        "title": "Required independent execution evidence remains unavailable",
+        "verification": "Against exact commit 065675e53ee8de5a7b9fb48542aa4ba970712a59, run python3 -m py_compile $(git ls-files '*.py'), python3 -m unittest discover -s tests, and python3 scripts/validate_repo.py in an environment supporting bytecode/temp writes and loopback sockets; record commands, exits, and outputs."
+      }
+    ],
+    "limitations": [
+      "The review sandbox is read-only, has no writable temporary directory, and denies loopback socket binding; consequently the full required checks could not pass independently.",
+      "No live Microsoft Graph fetch was attempted because it is explicitly a protected action and not an ISSUE-0003 completion criterion.",
+      "The author-reported 52-test, compile, and governance results were inspected only as claims; they were not independently reproduced in full.",
+      "Static review found no additional unresolved product-code defect in the exact candidate diff, but this does not remove the two blocking evidence/governance findings."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "065675e53ee8de5a7b9fb48542aa4ba970712a59",
+    "schema_version": "1.0",
+    "summary": "BLOCKED. Static review of the exact candidate found the Graph implementation consistent with ISSUE-0003's functional and security scope, and 34 independently runnable Graph/auth tests passed. However, repair round 3 conflicts with the binding two-round workflow limit, and the sandbox prevented independent completion of the full required checks.",
+    "target_id": "ISSUE-0003"
+  },
+  "test_only": false
+}

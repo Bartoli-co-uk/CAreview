@@ -118,6 +118,13 @@ class ServerIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.status, 200)
         self.assertEqual(json.loads(resp.read())["state"], "error")
 
+    def test_policies_unauthenticated_401(self) -> None:
+        # No sign-in has happened, so there is no token.
+        server.AUTH.logout()
+        resp = self._request("/api/policies", f"127.0.0.1:{self.port}")
+        self.assertEqual(resp.status, 401)
+        self.assertEqual(json.loads(resp.read())["error"], "not_authenticated")
+
 
 if __name__ == "__main__":
     unittest.main()

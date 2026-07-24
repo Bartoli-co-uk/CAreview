@@ -1,9 +1,10 @@
 # ISSUE-0003: Microsoft Graph client for Conditional Access policies
 
-**Status:** `PLANNED`
+**Status:** `REVIEWING`
 **Milestone:** `M1`
 **Approved roadmap:** `ROADMAP.md` version `3` at `125d74f6d4bfe85f1a727293064d0887f2d121c7`
-**Dependencies:** `ISSUE-0002`; A3 (named-locations/roles) resolved and the normalized data contract agreed before implementation (Codex F-003)
+**Dependencies:** `ISSUE-0002` (COMPLETE); A3 resolved + data contract recorded in the handoff (single endpoint; identifier matching, no enrichment)
+**Starting SHA:** `98a20bc479b55b1cdab5e8958ed3630bff0e044a`
 **Branch:** `ai/ISSUE-0003-graph-client`
 **Starting SHA:** `[set at implementation start]`
 **Candidate SHA:** `Not created`

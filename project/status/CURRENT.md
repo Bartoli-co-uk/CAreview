@@ -1,5 +1,5 @@
 <!-- claudex-state
-stage: TEMPLATE_READY
+stage: BRIEF_DRAFTING
 active_issue: none
 active_milestone: none
 -->
@@ -17,9 +17,9 @@ records described below.
 
 | Field | Current value |
 |---|---|
-| Stage | `TEMPLATE_READY` |
-| Project description | `project/intake/PROJECT_DESCRIPTION.md`; not supplied |
-| Project brief | Not created |
+| Stage | `BRIEF_DRAFTING` |
+| Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
+| Project brief | Drafting in progress |
 | Brief approval | Not recorded |
 | Roadmap | Template only; not approved |
 | Roadmap approval | Not recorded |
@@ -31,8 +31,8 @@ records described below.
 | Latest Codex review | None |
 | Last human decision | None |
 | Open blockers | None |
-| Next required actor | Human |
-| Next permitted action | In a newly derived repository, complete and commit the README customization checklist first. Then replace the placeholder in `project/intake/PROJECT_DESCRIPTION.md` with the human's project description; a fresh Claude requirements task may draft the brief |
+| Next required actor | Claude (drafting brief), then Human (brief approval) |
+| Next permitted action | Claude drafts `project/brief/PROJECT_BRIEF.md` from the template, commits it, and stops for the human to approve the exact brief commit. No roadmap or implementation work until that approval is recorded |
 | Actions not yet permitted | Roadmap approval, implementation, review of product code, merge, publication, deployment, or any protected action |
 
 When this repository is adopted for a project, replace the values above and add

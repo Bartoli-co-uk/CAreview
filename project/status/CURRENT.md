@@ -1,6 +1,6 @@
 <!-- claudex-state
-stage: IMPLEMENTATION
-active_issue: none
+stage: ISSUE_REVIEW
+active_issue: ISSUE-0001
 active_milestone: none
 -->
 

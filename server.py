@@ -20,9 +20,12 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 import auth
+import graph
 
 # Process-wide in-memory authentication state (device-code session + token).
 AUTH = auth.AuthManager()
+# Read-only Microsoft Graph client for Conditional Access policies.
+GRAPH = graph.GraphClient()
 
 # Reject request bodies larger than this; the JSON we accept is tiny.
 MAX_BODY_BYTES = 64 * 1024
@@ -137,10 +140,32 @@ class CAReviewHandler(BaseHTTPRequestHandler):
         if path == "/api/health":
             self._send_json(HTTPStatus.OK, health_payload())
             return
+        if path == "/api/policies":
+            self._policies()
+            return
         if path in STATIC_FILES:
             self._send_static(path)
             return
         self._reject(HTTPStatus.NOT_FOUND, "not found")
+
+    def _policies(self) -> None:
+        token = AUTH.get_token()
+        if not token:
+            self._send_json(HTTPStatus.UNAUTHORIZED, {"error": "not_authenticated"})
+            return
+        try:
+            policies = GRAPH.fetch_policies(token)
+        except graph.GraphError as exc:
+            status = {
+                "not_authenticated": HTTPStatus.UNAUTHORIZED,
+                "consent_required": HTTPStatus.FORBIDDEN,
+            }.get(exc.code, HTTPStatus.BAD_GATEWAY)
+            self._send_json(status, {"error": exc.code, "message": str(exc)})
+            return
+        except Exception:  # noqa: BLE001 — never leak an internal error/stack to the client
+            self._send_json(HTTPStatus.BAD_GATEWAY, {"error": "graph_error", "message": "unexpected error"})
+            return
+        self._send_json(HTTPStatus.OK, {"policies": policies, "count": len(policies)})
 
     def _read_json_body(self) -> dict | None:
         try:

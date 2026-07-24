@@ -1,0 +1,201 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T15:26:34Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f94ba-cd1d-73b0-96e1-367f0213b663"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "e94ef5abad6e95ec899a7bca04e30e9dc3dbea81",
+    "evidence": [
+      {
+        "detail": "HEAD exactly matched the launcher target and the working tree was clean; the supplied base and target objects both resolved.",
+        "reference": "git status --short; git rev-parse HEAD; git rev-parse e94ef5abad6e95ec899a7bca04e30e9dc3dbea81; git rev-parse fbb416403d6e6f25fd19fb8af09b46aeef033e1f",
+        "source": "command"
+      },
+      {
+        "detail": "The complete supplied base-to-target change was inspected, covering analyzer/rules/API behavior, tests, fixtures, documentation, and governance records.",
+        "reference": "git diff e94ef5abad6e95ec899a7bca04e30e9dc3dbea81 fbb416403d6e6f25fd19fb8af09b46aeef033e1f",
+        "source": "diff"
+      },
+      {
+        "detail": "The prescribed test command ran 68 tests but ended with 17 errors because the review sandbox prohibited loopback socket binding.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "The prescribed compile check could not produce successful independent evidence in the read-only checkout because py_compile requires bytecode output.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not create its required temporary workspace in this read-only environment.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The handoff records author-run results of compile exit 0, 68 passing tests, and governance validation passing, but contains no raw output independently verifiable in this checkout.",
+        "reference": "project/handoffs/ISSUE-0004-handoff.md",
+        "source": "file"
+      },
+      {
+        "detail": "The issue requires missing required evidence to make a rule not evaluable and requires the incomplete fixture to prove that behavior.",
+        "reference": "project/issues/ISSUE-0004.md",
+        "source": "file"
+      },
+      {
+        "detail": "The analyzer gates only external inputs; normalization defaults absent or malformed policy fields to empty values, after which the rules score them as failures.",
+        "reference": "analyzer.py; rules.py; graph.py",
+        "source": "file"
+      },
+      {
+        "detail": "The all-users and administrator MFA predicates accept partial coverage: any all-users policy passes despite arbitrary exclusions, and any intersection with the admin-role set passes without covering the remaining listed admin roles.",
+        "reference": "rules.py",
+        "source": "file"
+      },
+      {
+        "detail": "The current-state index identifies ISSUE-0004 repair round 2 but still says the next permitted action is to start ISSUE-0004 from main.",
+        "reference": "project/status/CURRENT.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the required compile and test checks complete successfully against fbb416403d6e6f25fd19fb8af09b46aeef033e1f with concrete, candidate-bound evidence.",
+          "Observed: the independent test run ended with 17 PermissionError failures caused by prohibited socket binding; compilation and governance validation also could not complete in the read-only environment.",
+          "The committed handoff records successful author runs, but no raw command output is preserved for independent verification. Repository review rules require BLOCKED when evidence cannot be verified."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 46,
+            "path": "project/issues/ISSUE-0004.md"
+          },
+          {
+            "line": 54,
+            "path": "project/handoffs/ISSUE-0004-handoff.md"
+          }
+        ],
+        "remediation": "Preserve concrete output, exit status, environment, and full candidate SHA from successful runs of both required commands against fbb416403d6e6f25fd19fb8af09b46aeef033e1f, then provide it to a fresh review. DECISION-004 permits the human to disposition this environment-only limitation but does not allow this reviewer to report PASS.",
+        "severity": "high",
+        "title": "Required candidate-bound checks could not be independently verified",
+        "verification": "Verify that the exact compile and unittest commands exit 0 and that their preserved output explicitly binds to fbb416403d6e6f25fd19fb8af09b46aeef033e1f."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: every rule lacking a declared required field is reported not_evaluable and excluded from scoring, as stated by acceptance criterion 6.",
+          "Observed: analyzer.py only gates requirements in EXTERNAL_INPUTS. Policy-field requirements are never evaluated for presence.",
+          "graph.normalize_policy replaces absent or malformed evidence with empty defaults, destroying the distinction between missing evidence and an observed empty value; dependent rules then generally fail and lower the score.",
+          "The new guarantee test checks only each requirement's top-level key against normalize_policy({}); it does not verify nested paths, distinguish missing/malformed evidence, or prove not-evaluable scoring behavior.",
+          "The incomplete fixture is an empty list and verifies only not-all-report-only and break-glass-excluded, rather than representative missing declared fields."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 34,
+            "path": "analyzer.py"
+          },
+          {
+            "line": 245,
+            "path": "rules.py"
+          },
+          {
+            "line": 139,
+            "path": "graph.py"
+          },
+          {
+            "line": 87,
+            "path": "tests/test_analyzer.py"
+          },
+          {
+            "line": 120,
+            "path": "tests/test_analyzer.py"
+          }
+        ],
+        "remediation": "Preserve field-presence/validity metadata through normalization, or revise the approved contract explicitly. Enforce all declared requirements before rule evaluation. Add incomplete policies with absent and malformed representative fields and assert dependent rules are not_evaluable, create no finding, and contribute no denominator weight.",
+        "severity": "high",
+        "title": "Declared policy-field requirements still do not govern evaluability",
+        "verification": "For every required evidence category, remove or malform that evidence and confirm only dependent rules become not_evaluable and their weights are excluded from scoring."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: MFA-for-all-users and MFA-for-administrators pass only when their named populations are covered, subject to documented legitimate exclusions.",
+          "Observed: mfa-all-users passes any enabled MFA policy containing includeUsers=All, even if excludeUsers, excludeGroups, or excludeRoles removes most of the tenant.",
+          "Observed: mfa-admins passes when a policy includes any one role from ADMIN_ROLE_TEMPLATE_IDS, despite the rule title and rationale claiming administrators broadly are protected.",
+          "Fixtures test only ideal coverage and do not exercise exclusions or incomplete administrator-role coverage, allowing materially overstated scores."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 85,
+            "path": "rules.py"
+          },
+          {
+            "line": 95,
+            "path": "rules.py"
+          },
+          {
+            "line": 31,
+            "path": "tests/test_analyzer.py"
+          }
+        ],
+        "remediation": "Define the required coverage semantics explicitly. For all-users MFA, reject material exclusions other than validated break-glass accounts or report the limitation. For administrators, require the documented administrator-role set to be covered across enabled policies, or narrow the rule title and scoring claim. Add partial-coverage and broad-exclusion tests.",
+        "severity": "high",
+        "title": "MFA rules can pass materially incomplete population coverage",
+        "verification": "Test that excluding arbitrary users/groups/roles prevents the all-users rule from passing and that covering only one administrator role cannot satisfy an all-administrators claim."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: CURRENT.md names the actual next permitted action for the active repair/review gate.",
+          "Observed: the status correctly identifies ISSUE-0004 repair round 2, but its next permitted action still says to start ISSUE-0004 from main and implement it, an action already completed by this candidate.",
+          "AGENTS.md requires a fresh reader to derive the next action from this record and requires stale or contradictory state to be repaired first."
+        ],
+        "id": "F-004",
+        "locations": [
+          {
+            "line": 35,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Update the next actor and next permitted action to the current review disposition: resolve substantive findings within the authorized workflow or stop for the required human decision, then launch a fresh review of the resulting exact candidate.",
+        "severity": "medium",
+        "title": "Current-state index still gives a stale next action",
+        "verification": "Confirm CURRENT.md consistently identifies the active gate, candidate/review state, blockers, next actor, and one presently permitted action without instructing readers to restart ISSUE-0004."
+      }
+    ],
+    "limitations": [
+      "The sandbox prohibits loopback socket binding, bytecode-cache creation, and temporary-directory creation, so the required checks could not complete successfully here.",
+      "No independently generated successful check log bound to the exact target SHA was present in the reviewed tree.",
+      "The isolated target commit is grafted, so ancestry to the base could not be established; scope was reviewed using the launcher-supplied explicit two-object diff.",
+      "No live Microsoft tenant access was attempted; ISSUE-0004 is intended to be verified offline.",
+      "This report does not rely on or adopt conclusions from earlier reviews; earlier reports were inspected only as governed history and repair context."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "fbb416403d6e6f25fd19fb8af09b46aeef033e1f",
+    "schema_version": "1.0",
+    "summary": "BLOCKED: successful required checks could not be independently reproduced, the candidate still contradicts the approved per-required-field not-evaluable behavior, MFA predicates can materially overstate coverage, and CURRENT.md retains a stale next action. Heuristic labeling, deterministic sorting, in-memory break-glass storage, fixture sanitization, and the broad-block predicate were otherwise supported by static inspection.",
+    "target_id": "ISSUE-0004"
+  },
+  "test_only": false
+}

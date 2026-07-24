@@ -1,6 +1,6 @@
 <!-- claudex-state
-stage: IMPLEMENTATION
-active_issue: none
+stage: ISSUE_REPAIR
+active_issue: ISSUE-0004
 active_milestone: none
 -->
 
@@ -17,23 +17,23 @@ records described below.
 
 | Field | Current value |
 |---|---|
-| Stage | `IMPLEMENTATION` |
+| Stage | `ISSUE_REPAIR` |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v1; APPROVED (DECISION-001) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (binds `179a023`) |
 | Roadmap | `ROADMAP.md` v3; APPROVED (DECISION-003, binds `125d74f`) |
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | `M1` (in progress) |
-| Active issue | None — ISSUE-0003 COMPLETE and merged |
-| Issue repair round | None |
-| Candidate product commit | Branch HEAD of `ai/ISSUE-0003-graph-client` (the launcher binds the exact SHA at review time) |
-| Latest implementation handoff | `project/handoffs/ISSUE-0003-handoff.md` |
-| Latest Codex review | ISSUE-0003 final `ISSUE-0003-065675e53ee8-codex.json` — no product-code defect (DECISION-004/007) |
+| Active issue | `ISSUE-0004` (analyzer) — status `REPAIRING`, branch `ai/ISSUE-0004-analyzer`, Starting SHA `e94ef5a` |
+| Issue repair round | Final confirming round (authorized by DECISION-009) |
+| Candidate product commit | `ai/ISSUE-0004-analyzer` — reviewed product SHA `9f3885bb80ca4c65912f5872785e0980e52747c5` (product code unchanged since `80a8770`) |
+| Latest implementation handoff | `project/handoffs/ISSUE-0004-handoff.md` |
+| Latest Codex review | ISSUE-0004 final `ISSUE-0004-9f3885bb80ca-codex.json` — no additional substantive analyzer defect; blocked only on SHA/record sync (fixed here) + execution evidence (DECISION-004) |
 | Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e` |
-| Last human decision | `DECISION-007` (raised repair budget); also `DECISION-006`..`001` |
+| Last human decision | `DECISION-009` (ISSUE-0004 final round); also `DECISION-008` (evaluability model), `DECISION-007`..`001` |
 | Open blockers | None. Standing: Codex issue reviews stay `BLOCKED` on execution evidence (DECISION-004); author runs checks out-of-band |
 | Next required actor | Claude (implement ISSUE-0004 autonomously per DECISION-005) |
-| Next permitted action | Start `ISSUE-0004` (analyzer + rules + scoring) on branch `ai/ISSUE-0004-analyzer` from `main`; implement with sanitized fixtures, run checks, Codex review + repairs (DECISION-007 budget), merge under DECISION-004/005 |
+| Next permitted action | Merge `ai/ISSUE-0004-analyzer` (reviewed SHA `9f3885b`) into `main` per DECISION-004/005/007/009, mark ISSUE-0004 COMPLETE, then start ISSUE-0005 |
 | Actions not yet permitted | Merge without a clean review, publication, deployment, live tenant auth/fetch, or any protected action |
 
 When this repository is adopted for a project, replace the values above and add

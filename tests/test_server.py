@@ -186,6 +186,53 @@ class ServerIntegrationTests(unittest.TestCase):
             server.GRAPH = original
             server.AUTH.logout()
 
+    def test_analysis_unauthenticated_401(self) -> None:
+        server.AUTH.logout()
+        resp = self._request("/api/analysis", f"127.0.0.1:{self.port}")
+        self.assertEqual(resp.status, 401)
+
+    def test_breakglass_endpoint_sanitizes_and_stores(self) -> None:
+        origin = f"http://127.0.0.1:{self.port}"
+        good = "62e90394-69f5-4237-9190-012177145e10"
+        body = json.dumps({"ids": [good, "not-a-guid"]}).encode()
+        try:
+            resp = self._post("/api/breakglass", f"127.0.0.1:{self.port}", origin, body)
+            self.assertEqual(resp.status, 200)
+            self.assertEqual(json.loads(resp.read())["count"], 1)  # junk dropped
+            self.assertEqual(server.get_break_glass_ids(), [good])
+        finally:
+            server.set_break_glass_ids([])  # clear
+
+    def test_breakglass_requires_origin(self) -> None:
+        resp = self._post("/api/breakglass", f"127.0.0.1:{self.port}", None, b"{}")
+        self.assertEqual(resp.status, 403)
+
+    def test_analysis_success(self) -> None:
+        self._with_token()
+        original = server.GRAPH
+
+        class FakeGraph:
+            def fetch_policies(self, token: str) -> list[dict]:
+                # One enabled block-legacy-auth policy → some score, no crash.
+                return [{
+                    "id": "p", "displayName": "block legacy", "state": "enabled",
+                    "conditions": {"clientAppTypes": ["other"], "includeUsers": ["All"]},
+                    "grantControls": {"operator": "OR", "builtInControls": ["block"]},
+                    "sessionControls": [],
+                }]
+
+        server.GRAPH = FakeGraph()
+        try:
+            resp = self._request("/api/analysis", f"127.0.0.1:{self.port}")
+            body = json.loads(resp.read())
+            self.assertEqual(resp.status, 200)
+            self.assertIn("score", body)
+            self.assertIn("findings", body)
+            self.assertTrue(body["scoreIsHeuristic"])
+        finally:
+            server.GRAPH = original
+            server.AUTH.logout()
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,139 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T15:46:10Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f94cc-b332-71d3-a1ec-1fd1d52ec76d"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "e94ef5abad6e95ec899a7bca04e30e9dc3dbea81",
+    "evidence": [
+      {
+        "detail": "Checkout HEAD exactly matched the launcher target; the supplied base object was present. The base-to-target diff contains 20 changed files with 1,806 insertions and 17 deletions. The worktree remained clean after review commands.",
+        "reference": "git rev-parse HEAD; git cat-file -t e94ef5abad6e95ec899a7bca04e30e9dc3dbea81; git diff --stat e94ef5abad6e95ec899a7bca04e30e9dc3dbea81 9f3885bb80ca4c65912f5872785e0980e52747c5; git status --short",
+        "source": "command"
+      },
+      {
+        "detail": "Independent unit-test execution ran 73 tests. Fifty-six completed successfully, but 17 server integration tests errored because the read-only sandbox denied loopback socket binding. Exit status was 1.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Independent compilation could not execute successfully because py_compile attempted to create __pycache__; the read-only sandbox denied the write. Exit status was 1.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not complete because the validator requires a writable temporary directory, unavailable in this sandbox. Exit status was 1.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "Static diff whitespace validation completed successfully with exit status 0.",
+        "reference": "git diff --check e94ef5abad6e95ec899a7bca04e30e9dc3dbea81 9f3885bb80ca4c65912f5872785e0980e52747c5",
+        "source": "check"
+      },
+      {
+        "detail": "Static inspection covered the approved issue, brief, roadmap, workflow/security documentation, analyzer and rule implementation, server integration, fixtures, tests, handoff, status, and exact base-to-target diff. No additional substantive code or security defect was established from the available evidence.",
+        "reference": "analyzer.py; rules.py; server.py; tests/test_analyzer.py; tests/test_server.py; project/issues/ISSUE-0004.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Expected: because the issue exceeded its repair budget, the exact human override must authorize the SHA submitted for the exceptional final review.",
+          "Observed: DECISION-009 authorizes candidate 80a87704f1ced4ffd342f6f4ecfa71bb722d4ec3, but the launcher submitted and the checkout contains 9f3885bb80ca4c65912f5872785e0980e52747c5.",
+          "AGENTS.md states that changed commit or target identity makes an approval stale and that limit exhaustion blocks until an exact human decision.",
+          "The target commit itself is described as the commit recording DECISION-009, confirming it is distinct from the candidate named by that decision."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 11,
+            "path": "project/decisions/DECISION-009-issue0004-final-round.md"
+          }
+        ],
+        "remediation": "Obtain an exact human decision authorizing review of 9f3885bb80ca4c65912f5872785e0980e52747c5, or relaunch the authorized review against 80a87704f1ced4ffd342f6f4ecfa71bb722d4ec3 if that is the intended candidate. Do not infer that authorization for one SHA covers another.",
+        "severity": "high",
+        "title": "Final-round authorization binds a different candidate SHA",
+        "verification": "Confirm that the candidate SHA in the committed human decision exactly equals both launcher target and checkout HEAD before starting a fresh review."
+      },
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Expected: required tests and compilation execute successfully against the exact reviewed commit, with independently verifiable output.",
+          "Observed: the unit-test command exited 1 because all 17 server integration tests were prevented from binding a loopback socket; compilation exited 1 because the sandbox prohibited __pycache__ writes.",
+          "The handoff records 68 passing tests, but the current suite discovers 73 tests, and repository rules treat author statements as claims rather than independent evidence.",
+          "The governance validator also exited 1 because no writable temporary directory was available."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 63,
+            "path": "project/handoffs/ISSUE-0004-handoff.md"
+          }
+        ],
+        "remediation": "Run the exact required compile and complete 73-test suite against 9f3885bb80ca4c65912f5872785e0980e52747c5 in an environment permitting bytecode/temp writes and loopback binding, record the real output and exit statuses, then launch a fresh review. Also run and record governance validation if it remains a required repository check.",
+        "severity": "medium",
+        "title": "Required execution evidence could not be independently verified",
+        "verification": "The compile command, full unittest discovery, and applicable governance validator must each exit 0 against the exact target SHA; test discovery should account for all 73 current tests."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: CURRENT.md identifies the actual latest human decision and names the next permitted action consistently.",
+          "Observed: the target includes DECISION-009, but CURRENT.md says the last human decision is DECISION-007 and still asks the human to authorize the final confirming review.",
+          "CURRENT.md simultaneously says there are no open blockers while recording repair-budget exhaustion and a required human decision.",
+          "Repository rules designate CURRENT.md as the first authoritative current-state index and require stale or contradictory records to block progress."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 33,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 34,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 36,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Synchronize CURRENT.md with DECISION-009 and the exact candidate actually authorized: identify the latest decision, state the true blocker status, and name the precise next permitted action. Any resulting commit must receive a fresh commit-bound review.",
+        "severity": "medium",
+        "title": "Current-state index is stale and internally contradictory",
+        "verification": "Re-read CURRENT.md from a fresh checkout and confirm its stage, repair count, candidate SHA, latest decision, blockers, and next action agree with the committed decisions and launcher target."
+      }
+    ],
+    "limitations": [
+      "The sandbox was read-only, provided no writable temporary directory, and prohibited loopback socket binding. Consequently, compilation, governance validation, and 17 server integration tests could not complete.",
+      "The checkout is grafted/shallow: commit parent metadata is unavailable. Review identity therefore relies on the launcher-supplied base, the available base object, and the exact base-to-target tree diff.",
+      "No live Microsoft authentication, Graph request, or tenant data was exercised; these are outside this issue's offline verification scope and protected-action boundaries.",
+      "Author-recorded check results are not accepted as independent verification, particularly because the handoff reports 68 tests while the reviewed tree currently discovers 73."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "9f3885bb80ca4c65912f5872785e0980e52747c5",
+    "schema_version": "1.0",
+    "summary": "BLOCKED. Static inspection found no additional substantive analyzer defect, but the exceptional final-review authorization names a different SHA, CURRENT.md is stale and contradictory, and required execution evidence could not be independently completed in the read-only/no-socket environment.",
+    "target_id": "ISSUE-0004"
+  },
+  "test_only": false
+}

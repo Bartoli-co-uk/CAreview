@@ -1,0 +1,178 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T14:38:31Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f948e-ca73-7ce2-b638-3b08eb7df633"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "98a20bc479b55b1cdab5e8958ed3630bff0e044a",
+    "evidence": [
+      {
+        "detail": "Checkout HEAD and supplied target both resolve to 2495c32df08ee11a563122bde4a5fca6fe93fae1; supplied base resolves to 98a20bc479b55b1cdab5e8958ed3630bff0e044a. The worktree was clean.",
+        "reference": "git status --short; git rev-parse HEAD; git rev-parse 98a20bc479b55b1cdab5e8958ed3630bff0e044a; git rev-parse 2495c32df08ee11a563122bde4a5fca6fe93fae1",
+        "source": "command"
+      },
+      {
+        "detail": "The exact base-to-target diff adds graph.py and tests/test_graph.py and changes server.py, tests/test_server.py, the issue record, handoff, and current status.",
+        "reference": "git diff --name-status 98a20bc479b55b1cdab5e8958ed3630bff0e044a..2495c32df08ee11a563122bde4a5fca6fe93fae1",
+        "source": "diff"
+      },
+      {
+        "detail": "Independent tests ran 42 tests but exited 1: 32 completed and all 10 server integration tests errored because the read-only sandbox prohibited binding 127.0.0.1.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Independent compilation exited 1 because py_compile could not create __pycache__ in the read-only checkout.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation exited 1 because no writable temporary directory was available to its launcher smoke tests.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The handoff claims compile exit 0, 42 passing tests, and governance success from author-run out-of-band checks, but this review cannot independently verify complete successful execution.",
+        "reference": "project/handoffs/ISSUE-0003-handoff.md",
+        "source": "file"
+      },
+      {
+        "detail": "No live tenant fetch was attempted because it is a separately protected action and is explicitly not an issue-completion prerequisite.",
+        "reference": "project/issues/ISSUE-0003.md",
+        "source": "limitation"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Expected: every bearer-authenticated request must remain restricted to Microsoft Graph, as required by the issue stop condition and security boundary.",
+          "Observed: fetch_policies assigns an arbitrary string from @odata.nextLink directly to url and sends the Authorization header through the injected/default transport on the next iteration. urllib_graph_transport performs no scheme or hostname validation, despite its comment claiming only Microsoft Graph URLs reach it.",
+          "A response containing an https://attacker.example next link would therefore receive the tenant access token. Redirect handling is also not explicitly constrained or validated.",
+          "The existing paging test accepts a next-link URL but does not test rejection of non-Graph hosts or redirects."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 43,
+            "path": "graph.py"
+          },
+          {
+            "line": 138,
+            "path": "graph.py"
+          },
+          {
+            "line": 148,
+            "path": "graph.py"
+          }
+        ],
+        "remediation": "Validate every initial, paged, and redirected destination before attaching credentials: require HTTPS and the exact approved Microsoft Graph hostname (and an appropriate path policy). Disable redirects or implement a redirect handler that reapplies the same validation. Return a stable GraphError for rejected destinations and add tests proving arbitrary hosts, userinfo/hostname tricks, non-HTTPS URLs, and redirects cannot receive the bearer token.",
+        "severity": "high",
+        "title": "Unvalidated next links can exfiltrate the bearer token",
+        "verification": "Use a recording transport/HTTP test double with malicious next links and redirects; verify no request is made and no Authorization header leaves the approved Graph origin. Then rerun compilation and the full test suite."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the prerequisite contract must define the optional local, user-supplied break-glass object-ID input and specify that the corresponding analyzer rule is not evaluable when it is absent.",
+          "Observed: the handoff's recorded contract lists only normalized policy fields. It contains no shape, validation/sanitization rules, supply mechanism, or absent-input behavior for the required break-glass input.",
+          "ISSUE-0004 is expressly required to bind its rules to this contract, so leaving this portion unspecified carries the planning ambiguity forward."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 17,
+            "path": "project/handoffs/ISSUE-0003-handoff.md"
+          }
+        ],
+        "remediation": "Extend the durable normalized-data contract with the exact optional break-glass input shape, accepted object-ID format and sanitization, in-memory/no-commit handling, and explicit not-evaluable behavior when absent. Ensure ISSUE-0004 can consume it without inventing a new contract.",
+        "severity": "medium",
+        "title": "The required break-glass input contract is missing",
+        "verification": "Review the updated contract against project/issues/ISSUE-0003.md lines 38–52 and confirm tests or subsequent issue acceptance criteria cover supplied, absent, and invalid input."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: acceptance criterion 2 says multi-page responses are fully followed; failure to complete paging should be reported as an error, not returned as a successful complete result.",
+          "Observed: after more than 1000 pages, the client silently breaks and returns the accumulated partial policy list even when a next link remains.",
+          "A repeated/cyclic next link likewise causes up to 1001 requests and then a misleading successful partial response.",
+          "The current paging test covers only a normal two-page response."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 136,
+            "path": "graph.py"
+          },
+          {
+            "line": 150,
+            "path": "graph.py"
+          }
+        ],
+        "remediation": "Track visited URLs and raise a stable GraphError for cycles or when a documented page limit is exceeded; never return a partial collection as a successful complete fetch. Add cycle and limit tests.",
+        "severity": "medium",
+        "title": "Paging limit silently returns incomplete policies as success",
+        "verification": "Test a repeated next link and a sequence exceeding the configured limit; each must raise the documented error and /api/policies must return a structured failure rather than HTTP 200 with partial data."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the active issue record should durably identify one starting SHA and the exact candidate under review.",
+          "Observed: the record contains two contradictory Starting SHA fields, one exact and one placeholder, and still says Candidate SHA: Not created even though status is REVIEWING and the launcher supplied target 2495c32df08ee11a563122bde4a5fca6fe93fae1.",
+          "The repository rules require current records to identify the reviewed candidate without relying on chat or launcher-only context."
+        ],
+        "id": "F-004",
+        "locations": [
+          {
+            "line": 7,
+            "path": "project/issues/ISSUE-0003.md"
+          },
+          {
+            "line": 9,
+            "path": "project/issues/ISSUE-0003.md"
+          },
+          {
+            "line": 10,
+            "path": "project/issues/ISSUE-0003.md"
+          }
+        ],
+        "remediation": "Remove the duplicate placeholder and bind Candidate SHA to 2495c32df08ee11a563122bde4a5fca6fe93fae1 for this review round. Keep subsequent repair candidates and reports explicitly SHA-bound.",
+        "severity": "low",
+        "title": "Issue metadata does not identify the reviewed candidate consistently",
+        "verification": "Run the governance validator and inspect the issue/status/handoff records to confirm one base SHA and one exact candidate SHA agree with the next review invocation."
+      }
+    ],
+    "limitations": [
+      "The full test suite could not complete successfully in this read-only, network-restricted review environment because server tests require a loopback socket.",
+      "Compilation could not be independently verified because py_compile requires filesystem writes for bytecode output.",
+      "Governance validation could not complete because its smoke tests require a writable temporary directory.",
+      "Author-reported successful checks are claims supported only by the committed handoff; raw immutable command output bound to the target commit is not present.",
+      "The protected live Graph integration was not exercised, so real tenant consent behavior, response compatibility, and paging remain unverified.",
+      "Because mandatory independent execution evidence is unavailable, repository rules require BLOCKED even apart from the substantive findings."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "2495c32df08ee11a563122bde4a5fca6fe93fae1",
+    "schema_version": "1.0",
+    "summary": "BLOCKED: target identity is correct, but independent compile, full tests, and governance validation could not pass in the review sandbox. Static review also found a high-severity bearer-token exfiltration path through unvalidated next links, an incomplete prerequisite data contract, silent partial paging success, and stale candidate metadata.",
+    "target_id": "ISSUE-0003"
+  },
+  "test_only": false
+}

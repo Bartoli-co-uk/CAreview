@@ -98,6 +98,39 @@ class GraphClientTests(unittest.TestCase):
         self.assertEqual(p["grantControls"]["builtInControls"], [])
         self.assertEqual(p["sessionControls"], [])
 
+    def test_non_graph_next_link_rejected_without_sending_token(self) -> None:
+        page1 = {"value": [POLICY_RAW], "@odata.nextLink": "https://evil.example.com/steal"}
+        transport = SeqTransport([(200, page1)])
+        with self.assertRaises(graph.GraphError) as ctx:
+            graph.GraphClient(transport=transport).fetch_policies("tok")
+        self.assertEqual(ctx.exception.code, "invalid_url")
+        self.assertEqual(len(transport.calls), 1)  # token never sent to the evil host
+
+    def test_paging_cycle_detected(self) -> None:
+        page1 = {"value": [POLICY_RAW], "@odata.nextLink": graph.GRAPH_POLICIES_URL}
+        with self.assertRaises(graph.GraphError) as ctx:
+            graph.GraphClient(transport=SeqTransport([(200, page1)])).fetch_policies("tok")
+        self.assertEqual(ctx.exception.code, "graph_error")
+
+
+class UrlAndInputValidationTests(unittest.TestCase):
+    def test_is_graph_url(self) -> None:
+        self.assertTrue(graph.is_graph_url("https://graph.microsoft.com/v1.0/next"))
+        for bad in (
+            "http://graph.microsoft.com/x",          # not https
+            "https://evil.example.com/x",            # wrong host
+            "https://graph.microsoft.com.evil.com/x",  # suffix trick
+            "https://user:pw@graph.microsoft.com/x",   # embedded creds
+            "ftp://graph.microsoft.com/x",
+            "not a url",
+        ):
+            self.assertFalse(graph.is_graph_url(bad), bad)
+
+    def test_sanitize_object_ids(self) -> None:
+        good = "62e90394-69f5-4237-9190-012177145e10"
+        self.assertEqual(graph.sanitize_object_ids([good, "not-a-guid", 123, ""]), [good])
+        self.assertEqual(graph.sanitize_object_ids("nope"), [])
+
 
 if __name__ == "__main__":
     unittest.main()

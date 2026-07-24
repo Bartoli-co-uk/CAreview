@@ -1,5 +1,5 @@
 <!-- claudex-state
-stage: ISSUE_REVIEW
+stage: ISSUE_REPAIR
 active_issue: ISSUE-0003
 active_milestone: none
 -->
@@ -17,18 +17,18 @@ records described below.
 
 | Field | Current value |
 |---|---|
-| Stage | `ISSUE_REVIEW` |
+| Stage | `ISSUE_REPAIR` |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v1; APPROVED (DECISION-001) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (binds `179a023`) |
 | Roadmap | `ROADMAP.md` v3; APPROVED (DECISION-003, binds `125d74f`) |
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | `M1` (in progress) |
-| Active issue | `ISSUE-0003` (Graph client) — status `REVIEWING`, branch `ai/ISSUE-0003-graph-client`, Starting SHA `98a20bc` |
-| Issue repair round | None (round 0) |
+| Active issue | `ISSUE-0003` (Graph client) — status `REPAIRING`, branch `ai/ISSUE-0003-graph-client`, Starting SHA `98a20bc` |
+| Issue repair round | Repair round 1 (Codex F-001 SSRF/token-exfil, F-002 contract, F-003 paging, F-004 metadata) |
 | Candidate product commit | Branch HEAD of `ai/ISSUE-0003-graph-client` (the launcher binds the exact SHA at review time) |
 | Latest implementation handoff | `project/handoffs/ISSUE-0003-handoff.md` |
-| Latest Codex review | Pending ISSUE-0003 review; ISSUE-0002 final was clean per DECISION-004 |
+| Latest Codex review | ISSUE-0003 round 0 `ISSUE-0003-2495c32df08e-codex.json` (BLOCKED: F-001..F-004) + response; repaired candidate pending re-review |
 | Completed issues | `ISSUE-0001` (server shell) `23e6633`; `ISSUE-0002` (device-code auth) `3c8fb869` |
 | Last human decision | `DECISION-006` (ISSUE-0002 extra round + merge); also `DECISION-005` (autonomy), `DECISION-004` (gate policy), `DECISION-003`..`001` |
 | Open blockers | None. Standing: Codex issue reviews stay `BLOCKED` on execution evidence (DECISION-004); author runs checks out-of-band |

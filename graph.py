@@ -16,12 +16,21 @@ enrichment would be a separate issue.
 from __future__ import annotations
 
 import json
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
 from typing import Callable
 
-GRAPH_POLICIES_URL = "https://graph.microsoft.com/v1.0/identity/conditionalAccess/policies"
+GRAPH_HOST = "graph.microsoft.com"
+GRAPH_POLICIES_URL = f"https://{GRAPH_HOST}/v1.0/identity/conditionalAccess/policies"
+
+# Upper bound on pages followed; a normal tenant has far fewer.
+MAX_PAGES = 200
+
+# Entra object-ID (GUID) shape, used to sanitize the optional break-glass input
+# (part of the normalized data contract consumed by the analyzer, ISSUE-0004).
+_GUID_RE = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 
 # Transport takes (url, headers) and returns (status, parsed_json).
 Transport = Callable[[str, "dict[str, str]"], "tuple[int, dict]"]
@@ -35,14 +44,51 @@ class GraphError(Exception):
         self.code = code
 
 
-def urllib_graph_transport(url: str, headers: dict[str, str]) -> tuple[int, dict]:
-    """Default transport: GET ``url`` with ``headers``; never raises.
+def is_graph_url(url: str) -> bool:
+    """True only for an HTTPS URL whose host is exactly Microsoft Graph.
 
-    Only Microsoft Graph URLs are ever passed here by the client.
+    The bearer token is attached to every request, so before trusting an initial
+    or paged (``@odata.nextLink``) URL we require ``https`` and the exact Graph
+    host with no embedded credentials — otherwise a crafted next link could
+    exfiltrate the token to an arbitrary host.
     """
+    try:
+        parts = urllib.parse.urlsplit(url)
+    except ValueError:
+        return False
+    return (
+        parts.scheme == "https"
+        and parts.hostname is not None
+        and parts.hostname.lower() == GRAPH_HOST
+        and not parts.username
+        and not parts.password
+    )
+
+
+def sanitize_object_ids(values: object) -> list[str]:
+    """Keep only well-formed GUID strings from a list (break-glass input)."""
+    if not isinstance(values, list):
+        return []
+    return [v for v in values if isinstance(v, str) and _GUID_RE.match(v)]
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Never follow HTTP redirects: a 3xx must not carry the bearer token to a
+    new host. Graph paging uses ``@odata.nextLink`` in the body, not redirects."""
+
+    def redirect_request(self, *args: object, **kwargs: object) -> None:
+        return None
+
+
+_OPENER = urllib.request.build_opener(_NoRedirect)
+
+
+def urllib_graph_transport(url: str, headers: dict[str, str]) -> tuple[int, dict]:
+    """Default transport: GET ``url`` with ``headers``; never raises, never
+    follows redirects. The caller validates the host before calling this."""
     request = urllib.request.Request(url, method="GET", headers=headers)
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:  # noqa: S310 (fixed host)
+        with _OPENER.open(request, timeout=30) as response:  # noqa: S310 (host pre-validated)
             raw = response.read().decode("utf-8", "replace")
             status = response.status
     except urllib.error.HTTPError as exc:
@@ -133,8 +179,17 @@ class GraphClient:
         headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
         policies: list[dict] = []
         url: str | None = GRAPH_POLICIES_URL
-        seen = 0
+        visited: set[str] = set()
         while url:
+            # Validate the destination before attaching the bearer token.
+            if not is_graph_url(url):
+                raise GraphError("invalid_url", "refusing to send credentials to a non-Graph host")
+            if url in visited:
+                raise GraphError("graph_error", "paging cycle detected")
+            if len(visited) >= MAX_PAGES:
+                raise GraphError("graph_error", "paging exceeded the maximum page count")
+            visited.add(url)
+
             status, payload = self._transport(url, headers)
             if status == 401:
                 raise GraphError("not_authenticated", "token rejected")
@@ -147,8 +202,4 @@ class GraphClient:
                     policies.append(normalize_policy(raw))
             next_link = payload.get("@odata.nextLink")
             url = next_link if isinstance(next_link, str) else None
-            # Defensive bound against a pathological paging loop.
-            seen += 1
-            if seen > 1000:
-                break
         return policies

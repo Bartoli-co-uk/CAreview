@@ -1,13 +1,12 @@
 # ISSUE-0003: Microsoft Graph client for Conditional Access policies
 
-**Status:** `REVIEWING`
+**Status:** `REPAIRING`
 **Milestone:** `M1`
 **Approved roadmap:** `ROADMAP.md` version `3` at `125d74f6d4bfe85f1a727293064d0887f2d121c7`
 **Dependencies:** `ISSUE-0002` (COMPLETE); A3 resolved + data contract recorded in the handoff (single endpoint; identifier matching, no enrichment)
-**Starting SHA:** `98a20bc479b55b1cdab5e8958ed3630bff0e044a`
 **Branch:** `ai/ISSUE-0003-graph-client`
-**Starting SHA:** `[set at implementation start]`
-**Candidate SHA:** `Not created`
+**Starting SHA:** `98a20bc479b55b1cdab5e8958ed3630bff0e044a`
+**Candidate SHA:** `2495c32df08ee11a563122bde4a5fca6fe93fae1` (round 0); repair candidates rebind at review time
 
 ## Objective
 
@@ -98,7 +97,8 @@ is a protected action, not a completion precondition (Codex F-002).
 
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
-| 0 | `[path]` | `[SHA]` | `[path/summary]` | `[path]` | `[outcome]` |
+| 0 | `ISSUE-0003-handoff.md` | `2495c32df08e…` | py_compile 0; 42 tests pass; validator pass | `ISSUE-0003-2495c32df08e-codex.json` | BLOCKED (F-001 SSRF, F-003 paging, F-002 contract, F-004 metadata) |
+| 1 (repair) | `ISSUE-0003-handoff.md` | repair-1 candidate (launcher binds SHA) | py_compile 0; 46 tests pass; validator pass | pending re-review | pending |
 
 Maximum two repair rounds; every Codex review is a fresh ephemeral read-only
 process against the named SHA.

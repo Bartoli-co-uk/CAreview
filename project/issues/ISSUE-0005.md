@@ -1,6 +1,6 @@
 # ISSUE-0005: UI rendering — score, findings, and policy flow cards
 
-**Status:** `REVIEWING`
+**Status:** `REPAIRING`
 **Milestone:** `M1`
 **Approved roadmap:** `ROADMAP.md` version `3` at `125d74f6d4bfe85f1a727293064d0887f2d121c7`
 **Dependencies:** `ISSUE-0003`, `ISSUE-0004`
@@ -81,7 +81,8 @@ findings list, and a simple per-policy flow card
 
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
-| 0 | `[path]` | `[SHA]` | `[path/summary]` | `[path]` | `[outcome]` |
+| 0 | `ISSUE-0005-handoff.md` | `c88819f52ce0…` | py_compile 0; 75 tests pass; validator pass | `ISSUE-0005-c88819f52ce0-codex.json` | CHANGES_REQUIRED (F-001 sign-out leak, F-002 conditions, F-003 hostile-markup test, F-004 README) |
+| 1 (repair) | `ISSUE-0005-handoff.md` | repair-1 candidate (launcher binds SHA) | py_compile 0; 79 tests pass; validator pass | pending re-review | pending |
 
 Maximum two repair rounds; every Codex review is a fresh ephemeral read-only
 process against the named SHA.

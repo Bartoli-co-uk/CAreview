@@ -95,11 +95,22 @@ async function startSignIn() {
   pollTimer = setTimeout(() => pollOnce(data.handle, intervalMs), intervalMs);
 }
 
+function clearResults() {
+  document.getElementById("score-block").hidden = true;
+  document.getElementById("findings-block").hidden = true;
+  document.getElementById("policies-block").hidden = true;
+  document.getElementById("findings-list").textContent = "";
+  document.getElementById("policy-cards").textContent = "";
+}
+
 async function signOut() {
   stopPolling();
   await postJson("/api/auth/logout", {});
   showSignedOut();
   setAuthStatus("signed out", null);
+  // Sensitive tenant analysis must not remain visible after sign-out.
+  clearResults();
+  setResultsState("sign in to see your tenant's analysis", null);
 }
 
 function initAuth() {
@@ -177,7 +188,24 @@ function renderPolicyCard(policy) {
   const apps = c.includeApplications || [];
   const controls = (policy.grantControls && policy.grantControls.builtInControls) || [];
 
+  const conditionParts = [];
+  if (c.clientAppTypes && c.clientAppTypes.length) {
+    conditionParts.push("client apps: " + c.clientAppTypes.join(", "));
+  }
+  if (c.includeLocations && c.includeLocations.length) {
+    conditionParts.push("locations: " + c.includeLocations.join(", "));
+  }
+  if (c.signInRiskLevels && c.signInRiskLevels.length) {
+    conditionParts.push("sign-in risk: " + c.signInRiskLevels.join(", "));
+  }
+  if (c.userRiskLevels && c.userRiskLevels.length) {
+    conditionParts.push("user risk: " + c.userRiskLevels.join(", "));
+  }
+  const excluded = [...(c.excludeUsers || []), ...(c.excludeGroups || []), ...(c.excludeRoles || [])];
+  if (excluded.length) conditionParts.push("excludes " + excluded.length + " principal(s)");
+
   flow.append(el("div", "flow-step", "Users: " + (users.length ? users.join(", ") : "(none)")));
+  flow.append(el("div", "flow-step", "Conditions: " + (conditionParts.length ? conditionParts.join("; ") : "(none)")));
   flow.append(el("div", "flow-step", "Apps: " + (apps.length ? apps.join(", ") : "(none)")));
   flow.append(el("div", "flow-step", "Controls: " + (controls.length ? controls.join(", ") : "(none)")));
   card.append(flow);

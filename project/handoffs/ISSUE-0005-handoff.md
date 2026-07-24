@@ -1,4 +1,12 @@
-# Claude handoff: ISSUE-0005, round 0
+# Claude handoff: ISSUE-0005, repair round 1
+
+**Repair round 1** addresses Codex round-0 findings on candidate `c88819f52ce0`:
+F-001 (clear/hide analysis on sign-out), F-002 (add the Conditions flow step),
+F-003 (static no-dangerous-sink test + hostile-markup fixture; no browser
+available to confirm live rendering — recorded as a residual evidence gap, not
+claimed), F-004 (README). 79 tests pass. See
+`project/reviews/issues/ISSUE-0005-c88819f52ce0-claude-response.md`.
+
 
 **Claude issue task:** `CAreview ISSUE-0005 (UI rendering)`
 **Approved issue:** `project/issues/ISSUE-0005.md` at `67283f7e4a499af5e813a3f7d325bc81f9ddace8`
@@ -42,7 +50,7 @@ All rendering uses `textContent`/`createElement` only.
 | Check | Exact command | Actual result/exit | Evidence limitation |
 |---|---|---|---|
 | Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 | none |
-| Tests | `python3 -m unittest discover -s tests` | 75 passed, exit 0 | none |
+| Tests | `python3 -m unittest discover -s tests` | 79 passed, exit 0 | none |
 | Manual | `curl` root (CSP present), `/sample-data.json` (score 88, 2 findings) | as expected | none |
 | Governance | `python3 scripts/validate_repo.py` | passes (out-of-band per DECISION-004) | none |
 
@@ -51,6 +59,10 @@ All rendering uses `textContent`/`createElement` only.
 - Threat-model change: none new; renders already-local/already-fetched data;
   hardens caching of sensitive responses.
 - Data/secret impact: sample data is synthetic/sanitized; no tokens rendered.
+- Residual evidence gap: no browser automation tool was available this session,
+  so live in-browser rendering of the hostile-markup fixture was not confirmed —
+  only statically (no dangerous sinks in `app.js`) and via the fixture's presence.
+  A human can confirm visually by opening the app and viewing the sample.
 - Protected action attempted: No.
 
 ## Review request

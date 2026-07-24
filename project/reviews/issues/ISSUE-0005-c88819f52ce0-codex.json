@@ -1,0 +1,163 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T15:54:18Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f94d4-4471-7672-bd80-f9db1bbfb23f"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "67283f7e4a499af5e813a3f7d325bc81f9ddace8",
+    "evidence": [
+      {
+        "detail": "HEAD and launcher target both resolve to c88819f52ce031416787355eebf3c2eaf0a81fc7; base resolves to 67283f7e4a499af5e813a3f7d325bc81f9ddace8; working tree was clean and detached at the target.",
+        "reference": "git status --short --branch; git rev-parse HEAD",
+        "source": "command"
+      },
+      {
+        "detail": "The exact base-to-target diff changes nine files: project/handoffs/ISSUE-0005-handoff.md, project/issues/ISSUE-0005.md, project/status/CURRENT.md, server.py, tests/test_server.py, web/app.js, web/index.html, web/sample-data.json, and web/style.css. git diff --check completed successfully.",
+        "reference": "git diff 67283f7e4a499af5e813a3f7d325bc81f9ddace8..c88819f52ce031416787355eebf3c2eaf0a81fc7",
+        "source": "diff"
+      },
+      {
+        "detail": "The approved issue requires a Users → Conditions → Apps → Controls card, visible signed-out/loading/error/consent/empty states, an inert-markup fixture/test, restrictive CSP, no-store on sensitive responses, and README documentation.",
+        "reference": "project/issues/ISSUE-0005.md",
+        "source": "file"
+      },
+      {
+        "detail": "Static inspection confirms rendering uses createElement/textContent and does not use innerHTML or eval. The CSP meta policy permits only self-hosted default resources and prohibits base, forms, and objects.",
+        "reference": "web/app.js; web/index.html",
+        "source": "file"
+      },
+      {
+        "detail": "python3 -m unittest discover -s tests ran 75 tests but exited 1: 56 completed and all 19 server integration tests errored because the sandbox denied loopback socket binding with PermissionError.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "python3 -m py_compile $(git ls-files '*.py') exited 1 because the read-only sandbox denied creating __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "python3 scripts/validate_repo.py exited 1 because no writable temporary directory was available.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The author handoff records compile exit 0, 75 passing tests, successful manual curl checks, and passing governance validation, but supplies no durable raw check-output artifact and does not record a browser/live-tenant render result with console evidence.",
+        "reference": "project/handoffs/ISSUE-0005-handoff.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: signing out visibly transitions the analysis area to a signed-out state and does not leave tenant policy data displayed.",
+          "Observed: signOut only calls showSignedOut and updates auth-status; it never hides or clears score-block, findings-block, policies-block, or their tenant-derived contents.",
+          "After a successful live analysis, signing out therefore leaves the score, findings, and policy cards visible until another render or page reload. This violates acceptance criterion 3 and unnecessarily retains sensitive tenant configuration in the DOM."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 98,
+            "path": "web/app.js"
+          }
+        ],
+        "remediation": "On sign-out, clear or hide all live analysis content and explicitly render the signed-out results state. Keep sample-mode behavior distinguishable if sample results are intentionally allowed while signed out.",
+        "severity": "medium",
+        "title": "Signing out leaves sensitive tenant analysis visible",
+        "verification": "Add a UI-level test that renders tenant results, invokes signOut with a successful logout response, and verifies tenant-derived nodes are cleared/hidden and the signed-out state is visible; manually repeat the flow in a browser."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: each policy card implements the approved Users → Conditions → Apps → Controls visualization.",
+          "Observed: renderPolicyCard appends only Users, Apps, and Controls flow steps.",
+          "Condition fields such as clientAppTypes, platforms, locations, and risk levels are not represented, so the objective is incomplete."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 180,
+            "path": "web/app.js"
+          }
+        ],
+        "remediation": "Add a Conditions step that safely summarizes relevant condition fields using textContent, including a clear empty/default representation, while preserving the required flow order.",
+        "severity": "medium",
+        "title": "Per-policy cards omit the required Conditions step",
+        "verification": "Render the committed sample and a policy containing client-app, platform, location, or risk conditions; verify every card shows Users → Conditions → Apps → Controls and all values remain inert text."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: acceptance criterion 6 explicitly requires a test/fixture containing a policy display name with markup such as <img onerror>, quotes, and angle brackets and verification that it renders inertly.",
+          "Observed: web/sample-data.json contains ordinary display names, and the added tests only check sample JSON shape, the presence of the CSP string, and no-store headers.",
+          "Static implementation currently uses textContent, but the required regression evidence is absent."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 88,
+            "path": "tests/test_server.py"
+          },
+          {
+            "line": 1,
+            "path": "web/sample-data.json"
+          }
+        ],
+        "remediation": "Add the specified hostile display-name/finding strings to a sanitized UI fixture and a browser-capable or DOM-rendering test that proves they remain text and do not create executable elements or handlers. At minimum, make the review fixture exercise the required input and document the manual verification until a UI harness exists.",
+        "severity": "medium",
+        "title": "Required inert-markup regression fixture and test are missing",
+        "verification": "Run the UI test or documented browser check and verify the hostile string appears literally, no img/script element is created, no handler executes, and the console has no CSP or JavaScript error."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the issue's Documentation section requires a README note describing what users will see and the offline sample path.",
+          "Observed: README.md is unchanged in the base-to-target diff and contains no reference to sample-data.json or the View a sample analysis flow."
+        ],
+        "id": "F-004",
+        "locations": [
+          {
+            "line": 63,
+            "path": "project/issues/ISSUE-0005.md"
+          }
+        ],
+        "remediation": "Update README.md with a concise description of the score, findings, policy flow cards, heuristic limitation, and how to load the offline sample without signing in.",
+        "severity": "low",
+        "title": "Required README documentation was not updated",
+        "verification": "Confirm README.md documents the implemented UI and offline sample workflow and that its instructions match the actual route/button behavior."
+      }
+    ],
+    "limitations": [
+      "The read-only, socket-restricted review environment prevented successful execution of the full test suite, compile check, governance validator, server, curl checks, and browser/manual rendering. DECISION-004 documents this standing launcher limitation, but the reviewer cannot independently verify the author's successful out-of-band claims.",
+      "No JavaScript DOM or browser test harness exists in the repository, so console-error behavior, visual rendering, CSP enforcement, async state transitions, and hostile-string inertness could only be assessed statically.",
+      "A live Microsoft sign-in and tenant fetch were not performed because network access and credentials are unavailable and real tenant data must not enter review evidence.",
+      "The candidate record uses the symbolic phrase “this commit” rather than embedding the full target SHA. The launcher supplies the exact binding, so identity was reviewable, but durable records should be synchronized at closeout.",
+      "Residual risks after the listed repairs include malformed or schema-drifted API/sample payloads causing rendering exceptions, because the UI assumes arrays and expected object shapes without validation; current same-repository producers reduce but do not eliminate that risk."
+    ],
+    "mode": "issue",
+    "outcome": "CHANGES_REQUIRED",
+    "reviewed_sha": "c88819f52ce031416787355eebf3c2eaf0a81fc7",
+    "schema_version": "1.0",
+    "summary": "The target identity and diff are verified, and the implementation has sound text-only rendering, a restrictive CSP, local sample data, and no-store on successful sensitive responses. It does not yet satisfy the approved issue: sign-out leaves tenant results visible, policy cards omit Conditions, the required hostile-markup regression fixture/test is absent, and required README documentation was not added. Independent execution was also unavailable under the documented launcher sandbox.",
+    "target_id": "ISSUE-0005"
+  },
+  "test_only": false
+}

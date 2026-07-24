@@ -43,9 +43,12 @@ python3 server.py            # serves http://127.0.0.1:8765 (override with CAREV
 
 Open the URL to see the shell and a live server-health check, then click *Sign
 in*: enter your tenant, approve the device code shown at
-`microsoft.com/devicelogin`, and you are signed in. Fetching and scoring your
-Conditional Access policies (with admin consent to `Policy.Read.All`) lands in
-later issues.
+`microsoft.com/devicelogin`, and you are signed in. Signing in fetches your
+Conditional Access policies (admin consent to `Policy.Read.All` required) and
+renders a **0–100 heuristic score**, a severity-sorted **findings** list with
+rationale and remediation, and a **flow card** per policy
+(Users → Conditions → Apps → Controls). Click **"View a sample analysis"**
+(no sign-in needed) to see the same rendering against committed sample data.
 
 ## Verify it (offline)
 

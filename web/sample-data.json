@@ -2,7 +2,7 @@
   "policies": [
     {
       "id": "00000000-0000-0000-0000-000000000001",
-      "displayName": "Block legacy authentication",
+      "displayName": "Block legacy auth <img src=x onerror=alert(1)> \"quoted\" & <b>bold</b>",
       "state": "enabled",
       "conditions": {
         "includeUsers": [

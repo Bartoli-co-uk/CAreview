@@ -1,5 +1,5 @@
 <!-- claudex-state
-stage: ISSUE_REVIEW
+stage: ISSUE_REPAIR
 active_issue: ISSUE-0004
 active_milestone: none
 -->
@@ -17,14 +17,14 @@ records described below.
 
 | Field | Current value |
 |---|---|
-| Stage | `ISSUE_REVIEW` |
+| Stage | `ISSUE_REPAIR` |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v1; APPROVED (DECISION-001) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (binds `179a023`) |
 | Roadmap | `ROADMAP.md` v3; APPROVED (DECISION-003, binds `125d74f`) |
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | `M1` (in progress) |
-| Active issue | `ISSUE-0004` (analyzer) — status `REVIEWING`, branch `ai/ISSUE-0004-analyzer`, Starting SHA `e94ef5a` |
+| Active issue | `ISSUE-0004` (analyzer) — status `REPAIRING`, branch `ai/ISSUE-0004-analyzer`, Starting SHA `e94ef5a` |
 | Issue repair round | None |
 | Candidate product commit | Branch HEAD of `ai/ISSUE-0003-graph-client` (the launcher binds the exact SHA at review time) |
 | Latest implementation handoff | `project/handoffs/ISSUE-0004-handoff.md` |

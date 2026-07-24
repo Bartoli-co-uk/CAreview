@@ -1,4 +1,11 @@
-# Claude handoff: ISSUE-0004, round 0
+# Claude handoff: ISSUE-0004, repair round 1
+
+**Repair round 1** addresses Codex round-0 findings on candidate `f211f62ab4d9`:
+F-001 (enforce external-input `requires`; document the CA evaluability model),
+F-002 (add `no-overly-broad-block` rule), F-003 (`POST /api/breakglass` in-memory
+input wired into `/api/analysis`), F-004 (break-glass requires exclusion from every
+broad lockout policy), F-005 (README verify/scoring docs). 67 tests pass. See
+`project/reviews/issues/ISSUE-0004-f211f62ab4d9-claude-response.md`.
 
 **Claude issue task:** `CAreview ISSUE-0004 (analyzer + rules + scoring)`
 **Approved issue:** `project/issues/ISSUE-0004.md` at `e94ef5abad6e95ec899a7bca04e30e9dc3dbea81`
@@ -47,7 +54,7 @@ heuristic (`scoreIsHeuristic: true`), not a compliance certification.
 | Check | Exact command | Actual result/exit | Evidence limitation |
 |---|---|---|---|
 | Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 | none |
-| Tests | `python3 -m unittest discover -s tests` | 62 passed, exit 0 | none |
+| Tests | `python3 -m unittest discover -s tests` | 67 passed, exit 0 | none |
 | Governance | `python3 scripts/validate_repo.py` | passes (out-of-band; sandbox cannot per DECISION-004) | none |
 
 ## Security and residual risk

@@ -191,6 +191,22 @@ class ServerIntegrationTests(unittest.TestCase):
         resp = self._request("/api/analysis", f"127.0.0.1:{self.port}")
         self.assertEqual(resp.status, 401)
 
+    def test_breakglass_endpoint_sanitizes_and_stores(self) -> None:
+        origin = f"http://127.0.0.1:{self.port}"
+        good = "62e90394-69f5-4237-9190-012177145e10"
+        body = json.dumps({"ids": [good, "not-a-guid"]}).encode()
+        try:
+            resp = self._post("/api/breakglass", f"127.0.0.1:{self.port}", origin, body)
+            self.assertEqual(resp.status, 200)
+            self.assertEqual(json.loads(resp.read())["count"], 1)  # junk dropped
+            self.assertEqual(server.get_break_glass_ids(), [good])
+        finally:
+            server.set_break_glass_ids([])  # clear
+
+    def test_breakglass_requires_origin(self) -> None:
+        resp = self._post("/api/breakglass", f"127.0.0.1:{self.port}", None, b"{}")
+        self.assertEqual(resp.status, 403)
+
     def test_analysis_success(self) -> None:
         self._with_token()
         original = server.GRAPH

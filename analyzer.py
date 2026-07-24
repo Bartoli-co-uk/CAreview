@@ -32,10 +32,19 @@ def analyze(policies: list[dict], break_glass_ids: list[str] | None = None) -> d
     evaluable_weight = 0
 
     for rule in rules.RULES:
-        try:
-            status, affected = rule.check(policies, ctx)
-        except Exception:  # noqa: BLE001 — a rule bug must not crash the whole analysis
+        # Enforce declared EXTERNAL-input requirements (Codex F-001): a rule that
+        # needs an input the caller did not supply (e.g. break-glass IDs) is not
+        # evaluable and never scored, driven by its `requires` declaration.
+        missing_external = [
+            key for key in rule.requires if key in rules.EXTERNAL_INPUTS and not ctx.get(key)
+        ]
+        if missing_external:
             status, affected = rules.NOT_EVALUABLE, []
+        else:
+            try:
+                status, affected = rule.check(policies, ctx)
+            except Exception:  # noqa: BLE001 — a rule bug must not crash the whole analysis
+                status, affected = rules.NOT_EVALUABLE, []
 
         evaluated.append({"id": rule.id, "title": rule.title, "status": status})
 

@@ -131,25 +131,51 @@ def _check_not_all_report_only(policies: list[dict], ctx: dict) -> tuple[str, li
     return (PASS, []) if enabled else (FAIL, _names(policies))
 
 
-def _check_break_glass_excluded(policies: list[dict], ctx: dict) -> tuple[str, list[str]]:
-    ids = ctx.get("break_glass_ids") or []
-    if not ids:
-        return NOT_EVALUABLE, []
-    id_set = set(ids)
-    # Look at enabled all-user MFA/block policies; a break-glass account should be
-    # excluded from at least one, so it is not locked out in an emergency.
-    broad = _any(
+def _broad_lockout_policies(policies: list[dict]) -> list[dict]:
+    """Enabled all-user policies that enforce MFA or block (potential lockout)."""
+    return _any(
         policies,
         lambda p: _enabled(p)
         and "All" in _cond(p).get("includeUsers", [])
         and ({"mfa", "block"} & _grant_controls(p)),
     )
+
+
+def _check_break_glass_excluded(policies: list[dict], ctx: dict) -> tuple[str, list[str]]:
+    # Requires the external break-glass input; the analyzer marks this rule
+    # not-evaluable (via `requires`) when the input is absent, so an empty id list
+    # here means "no applicable broad policy to check".
+    ids = ctx.get("break_glass_ids") or []
+    id_set = set(ids)
+    broad = _broad_lockout_policies(policies)
     if not broad:
         return NOT_EVALUABLE, []
-    protected = [
-        p for p in broad if id_set.intersection(_cond(p).get("excludeUsers", []))
+    # Every break-glass account must be excluded from EVERY applicable broad
+    # lockout policy, or an emergency-access account could be locked out. Report
+    # the non-compliant policies (never the account identifiers).
+    noncompliant = [
+        p for p in broad if not id_set.issubset(set(_cond(p).get("excludeUsers", [])))
     ]
-    return (PASS, _names(protected)) if protected else (FAIL, _names(broad))
+    return (PASS, _names(broad)) if not noncompliant else (FAIL, _names(noncompliant))
+
+
+def _check_no_overly_broad_block(policies: list[dict], ctx: dict) -> tuple[str, list[str]]:
+    # An enabled "all users + all apps + block" policy with no exclusions can lock
+    # the entire tenant out. Flag any such policy.
+    def is_lockout(p: dict) -> bool:
+        c = _cond(p)
+        return (
+            _enabled(p)
+            and "block" in _grant_controls(p)
+            and "All" in c.get("includeUsers", [])
+            and "All" in c.get("includeApplications", [])
+            and not c.get("excludeUsers")
+            and not c.get("excludeGroups")
+            and not c.get("excludeRoles")
+        )
+
+    hits = _any(policies, is_lockout)
+    return (FAIL, _names(hits)) if hits else (PASS, [])
 
 
 RULES: list[Rule] = [
@@ -203,8 +229,24 @@ RULES: list[Rule] = [
     ),
     Rule(
         "break-glass-excluded", "Break-glass accounts are excluded from lockout", "medium", 10,
-        "A break-glass account excluded from broad MFA/block policies prevents tenant lockout.",
+        "A break-glass account excluded from every broad MFA/block policy prevents tenant lockout.",
         "Exclude your emergency-access accounts from all-user MFA/block policies (and monitor them).",
         ["conditions.excludeUsers", "break_glass_ids"], _check_break_glass_excluded,
     ),
+    Rule(
+        "no-overly-broad-block", "No all-users/all-apps block without exclusions", "high", 10,
+        "An enabled all-users + all-apps block policy with no exclusions can lock the whole tenant out.",
+        "Scope block policies narrowly or add break-glass/administrator exclusions.",
+        ["state", "grantControls", "conditions.includeUsers", "conditions.includeApplications"],
+        _check_no_overly_broad_block,
+    ),
 ]
+
+# Evaluability model (Codex F-001): a rule is NOT evaluable only when it declares
+# an EXTERNAL input in `requires` that the caller did not supply (currently just
+# `break_glass_ids`), or when a policy-existence rule has no policies to judge.
+# For Conditional Access, the ABSENCE of a protective policy is a genuine FAIL
+# (the tenant should have one), not "missing evidence" — the normalized contract
+# always populates policy fields, so field presence is never itself the signal.
+# External-input requirements are enforced by the analyzer before a rule runs.
+EXTERNAL_INPUTS = frozenset({"break_glass_ids"})

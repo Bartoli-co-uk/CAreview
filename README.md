@@ -50,13 +50,24 @@ later issues.
 ## Verify it (offline)
 
 ```sh
-python3 -m unittest discover -s tests    # server shell tests today; analyzer tests as issues land
+python3 -m unittest discover -s tests          # deterministic; no sign-in needed
 python3 -m py_compile $(git ls-files '*.py')
 ```
 
-The server shell is covered by unit and loopback integration tests today. As the
-Graph and analyzer issues land, the analyzer is additionally unit-tested against
-committed **sanitized** sample-policy fixtures, verifiable without signing in.
+The analyzer is unit-tested against committed **sanitized** sample-policy fixtures
+(`tests/fixtures/{strong,weak,incomplete}_tenant.json`, fake GUIDs, no real tenant
+data): the strong tenant scores 100 and the weak tenant scores low, deterministically.
+
+### What the score means
+
+The 0–100 score is a **heuristic**, not a compliance certification. It is the
+weight-weighted fraction of *evaluable* rules that pass:
+`score = round(100 × passed_weight / evaluable_weight)`. A rule whose required
+evidence is missing — an external input like break-glass account IDs, or an empty
+tenant for policy-existence rules — is reported **not evaluable** and excluded from
+both the numerator and denominator, so missing evidence is never scored as pass or
+fail. Each rule's severity, weight, and required fields are documented in `rules.py`.
+Break-glass IDs can be supplied locally (in memory only) via `POST /api/breakglass`.
 
 ## How this project is built — governance
 

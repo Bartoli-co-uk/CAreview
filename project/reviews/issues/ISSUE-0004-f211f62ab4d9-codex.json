@@ -1,0 +1,196 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T15:07:15Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f94a9-28a7-7123-8195-1e42ea94817f"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "e94ef5abad6e95ec899a7bca04e30e9dc3dbea81",
+    "evidence": [
+      {
+        "detail": "HEAD and launcher target both resolve to f211f62ab4d941ba53f77d1d02e6e9819596de44; base resolves to e94ef5abad6e95ec899a7bca04e30e9dc3dbea81. Worktree was clean and detached at the target.",
+        "reference": "git status --short --branch; git rev-parse HEAD",
+        "source": "command"
+      },
+      {
+        "detail": "The exact base-to-target diff contains 11 changed files: analyzer.py, rules.py, server.py, analyzer/server tests and fixtures, plus workflow records.",
+        "reference": "git diff --name-status e94ef5abad6e95ec899a7bca04e30e9dc3dbea81..f211f62ab4d941ba53f77d1d02e6e9819596de44",
+        "source": "diff"
+      },
+      {
+        "detail": "Independent test execution ran 62 tests: 47 passed and 15 server tests errored because the review sandbox denied loopback socket binding. Exit status was 1.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Independent compilation could not complete because the read-only sandbox denied creation of __pycache__. Exit status was 1.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not complete because no writable temporary directory was available in the review sandbox. Exit status was 1.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The committed handoff claims compile exit 0, 62 passing tests, and governance validation passing, but those results could not be independently reproduced in this read-only execution environment.",
+        "reference": "project/handoffs/ISSUE-0004-handoff.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: acceptance criterion 6 and the issue scope require every rule to declare required data-contract fields and become not evaluable when required evidence is absent.",
+          "Observed: Rule.requires is metadata only. analyzer.analyze calls rule.check directly and never validates required fields. Most checks convert absent fields to empty values and return FAIL.",
+          "The incomplete fixture is an empty policy list and its test asserts not-evaluable status for only two rules; the remaining rules produce failures despite having no evidence.",
+          "graph.normalize_policy also converts absent or malformed fields to empty defaults, so the analyzer cannot distinguish missing evidence from known-empty evidence."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 34,
+            "path": "analyzer.py"
+          },
+          {
+            "line": 37,
+            "path": "rules.py"
+          },
+          {
+            "line": 51,
+            "path": "tests/test_analyzer.py"
+          },
+          {
+            "line": 124,
+            "path": "graph.py"
+          }
+        ],
+        "remediation": "Preserve field-presence/evidence metadata in the normalized contract or define another reliable completeness signal, enforce each rule's requires declaration before evaluation, and expand the incomplete fixture/tests to prove every affected rule is excluded rather than failed.",
+        "severity": "high",
+        "title": "Required-field metadata does not control evaluability",
+        "verification": "Analyze policies missing each declared requirement and assert the corresponding rule is not_evaluable, contributes no finding, and is excluded from both score numerator and denominator."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: ISSUE-0004 explicitly includes a starter rule for an overly broad all-users plus all-apps grant.",
+          "Observed: rules.RULES contains nine rules, but none evaluates the combination of conditions.includeUsers, conditions.includeApplications, and grant controls for excessive breadth.",
+          "The strong and weak fixture tests contain no assertion for this required rule."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 155,
+            "path": "rules.py"
+          },
+          {
+            "line": 77,
+            "path": "tests/test_analyzer.py"
+          }
+        ],
+        "remediation": "Add the required declarative overly-broad-grant rule with documented weight, severity, required fields, rationale and remediation, plus positive, negative and missing-evidence fixture coverage.",
+        "severity": "medium",
+        "title": "Required overly broad grant rule is absent",
+        "verification": "Run fixture tests showing an unsafe all-users/all-apps grant produces the expected finding, a safely scoped policy does not, and absent required evidence is not evaluable."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the ISSUE-0003 contract defines local user-supplied break_glass_ids input for ISSUE-0004 to consume.",
+          "Observed: analyzer.analyze accepts the input, but server._analysis always invokes analyzer.analyze(policies) without any input source. Consequently the live /api/analysis path can never evaluate the break-glass rule.",
+          "The endpoint tests exercise only the permanently absent-input path."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 19,
+            "path": "analyzer.py"
+          },
+          {
+            "line": 174,
+            "path": "server.py"
+          },
+          {
+            "line": 193,
+            "path": "tests/test_server.py"
+          }
+        ],
+        "remediation": "Provide an approved local input path for sanitized break-glass IDs, retain the values in memory only, pass them into analyzer.analyze, and test supplied, absent, invalid and cleared input behavior.",
+        "severity": "medium",
+        "title": "API analysis cannot consume the break-glass input contract",
+        "verification": "Exercise /api/analysis with a supplied valid emergency-account ID and assert the rule passes or fails as appropriate; assert absent/invalid input remains not evaluable and no input is persisted."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: emergency accounts should be excluded from all applicable broad MFA/block policies, as stated by the rule remediation.",
+          "Observed: the check passes when any one broad policy excludes any supplied emergency ID. It does not require every supplied ID to be excluded, nor exclusion from every broad policy.",
+          "A tenant with two broad policies where only one excludes one of two emergency accounts is therefore reported as passing."
+        ],
+        "id": "F-004",
+        "locations": [
+          {
+            "line": 134,
+            "path": "rules.py"
+          }
+        ],
+        "remediation": "Require every sanitized break-glass ID to be excluded from every applicable enabled broad lockout policy, or explicitly document and obtain approval for a weaker intended definition. Report the noncompliant policies/accounts without exposing unnecessary identifiers.",
+        "severity": "high",
+        "title": "Break-glass rule passes partial exclusions",
+        "verification": "Add tests with multiple broad policies and multiple emergency IDs; the rule must fail if any applicable policy omits any supplied emergency account and pass only when coverage is complete."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the issue documentation section requires README/verify instructions describing the offline analyzer test and explaining that the score is heuristic rather than compliance.",
+          "Observed: README.md was not changed in the candidate diff and still says analysis is not implemented yet.",
+          "The handoff documents the scoring formula, but it does not satisfy the requested user-facing README/verify update."
+        ],
+        "id": "F-005",
+        "locations": [
+          {
+            "line": 12,
+            "path": "README.md"
+          }
+        ],
+        "remediation": "Reconcile the issue's allowed paths with its documentation requirement, then update README/verify content to describe the implemented offline fixtures, deterministic test command, scoring formula/limitations, and non-compliance meaning.",
+        "severity": "medium",
+        "title": "Required analyzer documentation is stale and missing",
+        "verification": "Inspect README/verify from the repaired candidate and run the documented offline command; confirm it no longer says analysis is unimplemented and clearly labels the score heuristic."
+      }
+    ],
+    "limitations": [
+      "The mandatory test command could not be fully executed because the review sandbox prohibits loopback socket binding; 15 server integration tests errored for that environmental reason.",
+      "The mandatory compile command could not complete because the read-only checkout prohibits creation of Python bytecode caches.",
+      "Governance validation could not complete because the sandbox exposed no writable temporary directory.",
+      "The author-recorded successful checks are repository claims rather than independently reproducible evidence in this review. Per the binding, execution failure requires BLOCKED even though substantive required changes were also found.",
+      "No live Microsoft sign-in or Graph request was attempted; those are protected actions and are not issue-completion evidence."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "f211f62ab4d941ba53f77d1d02e6e9819596de44",
+    "schema_version": "1.0",
+    "summary": "Target identity matches, but the review is blocked because mandatory checks could not be independently completed in the read-only sandbox. Static review also found five required changes: missing-evidence declarations are not enforced, the required overly-broad-grant rule is absent, the API cannot receive break-glass IDs, partial break-glass exclusions incorrectly pass, and required README/verify documentation remains stale.",
+    "target_id": "ISSUE-0004"
+  },
+  "test_only": false
+}

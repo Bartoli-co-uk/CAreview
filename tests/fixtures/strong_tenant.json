@@ -6,7 +6,7 @@
     "conditions": {
       "clientAppTypes": ["exchangeActiveSync", "other"],
       "applications": {"includeApplications": ["All"]},
-      "users": {"includeUsers": ["All"]}
+      "users": {"includeUsers": ["All"], "excludeUsers": ["11111111-1111-1111-1111-111111111111"]}
     },
     "grantControls": {"operator": "OR", "builtInControls": ["block"]}
   },
@@ -46,7 +46,7 @@
     "state": "enabled",
     "conditions": {
       "signInRiskLevels": ["high"],
-      "users": {"includeUsers": ["All"]},
+      "users": {"includeUsers": ["All"], "excludeUsers": ["11111111-1111-1111-1111-111111111111"]},
       "applications": {"includeApplications": ["All"]}
     },
     "grantControls": {"operator": "OR", "builtInControls": ["mfa"]}

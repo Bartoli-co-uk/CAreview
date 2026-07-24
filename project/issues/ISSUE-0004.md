@@ -1,6 +1,6 @@
 # ISSUE-0004: Analyzer engine, rule set, and scoring
 
-**Status:** `REVIEWING`
+**Status:** `REPAIRING`
 **Milestone:** `M1`
 **Approved roadmap:** `ROADMAP.md` version `3` at `125d74f6d4bfe85f1a727293064d0887f2d121c7`
 **Dependencies:** `ISSUE-0003`
@@ -81,7 +81,8 @@ findings, fully unit-tested against committed sanitized fixtures.
 
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
-| 0 | `[path]` | `[SHA]` | `[path/summary]` | `[path]` | `[outcome]` |
+| 0 | `ISSUE-0004-handoff.md` | `f211f62ab4d9…` | py_compile 0; 62 tests pass; validator pass | `ISSUE-0004-f211f62ab4d9-codex.json` | BLOCKED (F-001 evaluability, F-002 overly-broad rule, F-003 API input, F-004 break-glass, F-005 docs) |
+| 1 (repair) | `ISSUE-0004-handoff.md` | repair-1 candidate (launcher binds SHA) | py_compile 0; 67 tests pass; validator pass | pending re-review | pending |
 
 Maximum two repair rounds; every Codex review is a fresh ephemeral read-only
 process against the named SHA.

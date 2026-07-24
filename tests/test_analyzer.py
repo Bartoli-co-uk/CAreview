@@ -37,10 +37,46 @@ class AnalyzerTests(unittest.TestCase):
 
     def test_weak_tenant_scores_low(self) -> None:
         result = analyzer.analyze(load("weak_tenant.json"))
-        self.assertEqual(result["score"], 0)
+        self.assertLess(result["score"], 20)  # only the "no overly-broad block" rule passes
         ids = {f["id"] for f in result["findings"]}
         self.assertIn("mfa-admins", ids)
         self.assertIn("not-all-report-only", ids)
+
+    def test_overly_broad_block_flagged(self) -> None:
+        lockout = graph.normalize_policy({
+            "id": "x", "displayName": "Block everything", "state": "enabled",
+            "conditions": {"users": {"includeUsers": ["All"]}, "applications": {"includeApplications": ["All"]}},
+            "grantControls": {"builtInControls": ["block"]},
+        })
+        ids = {f["id"] for f in analyzer.analyze([lockout])["findings"]}
+        self.assertIn("no-overly-broad-block", ids)
+
+    def test_overly_broad_block_not_flagged_with_exclusion(self) -> None:
+        ok = graph.normalize_policy({
+            "id": "x", "displayName": "Block with exclusion", "state": "enabled",
+            "conditions": {
+                "users": {"includeUsers": ["All"], "excludeUsers": ["22222222-2222-2222-2222-222222222222"]},
+                "applications": {"includeApplications": ["All"]},
+            },
+            "grantControls": {"builtInControls": ["block"]},
+        })
+        ids = {f["id"] for f in analyzer.analyze([ok])["findings"]}
+        self.assertNotIn("no-overly-broad-block", ids)
+
+    def test_break_glass_requires_exclusion_from_every_broad_policy(self) -> None:
+        bg = ["11111111-1111-1111-1111-111111111111"]
+        policies = load("strong_tenant.json")
+        # All broad policies exclude the break-glass id → pass.
+        result_pass = analyzer.analyze(policies, break_glass_ids=bg)
+        self.assertNotIn("break-glass-excluded", {f["id"] for f in result_pass["findings"]})
+        # Remove the exclusion from one broad policy → fail.
+        for p in policies:
+            if "11111111-1111-1111-1111-111111111111" in p["conditions"]["excludeUsers"] \
+                    and "mfa" in [c.lower() for c in p["grantControls"]["builtInControls"]]:
+                p["conditions"]["excludeUsers"] = []
+                break
+        result_fail = analyzer.analyze(policies, break_glass_ids=bg)
+        self.assertIn("break-glass-excluded", {f["id"] for f in result_fail["findings"]})
 
     def test_findings_sorted_by_severity(self) -> None:
         result = analyzer.analyze(load("weak_tenant.json"))

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import threading
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -27,6 +28,22 @@ import graph
 AUTH = auth.AuthManager()
 # Read-only Microsoft Graph client for Conditional Access policies.
 GRAPH = graph.GraphClient()
+
+# Optional, user-supplied break-glass account object IDs (sanitized GUIDs), held
+# in memory only and never persisted. Used by the break-glass analysis rule.
+_BG_LOCK = threading.Lock()
+_break_glass_ids: list[str] = []
+
+
+def set_break_glass_ids(ids: object) -> list[str]:
+    with _BG_LOCK:
+        _break_glass_ids[:] = graph.sanitize_object_ids(ids)
+        return list(_break_glass_ids)
+
+
+def get_break_glass_ids() -> list[str]:
+    with _BG_LOCK:
+        return list(_break_glass_ids)
 
 # Reject request bodies larger than this; the JSON we accept is tiny.
 MAX_BODY_BYTES = 64 * 1024
@@ -188,7 +205,7 @@ class CAReviewHandler(BaseHTTPRequestHandler):
         except Exception:  # noqa: BLE001 — never leak an internal error/stack to the client
             self._send_json(HTTPStatus.BAD_GATEWAY, {"error": "graph_error", "message": "unexpected error"})
             return
-        self._send_json(HTTPStatus.OK, analyzer.analyze(policies))
+        self._send_json(HTTPStatus.OK, analyzer.analyze(policies, get_break_glass_ids()))
 
     def _read_json_body(self) -> dict | None:
         try:
@@ -230,6 +247,12 @@ class CAReviewHandler(BaseHTTPRequestHandler):
             if path == "/api/auth/logout":
                 AUTH.logout()
                 self._send_json(HTTPStatus.OK, {"state": "signed_out"})
+                return
+            if path == "/api/breakglass":
+                # Optional local input: sanitized GUIDs, in memory only. An empty
+                # or missing list clears it.
+                stored = set_break_glass_ids(body.get("ids", []))
+                self._send_json(HTTPStatus.OK, {"count": len(stored)})
                 return
         except Exception:  # noqa: BLE001 — never leak an internal error/stack to the client
             self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"state": "error", "error": "internal_error"})

@@ -1,6 +1,6 @@
 <!-- claudex-state
-stage: ISSUE_REPAIR
-active_issue: ISSUE-0003
+stage: IMPLEMENTATION
+active_issue: none
 active_milestone: none
 -->
 
@@ -17,23 +17,23 @@ records described below.
 
 | Field | Current value |
 |---|---|
-| Stage | `ISSUE_REPAIR` |
+| Stage | `IMPLEMENTATION` |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v1; APPROVED (DECISION-001) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (binds `179a023`) |
 | Roadmap | `ROADMAP.md` v3; APPROVED (DECISION-003, binds `125d74f`) |
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | `M1` (in progress) |
-| Active issue | `ISSUE-0003` (Graph client) — status `REPAIRING`, branch `ai/ISSUE-0003-graph-client`, Starting SHA `98a20bc` |
-| Issue repair round | Repair round 3 (DECISION-007; F-001 malformed-policy crash, F-002 metadata) |
+| Active issue | None — ISSUE-0003 COMPLETE and merged |
+| Issue repair round | None |
 | Candidate product commit | Branch HEAD of `ai/ISSUE-0003-graph-client` (the launcher binds the exact SHA at review time) |
 | Latest implementation handoff | `project/handoffs/ISSUE-0003-handoff.md` |
-| Latest Codex review | ISSUE-0003 repair-2 `ISSUE-0003-8733e07402e7-codex.json` (BLOCKED; F-001 crash, F-002 metadata); repair-3 candidate pending final review |
-| Completed issues | `ISSUE-0001` (server shell) `23e6633`; `ISSUE-0002` (device-code auth) `3c8fb869` |
-| Last human decision | `DECISION-006` (ISSUE-0002 extra round + merge); also `DECISION-005` (autonomy), `DECISION-004` (gate policy), `DECISION-003`..`001` |
+| Latest Codex review | ISSUE-0003 final `ISSUE-0003-065675e53ee8-codex.json` — no product-code defect (DECISION-004/007) |
+| Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e` |
+| Last human decision | `DECISION-007` (raised repair budget); also `DECISION-006`..`001` |
 | Open blockers | None. Standing: Codex issue reviews stay `BLOCKED` on execution evidence (DECISION-004); author runs checks out-of-band |
-| Next required actor | Claude (run the ISSUE-0003 Codex review) |
-| Next permitted action | Run `./scripts/run-codex-review.sh issue ISSUE-0003 98a20bc… <HEAD>`; address substantive findings (≤2 repairs); if BLOCKED only on execution evidence, merge under DECISION-004/005. Live Graph fetch is a protected action; STOP before any real tenant call |
+| Next required actor | Claude (implement ISSUE-0004 autonomously per DECISION-005) |
+| Next permitted action | Start `ISSUE-0004` (analyzer + rules + scoring) on branch `ai/ISSUE-0004-analyzer` from `main`; implement with sanitized fixtures, run checks, Codex review + repairs (DECISION-007 budget), merge under DECISION-004/005 |
 | Actions not yet permitted | Merge without a clean review, publication, deployment, live tenant auth/fetch, or any protected action |
 
 When this repository is adopted for a project, replace the values above and add

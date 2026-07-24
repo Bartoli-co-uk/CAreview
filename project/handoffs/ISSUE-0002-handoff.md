@@ -1,4 +1,11 @@
-# Claude handoff: ISSUE-0002, round 0
+# Claude handoff: ISSUE-0002, repair round 1
+
+**Repair history:** round 0 candidate `536f11cb7a9f` → Codex `CHANGES_REQUIRED`
+(F-001 concurrency race on token state, F-002 uncaught network/malformed errors);
+repair round 1 adds an `AuthManager` lock with a current-session identity check
+and full transport-error normalization. See
+`project/reviews/issues/ISSUE-0002-536f11cb7a9f-claude-response.md`.
+
 
 **Claude issue task:** `CAreview ISSUE-0002 (device-code auth)`
 **Approved issue:** `project/issues/ISSUE-0002.md` at `eb0490c7b7126dda7a573ef6a6bfbbf3de2398fe`
@@ -63,7 +70,7 @@ protected action).
 | Check | Exact command | Actual result/exit | Evidence limitation |
 |---|---|---|---|
 | Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 | none |
-| Tests | `python3 -m unittest discover -s tests` | 27 passed, exit 0 | none |
+| Tests | `python3 -m unittest discover -s tests` | 32 passed, exit 0 | none |
 | Manual origin | `curl -X POST … /api/auth/logout` with/without Origin | no-origin 403; same-origin `{"state":"signed_out"}` | none |
 | Governance | `python3 scripts/validate_repo.py` | passes (out-of-band; sandbox cannot per DECISION-004) | none |
 

@@ -163,6 +163,50 @@ class LifecycleTests(unittest.TestCase):
         with self.assertRaises(auth.AuthError):
             mgr.start()
 
+    def test_inflight_poll_after_logout_does_not_restore_token(self) -> None:
+        # Simulate logout happening during the token network call: the stale poll
+        # result must not install a token (F-001 concurrency fix).
+        clock = FakeClock()
+        holder: dict = {}
+
+        def transport(url: str, data: bytes) -> tuple[int, dict]:
+            if "devicecode" in url:
+                return DEVICE_OK
+            holder["mgr"].logout()
+            return (200, {"access_token": "T", "expires_in": 3600})
+
+        mgr = auth.AuthManager(transport=transport, clock=clock)
+        holder["mgr"] = mgr
+        handle = mgr.start()["handle"]
+        result = mgr.poll(handle)
+        self.assertNotEqual(result.get("state"), "success")
+        self.assertFalse(mgr.is_authenticated())
+
+    def test_network_error_during_poll_is_transient(self) -> None:
+        clock = FakeClock()
+        mgr, _ = manager([DEVICE_OK, (0, {"error": "network_error"})], clock)
+        handle = mgr.start()["handle"]
+        self.assertEqual(mgr.poll(handle)["state"], "pending")
+        self.assertIsNotNone(mgr._session)  # session intact for retry
+
+    def test_bad_response_during_poll_is_transient(self) -> None:
+        clock = FakeClock()
+        mgr, _ = manager([DEVICE_OK, (200, {"error": "bad_response"})], clock)
+        handle = mgr.start()["handle"]
+        self.assertEqual(mgr.poll(handle)["state"], "pending")
+
+    def test_start_network_error_raises(self) -> None:
+        clock = FakeClock()
+        mgr, _ = manager([(0, {"error": "network_error"})], clock)
+        with self.assertRaises(auth.AuthError):
+            mgr.start()
+
+    def test_urllib_transport_normalizes_network_failure(self) -> None:
+        # A transport-level failure returns (0, network_error), never raises.
+        status, payload = auth.urllib_transport("https://localhost:1/oauth2/v2.0/token", b"x=1")
+        self.assertEqual(status, 0)
+        self.assertEqual(payload.get("error"), "network_error")
+
 
 if __name__ == "__main__":
     unittest.main()

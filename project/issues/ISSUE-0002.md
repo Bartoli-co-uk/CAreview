@@ -1,6 +1,6 @@
 # ISSUE-0002: Device-code authentication
 
-**Status:** `REVIEWING`
+**Status:** `REPAIRING`
 **Milestone:** `M1`
 **Approved roadmap:** `ROADMAP.md` version `3` at `125d74f6d4bfe85f1a727293064d0887f2d121c7`
 **Dependencies:** `ISSUE-0001` (COMPLETE)
@@ -98,10 +98,12 @@ expired, denied, success, expiry, logout, concurrency).
 
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
-| 0 | `[path]` | `[SHA]` | `[path/summary]` | `[path]` | `[outcome]` |
+| 0 | `ISSUE-0002-handoff.md` | `536f11cb7a9f…` | py_compile 0; 27 tests pass; validator pass; manual origin OK | `ISSUE-0002-536f11cb7a9f-codex.json` | CHANGES_REQUIRED (F-001 concurrency, F-002 error handling) |
+| 1 (repair) | `ISSUE-0002-handoff.md` | repair-1 candidate (launcher binds SHA) | py_compile 0; 32 tests pass; validator pass | pending re-review | pending |
 
 Maximum two repair rounds; every Codex review is a fresh ephemeral read-only
-process against the named SHA.
+process against the named SHA. Per `DECISION-004`, a `BLOCKED` outcome whose only
+basis is the execution-evidence limitation is acceptable and the human merges.
 
 ## Completion
 

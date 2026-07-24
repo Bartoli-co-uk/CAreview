@@ -1,0 +1,164 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T13:18:00Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f9445-3f37-77b0-b9fe-8b1ffde5c29c"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "eb0490c7b7126dda7a573ef6a6bfbbf3de2398fe",
+    "evidence": [
+      {
+        "detail": "Detached checkout HEAD exactly matches the launcher-supplied target SHA; the issue Starting SHA exactly matches the supplied base SHA. The compared diff contains 11 changed files.",
+        "reference": "git rev-parse HEAD; git diff --stat eb0490c7b7126dda7a573ef6a6bfbbf3de2398fe 536f11cb7a9f76eb2c3bcf9fafcfb08b0dba50ba",
+        "source": "command"
+      },
+      {
+        "detail": "The approved issue requires logout/cancellation to clear tokens and pending handles, single-session concurrency, graceful error handling, mocked unit coverage, compile, tests, and documentation.",
+        "reference": "project/issues/ISSUE-0002.md",
+        "source": "file"
+      },
+      {
+        "detail": "Static inspection covered the complete candidate diff, authentication lifecycle, HTTP endpoints, browser flow, tests, documentation, and governance records.",
+        "reference": "auth.py; server.py; web/app.js; web/index.html; tests/test_auth.py; tests/test_server.py; README.md",
+        "source": "diff"
+      },
+      {
+        "detail": "Independent test execution ran 27 tests: 18 completed successfully, while all 9 socket-based server integration tests errored because the review sandbox prohibits loopback binding.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Independent compile execution could not complete because py_compile attempted to create __pycache__ in the read-only checkout.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Independent governance validation could not complete because no writable temporary directory is available.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The committed handoff records author-observed results of 27 passing tests, successful compilation, successful governance validation, and manual Origin checks, but these remain author-provided evidence rather than independently reproduced results.",
+        "reference": "project/handoffs/ISSUE-0002-handoff.md",
+        "source": "file"
+      },
+      {
+        "detail": "git diff --check completed successfully with no whitespace errors.",
+        "reference": "git diff --check eb0490c7b7126dda7a573ef6a6bfbbf3de2398fe 536f11cb7a9f76eb2c3bcf9fafcfb08b0dba50ba",
+        "source": "check"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: logout/cancellation must leave no access token or pending session, and at most one sign-in/session may be active.",
+          "Observed: ThreadingHTTPServer permits concurrent requests, but AuthManager state has no synchronization. poll() copies self._session, performs a blocking network call, and later writes self._access_token without confirming that the session is still current.",
+          "If logout() runs while the token request is in flight, logout clears state, after which the earlier poll can restore an access token at auth.py:178-182. A concurrent start can likewise be overwritten or mixed with completion from an older poll.",
+          "The existing logout and concurrency tests are sequential and therefore do not exercise either race."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 165,
+            "path": "auth.py"
+          },
+          {
+            "line": 178,
+            "path": "auth.py"
+          },
+          {
+            "line": 195,
+            "path": "auth.py"
+          },
+          {
+            "line": 229,
+            "path": "server.py"
+          },
+          {
+            "line": 129,
+            "path": "tests/test_auth.py"
+          },
+          {
+            "line": 148,
+            "path": "tests/test_auth.py"
+          }
+        ],
+        "remediation": "Make AuthManager lifecycle transitions concurrency-safe. Serialize relevant state changes or use a generation/session identity check so an in-flight poll can only install a token if its session is still current and has not been cancelled. Ensure concurrent starts have deterministic supersession semantics and logout invalidates all in-flight work.",
+        "severity": "high",
+        "title": "F-001: An in-flight poll can restore a token after logout or session supersession",
+        "verification": "Add deterministic multithreaded tests using a blocking fake transport: start a poll, invoke logout or a newer start while transport is blocked, release the old poll, and assert that no old token is installed, the cancelled handle remains invalid, and only the newest session can succeed. Rerun the full test suite."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: endpoint and transport failures should be surfaced as controlled error states without crashing request handling.",
+          "Observed: urllib_transport catches HTTPError only. URLError, timeout, connection failures, and malformed JSON from a successful HTTP response propagate directly.",
+          "AuthManager.start() and poll() do not normalize those exceptions. server._auth_start catches only AuthError, while _auth_poll has no exception handling around AUTH.poll(). A transient Microsoft/network failure therefore terminates the request handler without a JSON response.",
+          "Current tests cover OAuth error payloads but not transport exceptions, malformed JSON, missing required success fields, or invalid numeric interval/expiry values."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 74,
+            "path": "auth.py"
+          },
+          {
+            "line": 85,
+            "path": "auth.py"
+          },
+          {
+            "line": 129,
+            "path": "auth.py"
+          },
+          {
+            "line": 158,
+            "path": "auth.py"
+          },
+          {
+            "line": 187,
+            "path": "server.py"
+          },
+          {
+            "line": 199,
+            "path": "server.py"
+          },
+          {
+            "line": 160,
+            "path": "tests/test_auth.py"
+          }
+        ],
+        "remediation": "Convert network, timeout, decoding, malformed-response, and invalid-field failures into bounded AuthError or structured poll error results without including sensitive response data. Ensure both endpoints always return a controlled JSON error response. Validate required response fields and numeric ranges before creating or updating state.",
+        "severity": "medium",
+        "title": "F-002: Common identity-provider and network failures escape as uncaught exceptions",
+        "verification": "Add mocked tests for URLError/timeout, malformed JSON, missing user_code/device_code, invalid interval/expires_in, and poll transport failure. Exercise both HTTP endpoints and assert stable JSON errors with no handler traceback or token leakage; then rerun all required checks."
+      }
+    ],
+    "limitations": [
+      "The review sandbox is read-only and prohibits loopback socket binding. Consequently, the full tests, compile check, governance validator, and live server could not be independently completed.",
+      "The author records successful out-of-band checks at the reviewed commit, but the reviewer cannot independently verify those results here. DECISION-004 documents the human-approved disposition process for this recurring evidence limitation; it does not waive substantive findings.",
+      "The protected live Microsoft sign-in was not performed. This is explicitly excluded from automated completion and requires separate human approval naming the tenant and identity.",
+      "No browser automation or live Microsoft response was available, so UI behavior and first-party client/scope compatibility were assessed statically only.",
+      "Residual risks after the findings are repaired include the documented unauthenticated loopback API boundary and unverified live tenant compatibility."
+    ],
+    "mode": "issue",
+    "outcome": "CHANGES_REQUIRED",
+    "reviewed_sha": "536f11cb7a9f76eb2c3bcf9fafcfb08b0dba50ba",
+    "schema_version": "1.0",
+    "summary": "The candidate matches the supplied base/head identity and implements most ISSUE-0002 behavior, but it has two substantive blockers. Unsynchronized authentication state allows an in-flight poll to restore a sensitive token after logout or supersession, and ordinary network/provider failures can escape as uncaught handler exceptions. Independent execution was also constrained by the read-only, socket-restricted review environment.",
+    "target_id": "ISSUE-0002"
+  },
+  "test_only": false
+}

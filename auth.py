@@ -15,12 +15,18 @@ from __future__ import annotations
 import json
 import re
 import secrets
+import threading
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from typing import Callable
+
+# Transport-level failures (network, timeout, malformed response) are surfaced as
+# these sentinel error codes rather than raised, so a blip during polling is
+# retried instead of crashing the request handler.
+_TRANSIENT_ERRORS = frozenset({"network_error", "bad_response"})
 
 # Microsoft Graph PowerShell first-party public client (public by design; not a
 # secret). Chosen for broad delegated-scope device-code support.
@@ -43,6 +49,12 @@ Transport = Callable[[str, bytes], "tuple[int, dict]"]
 
 class AuthError(Exception):
     """A device-code request failed before a pollable session existed."""
+
+
+def _safe_error(payload: dict) -> str:
+    """A short, non-sensitive error label from a provider payload."""
+    value = payload.get("error_description") or payload.get("error")
+    return str(value)[:200] if value else ""
 
 
 def _authority(tenant: str) -> str:
@@ -72,7 +84,13 @@ def build_token_request(tenant: str, client_id: str, device_code: str) -> tuple[
 
 
 def urllib_transport(url: str, data: bytes) -> tuple[int, dict]:
-    """Default transport: POST form data and return ``(status, parsed_json)``."""
+    """Default transport: POST form data and return ``(status, parsed_json)``.
+
+    All failure modes are converted to a ``(status, dict)`` result rather than
+    raised: network/timeout/connection errors become ``(0, {"error":
+    "network_error"})`` and a non-JSON or non-object body becomes
+    ``{"error": "bad_response"}``. No response body is echoed back.
+    """
     request = urllib.request.Request(
         url,
         data=data,
@@ -84,14 +102,20 @@ def urllib_transport(url: str, data: bytes) -> tuple[int, dict]:
     )
     try:
         with urllib.request.urlopen(request, timeout=30) as response:  # noqa: S310 (fixed host)
-            return response.status, json.loads(response.read().decode("utf-8"))
+            raw = response.read().decode("utf-8", "replace")
+            status = response.status
     except urllib.error.HTTPError as exc:
         raw = exc.read().decode("utf-8", "replace")
-        try:
-            payload = json.loads(raw)
-        except json.JSONDecodeError:
-            payload = {"error": "http_error", "error_description": raw[:200]}
-        return exc.code, payload
+        status = exc.code
+    except (urllib.error.URLError, TimeoutError, OSError):
+        return 0, {"error": "network_error"}
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return status, {"error": "bad_response"}
+    if not isinstance(payload, dict):
+        return status, {"error": "bad_response"}
+    return status, payload
 
 
 @dataclass
@@ -121,6 +145,11 @@ class AuthManager:
         self.scopes = scopes
         self._transport: Transport = transport or urllib_transport
         self._clock = clock
+        # A single lock serializes all lifecycle transitions. The blocking network
+        # call in poll() happens OUTSIDE the lock; the result is only installed if
+        # the same session object is still current (identity check), so a logout or
+        # a superseding start during the call cannot be overwritten by a stale poll.
+        self._lock = threading.RLock()
         self._session: _Session | None = None
         self._access_token: str | None = None
         self._token_expires_at: float = 0.0
@@ -130,30 +159,35 @@ class AuthManager:
         """Begin a device-code sign-in, superseding any prior session."""
         url, data = build_devicecode_request(tenant, self.client_id, self.scopes)
         status, payload = self._transport(url, data)
-        if status != 200 or "device_code" not in payload:
-            raise AuthError(payload.get("error_description") or "device code request failed")
-        now = self._clock()
-        session = _Session(
-            handle=secrets.token_urlsafe(18),
-            device_code=payload["device_code"],
-            user_code=payload["user_code"],
-            verification_uri=payload.get("verification_uri") or payload.get("verification_url", ""),
-            interval=int(payload.get("interval", 5)),
-            expires_at=now + int(payload.get("expires_in", 900)),
-            tenant=tenant,
-        )
-        # Single-concurrency: a new sign-in supersedes any pending one and clears
-        # any existing token so state cannot be mixed across sessions.
-        self._session = session
-        self._access_token = None
-        self._token_expires_at = 0.0
-        return {
-            "handle": session.handle,
-            "user_code": session.user_code,
-            "verification_uri": session.verification_uri,
-            "expires_in": int(session.expires_at - now),
-            "interval": session.interval,
-        }
+        if status != 200 or "device_code" not in payload or "user_code" not in payload:
+            raise AuthError(_safe_error(payload) or "device code request failed")
+        try:
+            interval = int(payload.get("interval", 5))
+            expires_in = int(payload.get("expires_in", 900))
+        except (TypeError, ValueError):
+            raise AuthError("malformed device code response")
+        with self._lock:
+            now = self._clock()
+            session = _Session(
+                handle=secrets.token_urlsafe(18),
+                device_code=payload["device_code"],
+                user_code=payload["user_code"],
+                verification_uri=payload.get("verification_uri") or payload.get("verification_url", ""),
+                interval=interval,
+                expires_at=now + expires_in,
+                tenant=tenant,
+            )
+            # Single-concurrency: supersede any pending session and clear any token.
+            self._session = session
+            self._access_token = None
+            self._token_expires_at = 0.0
+            return {
+                "handle": session.handle,
+                "user_code": session.user_code,
+                "verification_uri": session.verification_uri,
+                "expires_in": int(session.expires_at - now),
+                "interval": session.interval,
+            }
 
     def poll(self, handle: str) -> dict:
         """Advance the sign-in for ``handle``; returns a state dict.
@@ -162,51 +196,64 @@ class AuthManager:
         is server-controlled: calls faster than the interval return ``pending``
         without contacting the token endpoint, and ``slow_down`` widens it.
         """
-        session = self._session
-        if session is None or handle != session.handle:
-            return {"state": "error", "error": "unknown_or_superseded_handle"}
-        now = self._clock()
-        if now >= session.expires_at:
-            self._session = None
-            return {"state": "expired"}
-        if session.last_poll and (now - session.last_poll) < session.interval:
-            return {"state": "pending"}
-        session.last_poll = now
+        with self._lock:
+            session = self._session
+            if session is None or handle != session.handle:
+                return {"state": "error", "error": "unknown_or_superseded_handle"}
+            now = self._clock()
+            if now >= session.expires_at:
+                self._session = None
+                return {"state": "expired"}
+            if session.last_poll and (now - session.last_poll) < session.interval:
+                return {"state": "pending"}
+            session.last_poll = now
+            tenant, device_code = session.tenant, session.device_code
 
-        url, data = build_token_request(session.tenant, self.client_id, session.device_code)
+        url, data = build_token_request(tenant, self.client_id, device_code)
         status, payload = self._transport(url, data)
-        if status == 200 and "access_token" in payload:
-            self._access_token = payload["access_token"]
-            self._token_expires_at = now + int(payload.get("expires_in", 3600))
-            self._session = None
-            return {"state": "success"}
 
-        error = payload.get("error")
-        if error == "authorization_pending":
-            return {"state": "pending"}
-        if error == "slow_down":
-            session.interval += 5
-            return {"state": "pending"}
-        # Terminal errors (expired_token, authorization_declined, access_denied,
-        # bad_verification_code, …): end the session.
-        self._session = None
-        return {"state": "error", "error": error or "unknown_error"}
+        with self._lock:
+            # Only act if this poll's session is still the current one; a logout or
+            # a superseding start during the network call invalidates the result.
+            if self._session is not session:
+                return {"state": "error", "error": "superseded"}
+            if status == 200 and "access_token" in payload:
+                try:
+                    expires_in = int(payload.get("expires_in", 3600))
+                except (TypeError, ValueError):
+                    expires_in = 3600
+                self._access_token = payload["access_token"]
+                self._token_expires_at = self._clock() + expires_in
+                self._session = None
+                return {"state": "success"}
+            error = payload.get("error")
+            if error in _TRANSIENT_ERRORS or error == "authorization_pending":
+                return {"state": "pending"}
+            if error == "slow_down":
+                session.interval += 5
+                return {"state": "pending"}
+            # Terminal provider errors (expired_token, authorization_declined,
+            # access_denied, bad_verification_code, unexpected response, …).
+            self._session = None
+            return {"state": "error", "error": error or "unexpected_response"}
 
     def logout(self) -> None:
         """Clear any pending session and token from memory."""
-        self._session = None
-        self._access_token = None
-        self._token_expires_at = 0.0
+        with self._lock:
+            self._session = None
+            self._access_token = None
+            self._token_expires_at = 0.0
 
     # -- token access (used by later issues) ------------------------------
     def get_token(self) -> str | None:
         """Return the access token if present and unexpired, else ``None``."""
-        if self._access_token is not None and self._clock() < self._token_expires_at:
-            return self._access_token
-        # Expired or absent: drop it. The MVP re-authenticates rather than
-        # refreshing (no refresh token is retained).
-        self._access_token = None
-        return None
+        with self._lock:
+            if self._access_token is not None and self._clock() < self._token_expires_at:
+                return self._access_token
+            # Expired or absent: drop it. The MVP re-authenticates rather than
+            # refreshing (no refresh token is retained).
+            self._access_token = None
+            return None
 
     def is_authenticated(self) -> bool:
         return self.get_token() is not None

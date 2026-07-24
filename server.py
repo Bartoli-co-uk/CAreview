@@ -172,15 +172,19 @@ class CAReviewHandler(BaseHTTPRequestHandler):
         if body is None:
             self._reject(HTTPStatus.BAD_REQUEST, "invalid request body")
             return
-        if path == "/api/auth/start":
-            self._auth_start(body)
-            return
-        if path == "/api/auth/poll":
-            self._auth_poll(body)
-            return
-        if path == "/api/auth/logout":
-            AUTH.logout()
-            self._send_json(HTTPStatus.OK, {"state": "signed_out"})
+        try:
+            if path == "/api/auth/start":
+                self._auth_start(body)
+                return
+            if path == "/api/auth/poll":
+                self._auth_poll(body)
+                return
+            if path == "/api/auth/logout":
+                AUTH.logout()
+                self._send_json(HTTPStatus.OK, {"state": "signed_out"})
+                return
+        except Exception:  # noqa: BLE001 — never leak an internal error/stack to the client
+            self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"state": "error", "error": "internal_error"})
             return
         self._reject(HTTPStatus.NOT_FOUND, "not found")
 

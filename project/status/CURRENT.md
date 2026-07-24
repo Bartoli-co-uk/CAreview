@@ -1,5 +1,5 @@
 <!-- claudex-state
-stage: ISSUE_REVIEW
+stage: ISSUE_REPAIR
 active_issue: ISSUE-0002
 active_milestone: none
 -->
@@ -17,18 +17,18 @@ records described below.
 
 | Field | Current value |
 |---|---|
-| Stage | `ISSUE_REVIEW` |
+| Stage | `ISSUE_REPAIR` |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v1; APPROVED (DECISION-001) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (binds `179a023`) |
 | Roadmap | `ROADMAP.md` v3; APPROVED (DECISION-003, binds `125d74f`) |
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | `M1` (in progress) |
-| Active issue | `ISSUE-0002` (device-code auth) — status `REVIEWING`, branch `ai/ISSUE-0002-device-code-auth`, Starting SHA `eb0490c` |
-| Issue repair round | None (round 0) |
+| Active issue | `ISSUE-0002` (device-code auth) — status `REPAIRING`, branch `ai/ISSUE-0002-device-code-auth`, Starting SHA `eb0490c` |
+| Issue repair round | Repair round 1 (fixing Codex F-001 concurrency race, F-002 error normalization) |
 | Candidate product commit | Branch HEAD of `ai/ISSUE-0002-device-code-auth` (the launcher binds the exact SHA at review time) |
 | Latest implementation handoff | `project/handoffs/ISSUE-0002-handoff.md` |
-| Latest Codex review | Pending ISSUE-0002 review; ISSUE-0001 final was clean per DECISION-004 |
+| Latest Codex review | ISSUE-0002 round 0 `project/reviews/issues/ISSUE-0002-536f11cb7a9f-codex.json` (CHANGES_REQUIRED: F-001/F-002) + response `…-536f11cb7a9f-claude-response.md`; repaired candidate pending re-review |
 | Completed issues | `ISSUE-0001` (server shell) — merged `23e6633` |
 | Last human decision | `DECISION-005` (merge ISSUE-0001 + autonomous cadence to M1); also `DECISION-004` (gate policy), `DECISION-003` (roadmap), `DECISION-002` (launcher fix), `DECISION-001` (brief) |
 | Open blockers | None. Standing: Codex issue reviews stay `BLOCKED` on execution evidence (DECISION-004); author runs checks out-of-band |

@@ -82,7 +82,8 @@ findings list, and a simple per-policy flow card
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
 | 0 | `ISSUE-0005-handoff.md` | `c88819f52ce0…` | py_compile 0; 75 tests pass; validator pass | `ISSUE-0005-c88819f52ce0-codex.json` | CHANGES_REQUIRED (F-001 sign-out leak, F-002 conditions, F-003 hostile-markup test, F-004 README) |
-| 1 (repair) | `ISSUE-0005-handoff.md` | repair-1 candidate (launcher binds SHA) | py_compile 0; 79 tests pass; validator pass | pending re-review | pending |
+| 1 (repair) | `ISSUE-0005-handoff.md` | `5f0af237d2f4…` | py_compile 0; 79 tests pass; validator pass | `ISSUE-0005-5f0af237d2f4-codex.json` | BLOCKED (F-001 async race) |
+| 2 (repair, DECISION-007) | `ISSUE-0005-handoff.md` | repair-2 candidate (launcher binds SHA) | py_compile 0; 80 tests pass; validator pass | pending final review | pending |
 
 Maximum two repair rounds; every Codex review is a fresh ephemeral read-only
 process against the named SHA.

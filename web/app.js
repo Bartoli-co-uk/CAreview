@@ -95,7 +95,14 @@ async function startSignIn() {
   pollTimer = setTimeout(() => pollOnce(data.handle, intervalMs), intervalMs);
 }
 
+// Monotonic generation counter: every sign-out, sample load, and live-analysis
+// load bumps it and captures its own value. An async fetch that resolves after
+// a newer load or a sign-out started discards its result instead of rendering
+// stale/superseded tenant data (the same race class fixed in auth.py).
+let resultsGeneration = 0;
+
 function clearResults() {
+  resultsGeneration += 1; // invalidate any in-flight load
   document.getElementById("score-block").hidden = true;
   document.getElementById("findings-block").hidden = true;
   document.getElementById("policies-block").hidden = true;
@@ -105,12 +112,13 @@ function clearResults() {
 
 async function signOut() {
   stopPolling();
+  // Clear immediately (before the network round-trip) so sensitive analysis
+  // cannot remain visible even briefly, and so it wins over any in-flight load.
+  clearResults();
+  setResultsState("sign in to see your tenant's analysis", null);
   await postJson("/api/auth/logout", {});
   showSignedOut();
   setAuthStatus("signed out", null);
-  // Sensitive tenant analysis must not remain visible after sign-out.
-  clearResults();
-  setResultsState("sign in to see your tenant's analysis", null);
 }
 
 function initAuth() {
@@ -239,23 +247,30 @@ function renderAnalysis(policies, analysis) {
 }
 
 async function loadSample() {
+  resultsGeneration += 1;
+  const myGeneration = resultsGeneration;
   setResultsState("loading sample…", null);
   try {
     const response = await fetch("/sample-data.json");
     const data = await response.json();
+    if (myGeneration !== resultsGeneration) return; // superseded by sign-out/another load
     renderAnalysis(data.policies, data.analysis);
   } catch (err) {
+    if (myGeneration !== resultsGeneration) return;
     setResultsState("could not load sample data", "error");
   }
 }
 
 async function loadLiveAnalysis() {
+  resultsGeneration += 1;
+  const myGeneration = resultsGeneration;
   setResultsState("loading…", null);
   try {
     const [policiesResp, analysisResp] = await Promise.all([
       fetch("/api/policies", { headers: { Accept: "application/json" } }),
       fetch("/api/analysis", { headers: { Accept: "application/json" } }),
     ]);
+    if (myGeneration !== resultsGeneration) return; // superseded by sign-out/another load
     if (policiesResp.status === 401 || analysisResp.status === 401) {
       setResultsState("sign in to see your tenant's analysis", null);
       return;
@@ -270,8 +285,10 @@ async function loadLiveAnalysis() {
     }
     const policiesBody = await policiesResp.json();
     const analysis = await analysisResp.json();
+    if (myGeneration !== resultsGeneration) return; // superseded during body parsing
     renderAnalysis(policiesBody.policies, analysis);
   } catch (err) {
+    if (myGeneration !== resultsGeneration) return;
     setResultsState("could not load analysis", "error");
   }
 }

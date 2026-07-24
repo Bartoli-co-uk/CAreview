@@ -38,6 +38,16 @@ class AppJsSafetyTests(unittest.TestCase):
         self.assertIn("textContent", APP_JS)
         self.assertNotIn("javascript:", APP_JS.lower())
 
+    def test_results_loads_are_generation_guarded(self) -> None:
+        # Codex F-001 (round 1): stale async loads must not restore/retain
+        # analysis after sign-out or a newer load. Proves the guard exists.
+        self.assertIn("resultsGeneration", APP_JS)
+        self.assertIn("myGeneration !== resultsGeneration", APP_JS)
+        # signOut must clear results before/around the network round-trip.
+        signout_start = APP_JS.index("async function signOut")
+        signout_body = APP_JS[signout_start:signout_start + 400]
+        self.assertIn("clearResults()", signout_body)
+
 
 class SampleDataHostileFixtureTests(unittest.TestCase):
     """A hostile display name is present in the committed sample so a human

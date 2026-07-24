@@ -1,0 +1,103 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T16:01:24Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f94da-ff14-7e63-be8b-ba488624ff47"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "67283f7e4a499af5e813a3f7d325bc81f9ddace8",
+    "evidence": [
+      {
+        "detail": "HEAD exactly matches the launcher target; the working tree is clean. The checkout is shallow/grafted, so target ancestry could not be established from commit metadata, but the supplied base object exists and the exact base-to-target diff was inspected.",
+        "reference": "git rev-parse HEAD; git status --porcelain=v1; git show -s 5f0af237d2f4c25baaee8c9e35284b89de50c4c7; git diff 67283f7e4a499af5e813a3f7d325bc81f9ddace8..5f0af237d2f4c25baaee8c9e35284b89de50c4c7",
+        "source": "command"
+      },
+      {
+        "detail": "The exact diff changes 13 files, including the UI, server, tests, README, issue/handoff/status records, and the prior review response/report.",
+        "reference": "git diff --stat 67283f7e4a499af5e813a3f7d325bc81f9ddace8..5f0af237d2f4c25baaee8c9e35284b89de50c4c7",
+        "source": "diff"
+      },
+      {
+        "detail": "The approved issue requires visible signed-out/loading/empty/consent-error states, safe hostile-markup rendering, Users → Conditions → Apps → Controls cards, restrictive CSP, no-store API responses, offline sample rendering, and README documentation.",
+        "reference": "project/issues/ISSUE-0005.md",
+        "source": "file"
+      },
+      {
+        "detail": "Static inspection confirms the repair adds the Conditions step, hostile sample fixture, textContent/createElement-only rendering checks, README guidance, restrictive CSP metadata, and no-store headers on successful policy and analysis responses.",
+        "reference": "web/app.js; web/index.html; web/sample-data.json; tests/test_ui_safety.py; README.md; server.py",
+        "source": "file"
+      },
+      {
+        "detail": "The independent test run executed 79 tests but exited 1: 19 server integration tests errored because the sandbox denied loopback socket binding; the remaining 60 tests completed without reported failures.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "The independent compile check exited 1 because the read-only checkout prevented creation of __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "The governance validator exited 1 because no writable temporary directory was available.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The author records compile exit 0, 79 passing tests, validator success, and curl-level sample checks, but no durable raw command-output artifact or browser/console result is committed.",
+        "reference": "project/handoffs/ISSUE-0005-handoff.md; project/reviews/issues/ISSUE-0005-c88819f52ce0-claude-response.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: once sign-out begins, tenant results remain cleared and no previously started asynchronous load can restore them.",
+          "Observed: signOut waits for the logout request before clearing results, while loadLiveAnalysis has no cancellation or generation/auth-state guard. If an in-flight policies/analysis request resolves after clearResults, renderAnalysis restores the tenant score, findings, and policy cards while the UI says signed out.",
+          "Expected: loading and error/consent/signed-out states do not leave stale analysis visible.",
+          "Observed: loadLiveAnalysis only changes results-state when loading or returning 401/403/error; it does not clear existing sample or tenant blocks. A previous analysis therefore remains visible beside loading or failure messages. This also makes the asynchronous sign-out race user-visible."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 106,
+            "path": "web/app.js"
+          },
+          {
+            "line": 252,
+            "path": "web/app.js"
+          }
+        ],
+        "remediation": "Clear results immediately when sign-out starts and invalidate or abort all outstanding analysis/sample requests. Gate every asynchronous render on a request generation and current authentication/mode state. Clear or hide prior result blocks before displaying loading, signed-out, consent, or generic error states.",
+        "severity": "medium",
+        "title": "Stale asynchronous loads can restore or retain analysis after sign-out and errors",
+        "verification": "Add deterministic UI tests with deferred fetch promises: render results, start a live load, sign out, then resolve the old load and assert results stay cleared. Also load a sample, force 401, 403, and network/error responses, and verify no prior score, findings, or policy cards remain visible."
+      }
+    ],
+    "limitations": [
+      "Required execution evidence is incomplete: the independent full test, compile, and governance commands all failed because the read-only/socket-restricted review environment forbids required writes and loopback binding. Under the binding and repository rules, this requires BLOCKED even though failures appear environmental.",
+      "No browser or JavaScript DOM harness was available. Offline visual rendering, console-error behavior, CSP enforcement, hostile-string inertness in a real DOM, responsive layout, and asynchronous state transitions were not executed.",
+      "No live Microsoft sign-in or tenant fetch was performed; it is a protected action and unavailable in this review environment.",
+      "The handoff's manual evidence is curl/data-level only and explicitly says live browser rendering was not performed, so acceptance criteria 1 and 4 lack direct browser evidence.",
+      "The shallow/grafted checkout does not expose the target commit's parent relationship. HEAD and both diff objects were verified, but ancestry from the supplied base could not be independently confirmed from commit metadata.",
+      "Residual static risk: render functions assume expected arrays and object shapes; malformed or schema-drifted payloads can throw and leave partially stale UI. Same-repository producers reduce this risk."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "5f0af237d2f4c25baaee8c9e35284b89de50c4c7",
+    "schema_version": "1.0",
+    "summary": "The repair addresses the prior Conditions, hostile-fixture, README, and basic sign-out-clear findings, but asynchronous result handling still allows stale tenant data to remain visible or reappear after sign-out. Independently required checks and browser rendering could not be completed in the restricted review environment, so the review is BLOCKED rather than a pass.",
+    "target_id": "ISSUE-0005"
+  },
+  "test_only": false
+}

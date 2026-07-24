@@ -1,4 +1,12 @@
-# Claude handoff: ISSUE-0005, repair round 1
+# Claude handoff: ISSUE-0005, repair round 2
+
+**Repair round 2** (this candidate) addresses Codex round-1 finding F-001: an
+async race where a stale `loadSample`/`loadLiveAnalysis` could resolve after
+sign-out and restore tenant analysis. Fixed with a `resultsGeneration` counter
+(same pattern as `auth.py`'s concurrency fixes) checked at every await point;
+`signOut()` clears results before the network round-trip. 80 tests pass. See
+`project/reviews/issues/ISSUE-0005-5f0af237d2f4-claude-response.md`.
+
 
 **Repair round 1** addresses Codex round-0 findings on candidate `c88819f52ce0`:
 F-001 (clear/hide analysis on sign-out), F-002 (add the Conditions flow step),
@@ -50,7 +58,7 @@ All rendering uses `textContent`/`createElement` only.
 | Check | Exact command | Actual result/exit | Evidence limitation |
 |---|---|---|---|
 | Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 | none |
-| Tests | `python3 -m unittest discover -s tests` | 79 passed, exit 0 | none |
+| Tests | `python3 -m unittest discover -s tests` | 80 passed, exit 0 | none |
 | Manual | `curl` root (CSP present), `/sample-data.json` (score 88, 2 findings) | as expected | none |
 | Governance | `python3 scripts/validate_repo.py` | passes (out-of-band per DECISION-004) | none |
 

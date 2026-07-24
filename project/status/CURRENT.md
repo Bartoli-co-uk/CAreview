@@ -25,10 +25,10 @@ records described below.
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | `M1` (in progress) |
 | Active issue | `ISSUE-0006` (docs + E2E) — status `REPAIRING`, branch `ai/ISSUE-0006-docs-verification`, Starting SHA `4e8e999` |
-| Issue repair round | None |
-| Candidate product commit | `main` at the ISSUE-0005 merge; reviewed product SHA `3dc059f` |
+| Issue repair round | Repair round 1 (Codex F-002 port URL, F-003 disk-write claim, F-004 status) |
+| Candidate product commit | Branch HEAD of `ai/ISSUE-0006-docs-verification` (the launcher binds the exact SHA at review time) |
 | Latest implementation handoff | `project/handoffs/ISSUE-0006-handoff.md` |
-| Latest Codex review | ISSUE-0005 final `ISSUE-0005-3dc059f2b16c-codex.json` — no substantive defect (DECISION-004/007) |
+| Latest Codex review | ISSUE-0006 round 0 `ISSUE-0006-30a75c425bf1-codex.json` (BLOCKED: F-002..F-004) + response; repair-1 candidate pending re-review |
 | Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e`; `ISSUE-0004` `9f3885b`; `ISSUE-0005` `3dc059f` |
 | Last human decision | `DECISION-009` (ISSUE-0004 final round); also `DECISION-008` (evaluability model), `DECISION-007`..`001` |
 | Open blockers | None. Standing: Codex issue reviews stay `BLOCKED` on execution evidence (DECISION-004); author runs checks out-of-band |

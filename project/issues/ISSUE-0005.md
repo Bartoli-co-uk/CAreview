@@ -1,12 +1,12 @@
 # ISSUE-0005: UI rendering — score, findings, and policy flow cards
 
-**Status:** `PLANNED`
+**Status:** `REVIEWING`
 **Milestone:** `M1`
 **Approved roadmap:** `ROADMAP.md` version `3` at `125d74f6d4bfe85f1a727293064d0887f2d121c7`
 **Dependencies:** `ISSUE-0003`, `ISSUE-0004`
 **Branch:** `ai/ISSUE-0005-ui-rendering`
-**Starting SHA:** `[set at implementation start]`
-**Candidate SHA:** `Not created`
+**Starting SHA:** `67283f7e4a499af5e813a3f7d325bc81f9ddace8`
+**Candidate SHA:** `this commit (branch HEAD); launcher binds the exact SHA`
 
 ## Objective
 

@@ -1,0 +1,268 @@
+{
+  "policies": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "displayName": "Block legacy authentication",
+      "state": "enabled",
+      "conditions": {
+        "includeUsers": [
+          "All"
+        ],
+        "excludeUsers": [
+          "11111111-1111-1111-1111-111111111111"
+        ],
+        "includeGroups": [],
+        "excludeGroups": [],
+        "includeRoles": [],
+        "excludeRoles": [],
+        "includeApplications": [
+          "All"
+        ],
+        "excludeApplications": [],
+        "clientAppTypes": [
+          "exchangeActiveSync",
+          "other"
+        ],
+        "includePlatforms": [],
+        "excludePlatforms": [],
+        "includeLocations": [],
+        "excludeLocations": [],
+        "signInRiskLevels": [],
+        "userRiskLevels": []
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "block"
+        ]
+      },
+      "sessionControls": []
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "displayName": "Require MFA for administrators",
+      "state": "enabled",
+      "conditions": {
+        "includeUsers": [],
+        "excludeUsers": [],
+        "includeGroups": [],
+        "excludeGroups": [],
+        "includeRoles": [
+          "62e90394-69f5-4237-9190-012177145e10",
+          "e8611ab8-c189-46e8-94e1-60213ab1f814",
+          "7be44c8a-adaf-4e2a-84d6-ab2649e08a13",
+          "194ae4cb-b126-40b2-bd5b-6091b380977d",
+          "29232cdf-9323-42fd-ade2-1d097af3e4de",
+          "f28a1f50-f6e7-4571-818b-6a12f2af6b6c",
+          "158c047a-c907-4556-b7ef-446551a6b5f7",
+          "966707d0-3269-4727-9be2-8c3a10f19b9d",
+          "b0f54661-2d74-4c50-afa3-1ec803f12efe"
+        ],
+        "excludeRoles": [],
+        "includeApplications": [
+          "All"
+        ],
+        "excludeApplications": [],
+        "clientAppTypes": [],
+        "includePlatforms": [],
+        "excludePlatforms": [],
+        "includeLocations": [],
+        "excludeLocations": [],
+        "signInRiskLevels": [],
+        "userRiskLevels": []
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "mfa"
+        ]
+      },
+      "sessionControls": []
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000003",
+      "displayName": "Require MFA for all users",
+      "state": "enabled",
+      "conditions": {
+        "includeUsers": [
+          "All"
+        ],
+        "excludeUsers": [
+          "11111111-1111-1111-1111-111111111111"
+        ],
+        "includeGroups": [],
+        "excludeGroups": [],
+        "includeRoles": [],
+        "excludeRoles": [],
+        "includeApplications": [
+          "All"
+        ],
+        "excludeApplications": [],
+        "clientAppTypes": [],
+        "includePlatforms": [],
+        "excludePlatforms": [],
+        "includeLocations": [],
+        "excludeLocations": [],
+        "signInRiskLevels": [],
+        "userRiskLevels": []
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "mfa"
+        ]
+      },
+      "sessionControls": []
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000005",
+      "displayName": "Sign-in risk policy",
+      "state": "enabled",
+      "conditions": {
+        "includeUsers": [
+          "All"
+        ],
+        "excludeUsers": [
+          "11111111-1111-1111-1111-111111111111"
+        ],
+        "includeGroups": [],
+        "excludeGroups": [],
+        "includeRoles": [],
+        "excludeRoles": [],
+        "includeApplications": [
+          "All"
+        ],
+        "excludeApplications": [],
+        "clientAppTypes": [],
+        "includePlatforms": [],
+        "excludePlatforms": [],
+        "includeLocations": [],
+        "excludeLocations": [],
+        "signInRiskLevels": [
+          "high"
+        ],
+        "userRiskLevels": []
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "mfa"
+        ]
+      },
+      "sessionControls": []
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000006",
+      "displayName": "User risk policy",
+      "state": "enabled",
+      "conditions": {
+        "includeUsers": [
+          "All"
+        ],
+        "excludeUsers": [],
+        "includeGroups": [],
+        "excludeGroups": [],
+        "includeRoles": [],
+        "excludeRoles": [],
+        "includeApplications": [
+          "All"
+        ],
+        "excludeApplications": [],
+        "clientAppTypes": [],
+        "includePlatforms": [],
+        "excludePlatforms": [],
+        "includeLocations": [],
+        "excludeLocations": [],
+        "signInRiskLevels": [],
+        "userRiskLevels": [
+          "high"
+        ]
+      },
+      "grantControls": {
+        "operator": "OR",
+        "builtInControls": [
+          "passwordChange"
+        ]
+      },
+      "sessionControls": []
+    }
+  ],
+  "analysis": {
+    "score": 88,
+    "scoreIsHeuristic": true,
+    "policyCount": 5,
+    "findings": [
+      {
+        "id": "device-compliance",
+        "title": "Device compliance or hybrid join is required",
+        "severity": "medium",
+        "weight": 10,
+        "rationale": "Requiring managed/compliant devices limits access from unmanaged endpoints.",
+        "remediation": "Add a policy requiring a compliant or hybrid-joined device for sensitive access.",
+        "affectedPolicies": []
+      },
+      {
+        "id": "session-controls",
+        "title": "Session controls are in use",
+        "severity": "low",
+        "weight": 5,
+        "rationale": "Session controls (sign-in frequency, persistent browser) limit stale sessions.",
+        "remediation": "Add session controls to sensitive-access policies.",
+        "affectedPolicies": []
+      }
+    ],
+    "evaluated": [
+      {
+        "id": "block-legacy-auth",
+        "title": "Legacy authentication is blocked",
+        "status": "pass"
+      },
+      {
+        "id": "mfa-admins",
+        "title": "MFA is required for administrators",
+        "status": "pass"
+      },
+      {
+        "id": "mfa-all-users",
+        "title": "MFA is required for all users",
+        "status": "pass"
+      },
+      {
+        "id": "device-compliance",
+        "title": "Device compliance or hybrid join is required",
+        "status": "fail"
+      },
+      {
+        "id": "signin-risk",
+        "title": "A sign-in risk policy is present",
+        "status": "pass"
+      },
+      {
+        "id": "user-risk",
+        "title": "A user risk policy is present",
+        "status": "pass"
+      },
+      {
+        "id": "session-controls",
+        "title": "Session controls are in use",
+        "status": "fail"
+      },
+      {
+        "id": "not-all-report-only",
+        "title": "At least one policy is enforced",
+        "status": "pass"
+      },
+      {
+        "id": "break-glass-excluded",
+        "title": "Break-glass accounts are excluded from lockout",
+        "status": "pass"
+      },
+      {
+        "id": "no-overly-broad-block",
+        "title": "No all-users/all-apps block without exclusions",
+        "status": "pass"
+      }
+    ],
+    "notEvaluable": []
+  }
+}

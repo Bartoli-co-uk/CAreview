@@ -83,4 +83,45 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   margin: 0.25rem 0;
 }
 
+.score-gauge {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.score-max { font-size: 1.1rem; color: var(--muted); font-weight: 400; }
+.score-caveat { color: var(--muted); font-size: 0.85rem; margin-top: 0.25rem; }
+
+#findings-list { list-style: none; margin: 0; padding: 0; }
+.finding {
+  border: 1px solid #26314a;
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  margin: 0.5rem 0;
+}
+.finding-rationale, .finding-remediation, .finding-affected {
+  margin: 0.3rem 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.severity-critical { background: rgba(255, 107, 107, 0.25); color: #ffb3b3; }
+.severity-high { background: rgba(255, 107, 107, 0.15); color: var(--error); }
+.severity-medium { background: rgba(255, 196, 0, 0.15); color: #ffcc4d; }
+.severity-low { background: rgba(53, 194, 107, 0.12); color: var(--ok); }
+.severity-info { background: #26314a; color: var(--muted); }
+
+#policy-cards { display: grid; gap: 0.75rem; }
+.policy-card {
+  border: 1px solid #26314a;
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+}
+.policy-card h4 { margin: 0 0 0.3rem; }
+.policy-state { color: var(--muted); font-size: 0.85rem; margin: 0 0 0.4rem; }
+.policy-flow { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.9rem; }
+.flow-step {
+  padding: 0.2rem 0.5rem;
+  background: #0f1626;
+  border-radius: 4px;
+}
+
 footer { color: var(--muted); font-size: 0.85rem; padding-bottom: 2rem; }

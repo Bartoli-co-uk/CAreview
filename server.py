@@ -60,6 +60,9 @@ STATIC_FILES: dict[str, str] = {
     "/index.html": "text/html; charset=utf-8",
     "/app.js": "text/javascript; charset=utf-8",
     "/style.css": "text/css; charset=utf-8",
+    # Committed, sanitized sample data so the UI can be reviewed offline without
+    # signing in (ISSUE-0005). Contains no real tenant data.
+    "/sample-data.json": "application/json; charset=utf-8",
 }
 
 # Loopback host names that legitimately reach this server. The port is appended
@@ -123,11 +126,14 @@ class CAReviewHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _send_json(self, status: HTTPStatus, payload: dict) -> None:
+    def _send_json(self, status: HTTPStatus, payload: dict, *, no_store: bool = False) -> None:
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        if no_store:
+            # Sensitive tenant data (policies/analysis) must never be cached.
+            self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(body)
 
@@ -186,7 +192,7 @@ class CAReviewHandler(BaseHTTPRequestHandler):
         except Exception:  # noqa: BLE001 — never leak an internal error/stack to the client
             self._send_json(HTTPStatus.BAD_GATEWAY, {"error": "graph_error", "message": "unexpected error"})
             return
-        self._send_json(HTTPStatus.OK, {"policies": policies, "count": len(policies)})
+        self._send_json(HTTPStatus.OK, {"policies": policies, "count": len(policies)}, no_store=True)
 
     def _analysis(self) -> None:
         token = AUTH.get_token()
@@ -205,7 +211,7 @@ class CAReviewHandler(BaseHTTPRequestHandler):
         except Exception:  # noqa: BLE001 — never leak an internal error/stack to the client
             self._send_json(HTTPStatus.BAD_GATEWAY, {"error": "graph_error", "message": "unexpected error"})
             return
-        self._send_json(HTTPStatus.OK, analyzer.analyze(policies, get_break_glass_ids()))
+        self._send_json(HTTPStatus.OK, analyzer.analyze(policies, get_break_glass_ids()), no_store=True)
 
     def _read_json_body(self) -> dict | None:
         try:

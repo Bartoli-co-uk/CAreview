@@ -85,6 +85,19 @@ class ServerIntegrationTests(unittest.TestCase):
         resp = self._request("/nope", f"127.0.0.1:{self.port}")
         self.assertEqual(resp.status, 404)
 
+    def test_sample_data_served(self) -> None:
+        resp = self._request("/sample-data.json", f"127.0.0.1:{self.port}")
+        self.assertEqual(resp.status, 200)
+        body = json.loads(resp.read())
+        self.assertIn("policies", body)
+        self.assertIn("analysis", body)
+        self.assertIn("score", body["analysis"])
+
+    def test_index_has_csp_meta(self) -> None:
+        resp = self._request("/", f"127.0.0.1:{self.port}")
+        body = resp.read().decode()
+        self.assertIn("Content-Security-Policy", body)
+
     def _post(self, path: str, host: str, origin: str | None, body: bytes) -> http.client.HTTPResponse:
         conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)
         conn.putrequest("POST", path, skip_host=True, skip_accept_encoding=True)
@@ -145,6 +158,7 @@ class ServerIntegrationTests(unittest.TestCase):
             self.assertEqual(resp.status, 200)
             self.assertEqual(body["count"], 1)
             self.assertEqual(body["policies"][0]["id"], "p1")
+            self.assertEqual(resp.getheader("Cache-Control"), "no-store")
         finally:
             server.GRAPH = original
             server.AUTH.logout()
@@ -229,6 +243,7 @@ class ServerIntegrationTests(unittest.TestCase):
             self.assertIn("score", body)
             self.assertIn("findings", body)
             self.assertTrue(body["scoreIsHeuristic"])
+            self.assertEqual(resp.getheader("Cache-Control"), "no-store")
         finally:
             server.GRAPH = original
             server.AUTH.logout()

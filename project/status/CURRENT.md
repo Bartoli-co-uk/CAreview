@@ -32,8 +32,8 @@ records described below.
 | Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e`; `ISSUE-0004` `9f3885b`; `ISSUE-0005` `3dc059f`; `ISSUE-0006` `d15f47c` |
 | Last human decision | `DECISION-011` (M1 validator fix, general-remediation cycle); also `DECISION-010`, `DECISION-009`..`001` |
 | Open blockers | None. M1 round 1 found a real blocking finding (validator self-test bug) which is now fixed; round 2's four fresh reviews are in progress |
-| Next required actor | Claude (run all four fresh round-2 milestone reviews against the remediation candidate) |
-| Next permitted action | Commit the remediation candidate, launch fresh independent Claude general + security subagent reviews and `./scripts/run-codex-review.sh milestone-general M1 <SHA>` / `milestone-security M1 <SHA>` against that exact SHA; present all four to the human for milestone acceptance |
+| Next required actor | Human (milestone acceptance decision) |
+| Next permitted action | Human reviews the M1 package (`project/milestones/M1.md` round 2, all four fresh reports) and records `APPROVE`/`REJECT`/`REMEDIATION_REQUIRED` in a decision file naming the exact package/SHAs. On approval, project completion may be pursued next |
 | Actions not yet permitted | Merge without a clean review, publication, deployment, live tenant auth/fetch, or any protected action |
 
 When this repository is adopted for a project, replace the values above and add

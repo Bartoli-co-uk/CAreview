@@ -1,0 +1,120 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T22:29:50Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f963e-7c77-7b50-a3a6-5bb84baf5539"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "The isolated checkout is clean and HEAD exactly matches the launcher-bound target.",
+        "reference": "git status --short; git rev-parse HEAD => 059b0ae8212261120cccc37aa1721d6369408560",
+        "source": "command"
+      },
+      {
+        "detail": "The milestone record names 6311a11a48a0a7e51e83a14ca4081d431cb46698 as the frozen candidate, not the launcher-bound reviewed SHA. It claims later commits are metadata-only and byte-identical, but the curated checkout does not contain the frozen commit object, so that claim cannot be independently verified.",
+        "reference": "project/milestones/M1.md:5",
+        "source": "file"
+      },
+      {
+        "detail": "The milestone gate requires all four blind reviews to pass against one frozen candidate, but the authoritative round-two table still contains placeholders for reviewed SHAs and outcomes.",
+        "reference": "project/milestones/M1.md:57",
+        "source": "file"
+      },
+      {
+        "detail": "The independent test run discovered 83 tests, but 22 HTTP integration tests errored because the sandbox denied loopback socket binding; the command exited nonzero.",
+        "reference": "python3 -m unittest discover -s tests => FAILED (errors=22), PermissionError during socket.bind",
+        "source": "check"
+      },
+      {
+        "detail": "Independent compilation could not complete because the read-only checkout denied bytecode output.",
+        "reference": "python3 -B -m py_compile $(git ls-files '*.py') => exit 1",
+        "source": "check"
+      },
+      {
+        "detail": "Independent governance validation could not complete because its temporary-file operations are incompatible with this read-only environment.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate_repo.py => exit 1",
+        "source": "check"
+      },
+      {
+        "detail": "Source inspection found deliberate controls for loopback-only binding, exact Host validation, same-origin POST enforcement, bounded JSON bodies, static-file allowlisting and containment, CSP and nosniff headers, no-store on sensitive successful responses, in-memory token lifecycle, tenant validation, fixed Microsoft identity egress, exact HTTPS Graph-host validation, redirect refusal, bounded paging, and text-only DOM rendering.",
+        "reference": "server.py; auth.py; graph.py; web/app.js; web/index.html",
+        "source": "file"
+      },
+      {
+        "detail": "The application uses Python's standard library only, and the inspected repository contains no third-party dependency lockfile or runtime package manifest. CI pins actions/checkout by commit and disables persisted credentials.",
+        "reference": ".github/workflows/validate.yml; git ls-tree -r --name-only HEAD",
+        "source": "file"
+      },
+      {
+        "detail": "Live tenant authentication and Graph fetching were not performed. The approved roadmap treats them as protected, non-gating actions and records the resulting operational uncertainty as a residual risk.",
+        "reference": "ROADMAP.md; project/milestones/M1.md:32",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "attack_preconditions": "No attacker action is required; this is a milestone evidence-integrity failure. Exploitation of an undiscovered defect would require such a defect to exist in behavior that the restricted review could not execute.",
+        "blocking": true,
+        "category": "evidence-integrity",
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "disposition": "open",
+        "evidence": [
+          "The launcher-bound review target is 059b0ae8212261120cccc37aa1721d6369408560, while project/milestones/M1.md names 6311a11a48a0a7e51e83a14ca4081d431cb46698 as the frozen candidate.",
+          "git cat-file could not resolve 6311a11a, preventing independent tree comparison with the reviewed target.",
+          "The round-two mandatory-review table has not been populated with exact reviewed SHAs and outcomes.",
+          "The full test suite, compilation, and governance validation each exited nonzero under the review sandbox. Repository-recorded passing claims cannot replace independently reproducible evidence under the binding review rules."
+        ],
+        "exploitability": "This does not establish a product vulnerability, but it prevents a reliable conclusion about the exact milestone candidate and leaves HTTP-boundary behavior unverified by this reviewer.",
+        "fingerprint": "m1-security-candidate-and-execution-evidence-unverifiable",
+        "id": "SEC-EVID-001",
+        "impact": "The milestone security gate cannot establish that all required reports and executable evidence apply to one exact candidate. Passing despite this discrepancy could approve an unverified commit or miss a defect in the 22 HTTP integration paths that could not execute.",
+        "locations": [
+          {
+            "line": 5,
+            "path": "project/milestones/M1.md"
+          },
+          {
+            "line": 28,
+            "path": "project/milestones/M1.md"
+          },
+          {
+            "line": 57,
+            "path": "project/milestones/M1.md"
+          }
+        ],
+        "remediation": "Choose and record one literal frozen candidate SHA for all four milestone reports. Provide a fresh isolated read-only review checkout containing the necessary commit objects and an environment that permits temporary/cache output and loopback socket binding. Rerun tests, compilation, governance validation, and all four fresh reviews against that same SHA, then populate the authoritative review table with exact report paths, SHAs, and outcomes.",
+        "severity": "high",
+        "title": "Exact candidate identity and required security evidence cannot be verified",
+        "verification": "Confirm the milestone record names the launcher target as its single frozen candidate; confirm all four reports contain that exact reviewed SHA; independently verify the full 83-test suite, py_compile, and validate_repo.py each exit 0; and verify any claimed tree equivalence with an available commit-to-commit diff."
+      }
+    ],
+    "limitations": [
+      "The launcher supplied no base commit.",
+      "The curated checkout contains only the target commit and omits the separately declared frozen candidate object, preventing ancestry and tree-equivalence verification.",
+      "Filesystem restrictions prevented compilation and governance validation from completing.",
+      "Network restrictions prevented loopback socket binding, so 22 HTTP integration tests and a manual server smoke test could not run.",
+      "No dependency or vulnerability scanner output was present; dependency assessment was limited to repository manifests, imports, workflow inspection, and the documented standard-library-only architecture.",
+      "No browser was available for runtime XSS, CSP, accessibility, or rendering validation.",
+      "No protected live Entra sign-in or Graph fetch was attempted; real-tenant compatibility and provider behavior remain unverified.",
+      "Provider-side Microsoft, GitHub Actions, and model-provider retention or isolation guarantees cannot be verified from repository evidence."
+    ],
+    "mode": "milestone-security",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "059b0ae8212261120cccc37aa1721d6369408560",
+    "schema_version": "1.0",
+    "summary": "The reviewed source shows strong, deliberate controls across the documented trust boundaries, and no concrete product vulnerability was identified by static inspection. The milestone security review is nevertheless BLOCKED: the repository names a different frozen candidate that is unavailable for comparison, the authoritative four-review table remains incomplete, and required executable evidence could not be independently reproduced in this sandbox. This is not a security certification.",
+    "target_id": "M1"
+  },
+  "test_only": false
+}

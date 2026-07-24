@@ -1,0 +1,128 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T16:16:40Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f94e8-f02f-79e3-be43-5e3d46599f2e"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "4e8e999ef2204ee7089726b205f5895dc73b38b0",
+    "evidence": [
+      {
+        "detail": "Detached checkout HEAD exactly matches the launcher-bound target SHA; the working tree was clean.",
+        "reference": "git rev-parse HEAD; git status --short --branch",
+        "source": "command"
+      },
+      {
+        "detail": "The supplied base and target objects exist, and the explicit base-to-target diff changes README and seven issue-governance records without changing product source or tests.",
+        "reference": "git diff --name-status 4e8e999ef2204ee7089726b205f5895dc73b38b0 e95edf2b4cb5b3e420846e10cd340eeaa9158bec",
+        "source": "diff"
+      },
+      {
+        "detail": "The supplied base is not an ancestor of the target, so review scope is based on the launcher's explicit two-tree diff rather than a linear commit range.",
+        "reference": "git merge-base --is-ancestor 4e8e999ef2204ee7089726b205f5895dc73b38b0 e95edf2b4cb5b3e420846e10cd340eeaa9158bec (exit 1)",
+        "source": "limitation"
+      },
+      {
+        "detail": "The exact diff passed whitespace/error validation.",
+        "reference": "git diff --check 4e8e999ef2204ee7089726b205f5895dc73b38b0 e95edf2b4cb5b3e420846e10cd340eeaa9158bec (exit 0)",
+        "source": "check"
+      },
+      {
+        "detail": "README now distinguishes feature completeness from pending milestone review, gives the correct alternate-port instruction, limits persistence claims to CAreview application data and credentials, documents the walkthrough, heuristic caveat, and RISK-001/002/004.",
+        "reference": "README.md:9",
+        "source": "file"
+      },
+      {
+        "detail": "Unit tests ran all 80 tests, but exited 1 because the sandbox prohibited loopback socket binding for 19 server integration tests; 61 tests completed successfully.",
+        "reference": "python3 -m unittest discover -s tests (exit 1, 19 PermissionError errors)",
+        "source": "check"
+      },
+      {
+        "detail": "Compilation could not run successfully because the read-only checkout prohibited creation of __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py') (exit 1)",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not run successfully because the sandbox had no usable writable temporary directory.",
+        "reference": "python3 scripts/validate_repo.py (exit 1)",
+        "source": "check"
+      },
+      {
+        "detail": "The handoff reports successful exact-candidate author-side compile, 80-test, governance, clean-clone, and server-health checks, but preserves only summarized claims rather than independently inspectable raw command output.",
+        "reference": "project/handoffs/ISSUE-0006-handoff.md:47",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Expected: acceptance criteria 1 and 2 require independently verifiable clean-checkout, compile, unittest, and application-run evidence against e95edf2b4cb5b3e420846e10cd340eeaa9158bec.",
+          "Observed: unittest exited 1 after 80 tests because 19 tests could not bind loopback sockets; py_compile exited 1 because bytecode output was prohibited; governance validation exited 1 because no writable temporary directory existed; the application walkthrough could not be run in this sandbox.",
+          "The handoff records successful author-side runs, but the review rules require author claims to be treated as claims unless supported by independently available command evidence."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 47,
+            "path": "project/handoffs/ISSUE-0006-handoff.md"
+          }
+        ],
+        "remediation": "Provide durable, independently inspectable raw command or CI evidence bound to the exact target SHA, or apply the existing human evidence-policy decision outside this review. The sandbox failures do not independently demonstrate a product defect.",
+        "severity": "medium",
+        "title": "Required execution evidence cannot be independently verified",
+        "verification": "In an environment permitting loopback sockets, bytecode output, and temporary files, run the exact compile, unittest, governance, clean-clone, and documented application walkthrough checks against e95edf2b4cb5b3e420846e10cd340eeaa9158bec; preserve commands, relevant raw output, exit statuses, and commit identity."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: after repair round 2 is committed, CURRENT.md should identify fresh Codex review of the committed candidate as the immediate action and Codex as the next actor.",
+          "Observed: lines 35-36 still assign the next action to Claude and instruct it to perform the final repair and commit the repair-2 candidate, although e95edf2b4cb5b3e420846e10cd340eeaa9158bec is that already-committed repair-2 candidate.",
+          "The handoff says this round specifically addresses the prior stale-next-action finding, so the committed current-state index contradicts both the candidate state and its stated repair objective.",
+          "This is the final permitted issue repair round; repository policy requires unresolved findings after two repairs to be presented to the human rather than silently advanced."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 35,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 36,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Do not begin another autonomous repair round. Present this unresolved final-round finding to the human as required by the repair-limit policy. If the human explicitly authorizes reconciliation, update CURRENT.md so the committed candidate, next actor, and immediate review action consistently describe fresh Codex review of the exact candidate SHA.",
+        "severity": "medium",
+        "title": "Current-state index still directs execution of the already-completed final repair",
+        "verification": "From repository files alone, confirm CURRENT.md identifies e95edf2b4cb5b3e420846e10cd340eeaa9158bec as the committed repair-2 candidate, identifies the fresh Codex review as the immediate gate, and does not instruct Claude to repeat or commit the completed repair."
+      }
+    ],
+    "limitations": [
+      "The supplied base and target are grafted and not in an ancestor relationship; both objects and their explicit two-tree diff were available, but linear ancestry could not establish base identity.",
+      "The read-only, socket-restricted environment prevented successful execution of all required checks. These environmental failures do not establish a product regression.",
+      "No live Microsoft authentication or Graph fetch was attempted because those are protected, tenant-specific actions and outside the approved review execution.",
+      "No browser-based walkthrough was possible because local server binding was prohibited.",
+      "The clean-clone and successful author-side check claims are summarized in the handoff without durable raw output, preventing independent validation."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "e95edf2b4cb5b3e420846e10cd340eeaa9158bec",
+    "schema_version": "1.0",
+    "summary": "BLOCKED. README repairs are substantively accurate and the diff contains no product-code changes, but mandatory execution evidence cannot be independently verified in this sandbox. A substantive governance defect also remains: CURRENT.md still tells Claude to perform and commit the already-completed final repair. Because two repair rounds are exhausted, repository policy requires an exact human decision rather than another autonomous repair.",
+    "target_id": "ISSUE-0006"
+  },
+  "test_only": false
+}

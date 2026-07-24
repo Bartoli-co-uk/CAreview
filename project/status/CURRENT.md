@@ -25,15 +25,15 @@ records described below.
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | `M1` (in progress) |
 | Active issue | `ISSUE-0006` (docs + E2E) — status `REPAIRING`, branch `ai/ISSUE-0006-docs-verification`, Starting SHA `4e8e999` |
-| Issue repair round | Repair round 2 (final; Codex F-002 status staleness, F-003 README overclaim) |
-| Candidate product commit | Branch HEAD of `ai/ISSUE-0006-docs-verification` (the launcher binds the exact SHA at review time) |
+| Issue repair round | Repair round 3 (over the default 2-round limit; authorized by DECISION-007) — CURRENT.md staleness only |
+| Candidate product commit | `ai/ISSUE-0006-docs-verification` at `e95edf2b4cb5b3e420846e10cd340eeaa9158bec` (repair-2 candidate; already committed, awaiting a fresh review of this exact SHA) |
 | Latest implementation handoff | `project/handoffs/ISSUE-0006-handoff.md` |
-| Latest Codex review | ISSUE-0006 repair-1 `ISSUE-0006-cc98f4e616af-codex.json` (BLOCKED; F-002 status, F-003 README) + response; repair-2 candidate pending final review |
+| Latest Codex review | ISSUE-0006 repair-2 `ISSUE-0006-e95edf2b4cb5-codex.json` (BLOCKED; F-002 this record was stale) + response; metadata-only fix pending final review |
 | Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e`; `ISSUE-0004` `9f3885b`; `ISSUE-0005` `3dc059f` |
 | Last human decision | `DECISION-009` (ISSUE-0004 final round); also `DECISION-008` (evaluability model), `DECISION-007`..`001` |
 | Open blockers | None. Standing: Codex issue reviews stay `BLOCKED` on execution evidence (DECISION-004); author runs checks out-of-band |
-| Next required actor | Claude (final repair for ISSUE-0006 F-002/F-003, then run a fresh Codex review) |
-| Next permitted action | Commit the repair-2 candidate, run `./scripts/run-codex-review.sh issue ISSUE-0006 4e8e999… <HEAD>`; if BLOCKED only on execution evidence with no substantive finding, merge under DECISION-004/005/007 — then present M1 for the four-review milestone gate |
+| Next required actor | Claude (run one more fresh Codex review of the current, already-committed candidate) |
+| Next permitted action | Run `./scripts/run-codex-review.sh issue ISSUE-0006 4e8e999… <HEAD>` against the exact current HEAD; if BLOCKED only on execution evidence with no substantive finding, merge under DECISION-004/005/007 — then present M1 for the four-review milestone gate |
 | Actions not yet permitted | Merge without a clean review, publication, deployment, live tenant auth/fetch, or any protected action |
 
 When this repository is adopted for a project, replace the values above and add

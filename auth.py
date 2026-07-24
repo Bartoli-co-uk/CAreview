@@ -164,6 +164,14 @@ class AuthManager:
         with self._lock:
             self._generation += 1
             generation = self._generation
+            # Immediately supersede any existing session/token: a new sign-in
+            # invalidates the old handle the instant it begins — even before the
+            # new device code arrives and even if the request then fails — so the
+            # old handle can never be polled during the in-flight window
+            # (single-concurrency acceptance criterion).
+            self._session = None
+            self._access_token = None
+            self._token_expires_at = 0.0
         url, data = build_devicecode_request(tenant, self.client_id, self.scopes)
         status, payload = self._transport(url, data)
         if status != 200 or "device_code" not in payload or "user_code" not in payload:

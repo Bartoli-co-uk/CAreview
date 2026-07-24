@@ -100,12 +100,12 @@ expired, denied, success, expiry, logout, concurrency).
 |---:|---|---|---|---|---|
 | 0 | `ISSUE-0002-handoff.md` | `536f11cb7a9f…` | py_compile 0; 27 tests pass; validator pass; manual origin OK | `ISSUE-0002-536f11cb7a9f-codex.json` | CHANGES_REQUIRED (F-001 concurrency, F-002 error handling) |
 | 1 (repair) | `ISSUE-0002-handoff.md` | `4b30e05f6219…` | py_compile 0; 32 tests pass; validator pass | `ISSUE-0002-4b30e05f6219-codex.json` | BLOCKED (F-001 in-flight start; execution evidence) |
-| 2 (repair) | `ISSUE-0002-handoff.md` | repair-2 candidate (launcher binds SHA) | py_compile 0; 33 tests pass; validator pass | pending final review | pending |
+| 2 (repair) | `ISSUE-0002-handoff.md` | `752cd75a8770…` | py_compile 0; 33 tests pass; validator pass | `ISSUE-0002-752cd75a8770-codex.json` | BLOCKED (F-001 immediate supersession; F-002 README advisory) |
+| 3 (repair, authorized) | `ISSUE-0002-handoff.md` | repair-3 candidate (launcher binds SHA) | py_compile 0; 34 tests pass; validator pass | pending final review | pending |
 
-Maximum two repair rounds (both used); every Codex review is a fresh ephemeral
-read-only process against the named SHA. Per `DECISION-004`, a `BLOCKED` outcome
-whose only basis is the execution-evidence limitation is acceptable and the human
-merges.
+Two repair rounds are the default; `DECISION-006` authorized one extra round for
+ISSUE-0002 to resolve F-001/F-002. Per `DECISION-004`, a `BLOCKED` outcome whose
+only basis is the execution-evidence limitation is acceptable and the human merges.
 
 ## Completion
 

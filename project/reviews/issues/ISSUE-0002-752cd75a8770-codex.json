@@ -1,0 +1,122 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T14:13:30Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f9478-2c00-7941-8c48-70ee1d820035"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "eb0490c7b7126dda7a573ef6a6bfbbf3de2398fe",
+    "evidence": [
+      {
+        "detail": "HEAD exactly matched the launcher-supplied target SHA; working tree was clean. The candidate names parent 4b30e05f621996c31f108f45e331629df0d7547d, and the supplied base-to-target diff was inspected.",
+        "reference": "git rev-parse HEAD; git status --short; git diff eb0490c7b7126dda7a573ef6a6bfbbf3de2398fe 752cd75a87708724b1b131845c256706da97ef0b",
+        "source": "command"
+      },
+      {
+        "detail": "The approved issue requires a new start to supersede any pending handle and permits at most one active sign-in/session.",
+        "reference": "project/issues/ISSUE-0002.md",
+        "source": "file"
+      },
+      {
+        "detail": "The candidate increments the lifecycle generation before the device-code request, but does not clear the existing session or token until after that blocking request succeeds.",
+        "reference": "auth.py:162",
+        "source": "file"
+      },
+      {
+        "detail": "The test suite ran 33 tests: 24 completed successfully and 9 server integration tests errored because the read-only sandbox denied loopback socket binding.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not complete because the read-only environment had no writable temporary directory.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "Compilation could not complete because py_compile attempted to create __pycache__ in the read-only checkout.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "The handoff records author-observed exit 0 for compilation, 33 passing tests, and governance validation, but those claims could not be independently reproduced in this review environment.",
+        "reference": "project/handoffs/ISSUE-0002-handoff.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: invoking start() immediately supersedes the existing pending handle and clears any authenticated token, satisfying the single-concurrency policy.",
+          "Observed: auth.py:164-168 only increments _generation before performing the blocking transport call. The prior _session and _access_token remain intact until auth.py:190-193 executes after a successful response.",
+          "During the in-flight request, poll() still accepts the prior handle at auth.py:209-220 and get_token() can still return the prior token at auth.py:259-267. If the new device-code request fails, the prior state remains indefinitely.",
+          "tests/test_auth.py:148 covers sequential starts only; tests/test_auth.py:185 covers logout during start, but no test verifies immediate invalidation during an in-flight or failed superseding start."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 164,
+            "path": "auth.py"
+          },
+          {
+            "line": 190,
+            "path": "auth.py"
+          },
+          {
+            "line": 148,
+            "path": "tests/test_auth.py"
+          }
+        ],
+        "remediation": "Under the lifecycle lock, make start() invalidate the current pending session and token when it claims the new generation, before releasing the lock for network I/O. Preserve the generation check so logout or a newer start still wins. Define and test the intended state after the replacement request fails.",
+        "severity": "medium",
+        "title": "A new in-flight start does not immediately supersede existing authentication state",
+        "verification": "Add synchronized tests that block the second start's transport and assert the old handle is rejected and get_token() is empty while it is in flight; also assert those states remain invalidated if the replacement request fails. Then rerun the full unit suite and compile check against the new candidate."
+      },
+      {
+        "blocking": false,
+        "classification": "ADVISORY",
+        "confidence": "high",
+        "evidence": [
+          "README.md:9-13 states device-code sign-in exists.",
+          "README.md:44-47 still says Sign in is disabled until the device-code issue lands, contradicting the implemented UI and current status."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 44,
+            "path": "README.md"
+          }
+        ],
+        "remediation": "Update the run instructions to describe the current sign-in UI and clearly state that live authentication requires the separately approved protected action.",
+        "severity": "low",
+        "title": "README run instructions still describe sign-in as disabled",
+        "verification": "Read the rendered Run it section and confirm it agrees with web/index.html and the issue's protected-action limitation."
+      }
+    ],
+    "limitations": [
+      "The checkout is shallow/grafted: the candidate's immediate parent object is unavailable locally, although the launcher-supplied base and target objects were present and their exact tree diff was inspectable.",
+      "The full test result is missing from this review because sandbox policy denied loopback socket creation; 9 integration tests errored before assertions.",
+      "The compile check is missing because the read-only filesystem prevented __pycache__ creation.",
+      "Governance validation is missing because no writable temporary directory was available.",
+      "No live Microsoft tenant sign-in was attempted; it is a protected action and explicitly not an ISSUE-0002 completion prerequisite.",
+      "The author-reported passing checks are repository claims, not independently verified execution evidence."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "752cd75a87708724b1b131845c256706da97ef0b",
+    "schema_version": "1.0",
+    "summary": "BLOCKED: required execution evidence could not be independently completed in the read-only sandbox, and static review found that start() leaves an old handle or token usable while a replacement device-code request is in flight or after it fails, contrary to the single-concurrency acceptance criterion. The repository records this as repair round 2, so the configured repair limit is exhausted and the unresolved finding requires the governed human decision path.",
+    "target_id": "ISSUE-0002"
+  },
+  "test_only": false
+}

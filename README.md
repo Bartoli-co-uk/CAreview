@@ -41,10 +41,11 @@ of the MVP.
 python3 server.py            # serves http://127.0.0.1:8765 (override with CAREVIEW_PORT)
 ```
 
-Open the URL to see the shell and a live server-health check. *Sign in* is
-disabled until the device-code auth issue lands; once it does, you will click it,
-approve a device code at `microsoft.com/devicelogin`, and (with admin consent to
-`Policy.Read.All`) the app will list and score your Conditional Access policies.
+Open the URL to see the shell and a live server-health check, then click *Sign
+in*: enter your tenant, approve the device code shown at
+`microsoft.com/devicelogin`, and you are signed in. Fetching and scoring your
+Conditional Access policies (with admin consent to `Policy.Read.All`) lands in
+later issues.
 
 ## Verify it (offline)
 

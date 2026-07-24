@@ -25,10 +25,10 @@ records described below.
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | `M1` (in progress) |
 | Active issue | `ISSUE-0002` (device-code auth) — status `REPAIRING`, branch `ai/ISSUE-0002-device-code-auth`, Starting SHA `eb0490c` |
-| Issue repair round | Repair round 2 (final; fixing Codex F-001 in-flight `start()` concurrency) |
+| Issue repair round | Repair round 3 (authorized by DECISION-006; immediate single-concurrency supersession + README) |
 | Candidate product commit | Branch HEAD of `ai/ISSUE-0002-device-code-auth` (the launcher binds the exact SHA at review time) |
 | Latest implementation handoff | `project/handoffs/ISSUE-0002-handoff.md` |
-| Latest Codex review | ISSUE-0002 repair-1 `ISSUE-0002-4b30e05f6219-codex.json` (BLOCKED; F-001 in-flight start) + response; repair-2 candidate pending final review |
+| Latest Codex review | ISSUE-0002 repair-2 `ISSUE-0002-752cd75a8770-codex.json` (BLOCKED; F-001 immediate supersession, F-002 README) — extra round authorized (DECISION-006); repair-3 candidate pending final review |
 | Completed issues | `ISSUE-0001` (server shell) — merged `23e6633` |
 | Last human decision | `DECISION-005` (merge ISSUE-0001 + autonomous cadence to M1); also `DECISION-004` (gate policy), `DECISION-003` (roadmap), `DECISION-002` (launcher fix), `DECISION-001` (brief) |
 | Open blockers | None. Standing: Codex issue reviews stay `BLOCKED` on execution evidence (DECISION-004); author runs checks out-of-band |

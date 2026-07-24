@@ -182,6 +182,20 @@ class LifecycleTests(unittest.TestCase):
         self.assertNotEqual(result.get("state"), "success")
         self.assertFalse(mgr.is_authenticated())
 
+    def test_new_start_immediately_clears_prior_token(self) -> None:
+        clock = FakeClock()
+        mgr, _ = manager(
+            [DEVICE_OK, (200, {"access_token": "T", "expires_in": 3600}),
+             (200, {"device_code": "D2", "user_code": "WXYZ", "verification_uri": "x",
+                    "interval": 5, "expires_in": 900})],
+            clock,
+        )
+        handle = mgr.start()["handle"]
+        mgr.poll(handle)
+        self.assertTrue(mgr.is_authenticated())
+        mgr.start()  # a new sign-in must invalidate the prior token at once
+        self.assertFalse(mgr.is_authenticated())
+
     def test_inflight_start_after_logout_does_not_recreate_session(self) -> None:
         # logout() during a start()'s device-code call must win: the stale start
         # detects supersession and refuses to install its session (F-001 round 2).

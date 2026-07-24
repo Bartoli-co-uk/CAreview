@@ -110,6 +110,37 @@ class AnalyzerTests(unittest.TestCase):
         b = analyzer.analyze(load("strong_tenant.json"))
         self.assertEqual(a, b)
 
+    def test_mfa_admins_requires_full_role_coverage(self) -> None:
+        # A single policy covering only ONE admin role must not overstate
+        # coverage as a full pass (Codex F-003).
+        partial = graph.normalize_policy({
+            "id": "x", "displayName": "MFA one role", "state": "enabled",
+            "conditions": {"users": {"includeRoles": ["62e90394-69f5-4237-9190-012177145e10"]}},
+            "grantControls": {"builtInControls": ["mfa"]},
+        })
+        ids = {f["id"] for f in analyzer.analyze([partial])["findings"]}
+        self.assertIn("mfa-admins", ids)
+
+    def test_mfa_all_users_group_exclusion_is_a_gap(self) -> None:
+        # Excluding an entire group from all-user MFA is a material coverage
+        # gap, unlike excluding a handful of individual break-glass users.
+        gap = graph.normalize_policy({
+            "id": "x", "displayName": "MFA all users minus a group", "state": "enabled",
+            "conditions": {"users": {"includeUsers": ["All"], "excludeGroups": ["some-group"]}},
+            "grantControls": {"builtInControls": ["mfa"]},
+        })
+        ids = {f["id"] for f in analyzer.analyze([gap])["findings"]}
+        self.assertIn("mfa-all-users", ids)
+
+    def test_mfa_all_users_individual_exclusion_ok(self) -> None:
+        ok = graph.normalize_policy({
+            "id": "x", "displayName": "MFA all users minus break-glass", "state": "enabled",
+            "conditions": {"users": {"includeUsers": ["All"], "excludeUsers": ["bg-id"]}},
+            "grantControls": {"builtInControls": ["mfa"]},
+        })
+        ids = {f["id"] for f in analyzer.analyze([ok])["findings"]}
+        self.assertNotIn("mfa-all-users", ids)
+
     def test_every_rule_has_metadata(self) -> None:
         for rule in rules.RULES:
             self.assertIn(rule.severity, {"critical", "high", "medium", "low", "info"})

@@ -83,21 +83,31 @@ def _check_block_legacy_auth(policies: list[dict], ctx: dict) -> tuple[str, list
 
 
 def _check_mfa_for_admins(policies: list[dict], ctx: dict) -> tuple[str, list[str]]:
-    hits = _any(
-        policies,
-        lambda p: _enabled(p)
-        and "mfa" in _grant_controls(p)
-        and ADMIN_ROLE_TEMPLATE_IDS.intersection(_cond(p).get("includeRoles", [])),
-    )
-    return (PASS, _names(hits)) if hits else (FAIL, [])
+    # A single policy covering one admin role is not enough: require the UNION
+    # of enabled MFA policies' includeRoles to cover EVERY documented admin role
+    # template (Codex F-003) — a single narrow policy must not overstate coverage.
+    mfa_policies = _any(policies, lambda p: _enabled(p) and "mfa" in _grant_controls(p))
+    covered: set[str] = set()
+    for p in mfa_policies:
+        covered |= ADMIN_ROLE_TEMPLATE_IDS.intersection(_cond(p).get("includeRoles", []))
+    if covered == ADMIN_ROLE_TEMPLATE_IDS:
+        hits = [p for p in mfa_policies if ADMIN_ROLE_TEMPLATE_IDS.intersection(_cond(p).get("includeRoles", []))]
+        return PASS, _names(hits)
+    return FAIL, _names(mfa_policies) if mfa_policies else []
 
 
 def _check_mfa_for_all_users(policies: list[dict], ctx: dict) -> tuple[str, list[str]]:
+    # "All users" coverage is undermined by excluding an entire GROUP or ROLE
+    # (a material population), not by excluding a handful of individual users
+    # (the normal break-glass pattern). Only individual-user exclusions are
+    # tolerated (Codex F-003).
     hits = _any(
         policies,
         lambda p: _enabled(p)
         and "mfa" in _grant_controls(p)
-        and "All" in _cond(p).get("includeUsers", []),
+        and "All" in _cond(p).get("includeUsers", [])
+        and not _cond(p).get("excludeGroups")
+        and not _cond(p).get("excludeRoles"),
     )
     return (PASS, _names(hits)) if hits else (FAIL, [])
 

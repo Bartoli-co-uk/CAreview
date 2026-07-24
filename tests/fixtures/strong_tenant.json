@@ -15,7 +15,17 @@
     "displayName": "Require MFA for administrators",
     "state": "enabled",
     "conditions": {
-      "users": {"includeRoles": ["62e90394-69f5-4237-9190-012177145e10"]},
+      "users": {"includeRoles": [
+        "62e90394-69f5-4237-9190-012177145e10",
+        "e8611ab8-c189-46e8-94e1-60213ab1f814",
+        "7be44c8a-adaf-4e2a-84d6-ab2649e08a13",
+        "194ae4cb-b126-40b2-bd5b-6091b380977d",
+        "29232cdf-9323-42fd-ade2-1d097af3e4de",
+        "f28a1f50-f6e7-4571-818b-6a12f2af6b6c",
+        "158c047a-c907-4556-b7ef-446551a6b5f7",
+        "966707d0-3269-4727-9be2-8c3a10f19b9d",
+        "b0f54661-2d74-4c50-afa3-1ec803f12efe"
+      ]},
       "applications": {"includeApplications": ["All"]}
     },
     "grantControls": {"operator": "OR", "builtInControls": ["mfa"]}

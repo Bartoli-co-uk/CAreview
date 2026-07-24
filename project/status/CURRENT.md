@@ -33,7 +33,7 @@ records described below.
 | Last human decision | `DECISION-007` (raised repair budget); also `DECISION-006`..`001` |
 | Open blockers | None. Standing: Codex issue reviews stay `BLOCKED` on execution evidence (DECISION-004); author runs checks out-of-band |
 | Next required actor | Claude (implement ISSUE-0004 autonomously per DECISION-005) |
-| Next permitted action | Start `ISSUE-0004` (analyzer + rules + scoring) on branch `ai/ISSUE-0004-analyzer` from `main`; implement with sanitized fixtures, run checks, Codex review + repairs (DECISION-007 budget), merge under DECISION-004/005 |
+| Next permitted action | ISSUE-0004 repair round 3 in progress (MFA coverage fix, F-003); the recurring F-002 evaluability-model disagreement is being presented to the human for a final decision before further review |
 | Actions not yet permitted | Merge without a clean review, publication, deployment, live tenant auth/fetch, or any protected action |
 
 When this repository is adopted for a project, replace the values above and add

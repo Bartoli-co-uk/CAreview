@@ -478,6 +478,15 @@ def provider_compatible_schema(value: Any) -> Any:
     for key, item in value.items():
         if key == "const":
             output["enum"] = [item]
+        elif key == "properties" and isinstance(item, dict):
+            # ``properties`` is a MAP of property-name -> subschema, not a schema
+            # object. Recurse into each value while preserving the property names;
+            # do not pass the names through the keyword filter (that would drop
+            # every property and emit an unsatisfiable ``"properties": {}``).
+            output["properties"] = {
+                name: provider_compatible_schema(subschema)
+                for name, subschema in item.items()
+            }
         elif key in allowed:
             output[key] = provider_compatible_schema(item)
     return output

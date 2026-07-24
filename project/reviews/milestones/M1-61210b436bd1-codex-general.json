@@ -1,0 +1,184 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T16:46:38Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f9504-6cce-74f3-8f51-99292eea47cb"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "The isolated checkout is clean and HEAD exactly matches the launcher target 61210b436bd183cd0a61289e9e77d3b57fd8082a.",
+        "reference": "61210b436bd183cd0a61289e9e77d3b57fd8082a",
+        "source": "command"
+      },
+      {
+        "detail": "CURRENT.md identifies the reviewed product SHA as d15f47c, while the milestone record identifies the two existing peer reports as reviewing 08516d8a2549; neither identity matches launcher target 61210b4.",
+        "reference": "project/status/CURRENT.md:29",
+        "source": "file"
+      },
+      {
+        "detail": "The milestone record claims a single frozen candidate but does not record its exact SHA, using 'this commit' instead; its verification rows are bound only to unspecified 'pre-freeze main HEAD'.",
+        "reference": "project/milestones/M1.md:5",
+        "source": "file"
+      },
+      {
+        "detail": "The milestone traceability table maps all six roadmap issues to implementation files, handoffs, and issue-review artifacts.",
+        "reference": "project/milestones/M1.md:15",
+        "source": "file"
+      },
+      {
+        "detail": "The existing Claude general review explicitly says it was performed in the same implementation session rather than a fresh top-level task, contrary to the mandatory fresh-review rule.",
+        "reference": "project/reviews/milestones/M1-08516d8a2549-claude-general.md:7",
+        "source": "file"
+      },
+      {
+        "detail": "The independent unit-test command discovered 80 tests, but 19 server integration tests errored because the read-only sandbox prohibited loopback socket binding; exit status was 1.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "The independent compile check could not create __pycache__ in the read-only checkout and exited 1.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "The governance validator could not create a temporary directory in the read-only environment and exited 1.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "Repository evidence records prior successful execution: 80 tests, compile exit 0, validator success, and local health/sample smoke checks, but identifies these only as pre-freeze evidence rather than binding them to launcher SHA 61210b4.",
+        "reference": "project/milestones/M1.md:24",
+        "source": "file"
+      },
+      {
+        "detail": "Live tenant authentication/fetch and actual browser rendering were not performed. The approved roadmap permits the former as a residual evidence gap, while the latter remains a documented UI-verification limitation.",
+        "reference": "project/milestones/M1.md:30",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Launcher target is 61210b436bd183cd0a61289e9e77d3b57fd8082a.",
+          "project/status/CURRENT.md:29 identifies d15f47c as the reviewed product SHA.",
+          "project/milestones/M1.md:38 and :40 bind existing peer reviews to 08516d8a2549.",
+          "project/milestones/M1.md:5 does not state an exact frozen SHA, and verification at :28-31 is only attributed to 'pre-freeze main HEAD'.",
+          "AGENTS.md requires all four milestone reports and real checks to be bound to one exact frozen candidate; missing or contradictory evidence blocks."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 29,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 5,
+            "path": "project/milestones/M1.md"
+          },
+          {
+            "line": 28,
+            "path": "project/milestones/M1.md"
+          },
+          {
+            "line": 38,
+            "path": "project/milestones/M1.md"
+          }
+        ],
+        "remediation": "Choose and record one exact frozen candidate SHA consistently in CURRENT.md and M1.md. Bind real check evidence and all four fresh milestone reports to that SHA. If 61210b4 is the candidate, rerun/re-record every required review and check against 61210b4; if another SHA is intended, invoke the launcher against that exact commit instead.",
+        "severity": "high",
+        "title": "Milestone candidate identity is contradictory and verification is not commit-bound",
+        "verification": "Confirm HEAD, CURRENT.md, M1.md, all four report filenames/content, and recorded check evidence name the same full SHA; then rerun the four-review gate without changing the candidate."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "project/reviews/milestones/M1-08516d8a2549-claude-general.md:7 states the review used the same session as implementation and was not a fresh top-level task.",
+          "The report's limitations section repeats that it was written within the same overall session that authored implementation.",
+          "AGENTS.md requires four fresh commit-bound milestone reports, and the supplied prompt requires the Claude and Codex reviews to run in separate new read-only tasks."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 7,
+            "path": "project/reviews/milestones/M1-08516d8a2549-claude-general.md"
+          }
+        ],
+        "remediation": "Discard the non-fresh Claude general report as gate evidence and run a new read-only Claude general-review task against the exact frozen candidate. Ensure the Claude security review independently satisfies the same freshness requirement before treating it as valid.",
+        "severity": "high",
+        "title": "Mandatory Claude general review is not fresh or independent",
+        "verification": "The replacement report should identify a new read-only task, the exact common candidate SHA, and no implementation-session reuse; M1.md should link that valid report."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "The independent test run exited 1 with 19 PermissionError failures caused by prohibited socket binding.",
+          "The independent compile run exited 1 because the sandbox prohibited __pycache__ creation.",
+          "The independent validator run exited 1 because no writable temporary directory was available.",
+          "The milestone's claimed successful checks are not bound to the launcher SHA, so they cannot substitute as exact-candidate evidence."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 28,
+            "path": "project/milestones/M1.md"
+          }
+        ],
+        "remediation": "Run tests, compile, governance validation, and the documented server/UI smoke checks in an environment that permits their required temporary writes and loopback binding, against the selected exact candidate SHA. Record commands, exits, relevant output, SHA, and limitations in durable milestone evidence.",
+        "severity": "high",
+        "title": "Required checks could not be independently verified against the target commit",
+        "verification": "All required commands exit 0 against the exact frozen candidate, and M1.md records that full SHA rather than 'pre-freeze main HEAD'."
+      },
+      {
+        "blocking": false,
+        "classification": "ADVISORY",
+        "confidence": "high",
+        "evidence": [
+          "project/milestones/M1.md:30 states actual in-browser rendering was not confirmed.",
+          "project/handoffs/ISSUE-0005-handoff.md documents only static dangerous-sink checks and data-level smoke evidence.",
+          "The brief calls for a legible, keyboard-usable UI and the roadmap requires the offline fixture path to render."
+        ],
+        "id": "F-004",
+        "locations": [
+          {
+            "line": 30,
+            "path": "project/milestones/M1.md"
+          }
+        ],
+        "remediation": "Perform and record a browser smoke test of sample loading, score/findings/policy-card rendering, keyboard operation, sign-out clearing, error states, and hostile tenant strings rendering as inert text.",
+        "severity": "low",
+        "title": "Actual browser rendering and basic accessibility remain unverified",
+        "verification": "Record the browser/version, exact candidate SHA, exercised flows, observed results, console status, and any accessibility limitations."
+      }
+    ],
+    "limitations": [
+      "The launcher supplied no base commit. The isolated checkout exposes 61210b4 as a grafted/root commit, so a base-to-target milestone diff could not be inspected.",
+      "Read-only sandbox restrictions prevented socket binding, bytecode-cache creation, and temporary-directory creation; therefore tests, compile, validator, and server smoke checks could not complete independently.",
+      "No network or tenant access was available, so Microsoft device-code and Graph interoperability were not exercised.",
+      "No browser execution tool was available, so visual rendering, console behavior, and keyboard usability were assessed only from source and recorded evidence."
+    ],
+    "mode": "milestone-general",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "61210b436bd183cd0a61289e9e77d3b57fd8082a",
+    "schema_version": "1.0",
+    "summary": "M1 is blocked. The repository contains a coherent six-issue implementation and traceability records, but the milestone gate cannot be evaluated as one commit-bound package: durable records disagree among 61210b4, 08516d8, and d15f47c; the existing Claude general review admits it was not fresh; and required checks could not be independently completed or tied to the launcher target. Actual browser and live-tenant behavior also remain residual evidence gaps.",
+    "target_id": "M1"
+  },
+  "test_only": false
+}

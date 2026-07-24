@@ -118,11 +118,23 @@ class CAReviewHandler(BaseHTTPRequestHandler):
     # Bound at server construction so the handler knows which port to validate.
     port: int = DEFAULT_PORT
 
+    def _send_security_headers(self) -> None:
+        # Defense-in-depth alongside the HTML <meta> CSP: a real HTTP header
+        # also covers non-HTML responses and supports frame-ancestors, which a
+        # meta tag cannot express.
+        self.send_header(
+            "Content-Security-Policy",
+            "default-src 'self'; base-uri 'none'; form-action 'none'; "
+            "object-src 'none'; frame-ancestors 'none'",
+        )
+        self.send_header("X-Content-Type-Options", "nosniff")
+
     def _reject(self, status: HTTPStatus, message: str) -> None:
         body = json.dumps({"error": message}).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        self._send_security_headers()
         self.end_headers()
         self.wfile.write(body)
 
@@ -134,6 +146,7 @@ class CAReviewHandler(BaseHTTPRequestHandler):
         if no_store:
             # Sensitive tenant data (policies/analysis) must never be cached.
             self.send_header("Cache-Control", "no-store")
+        self._send_security_headers()
         self.end_headers()
         self.wfile.write(body)
 
@@ -153,6 +166,7 @@ class CAReviewHandler(BaseHTTPRequestHandler):
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", STATIC_FILES[path])
         self.send_header("Content-Length", str(len(data)))
+        self._send_security_headers()
         self.end_headers()
         self.wfile.write(data)
 

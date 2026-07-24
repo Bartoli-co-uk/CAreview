@@ -26,14 +26,14 @@ records described below.
 | Active milestone | `M1` — frozen for the four-review gate, status `REVIEWING` |
 | Active issue | None — ISSUE-0006 COMPLETE and merged; all six M1 issues done |
 | Issue repair round | Closed per DECISION-010 (4 rounds; no product finding in last 3) |
-| Candidate product commit | `main` at the ISSUE-0006 merge; reviewed product SHA `d15f47c` |
+| Candidate product commit | M1 remediation candidate (this commit; the launcher binds the exact SHA) — round 2, superseding `61210b4` |
 | Latest implementation handoff | `project/handoffs/ISSUE-0006-handoff.md` |
-| Latest Codex review | ISSUE-0006 final `ISSUE-0006-d15f47c5fb15-codex.json` — no product finding; closed per DECISION-010 |
+| Latest Codex review | ISSUE-0006 final `ISSUE-0006-d15f47c5fb15-codex.json` — no product finding; closed per DECISION-010. M1 round-1 Codex general `M1-61210b436bd1-codex-general.json` (BLOCKED, GEN-001) — superseded, remediated (DECISION-011) |
 | Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e`; `ISSUE-0004` `9f3885b`; `ISSUE-0005` `3dc059f`; `ISSUE-0006` `d15f47c` |
-| Last human decision | `DECISION-010` (ISSUE-0006 closeout); also `DECISION-009`, `DECISION-008`, `DECISION-007`..`001` |
-| Open blockers | None. Standing: Codex issue reviews stay `BLOCKED` on execution evidence (DECISION-004); author runs checks out-of-band |
-| Next required actor | Claude (write the Claude general/security reviews, then run the two Codex milestone reviews) |
-| Next permitted action | Write Claude general and Claude security milestone reviews (blind, before seeing any Codex conclusion), then run `./scripts/run-codex-review.sh milestone-general M1 <SHA>` and `milestone-security M1 <SHA>` against the frozen candidate; present all four to the human for milestone acceptance |
+| Last human decision | `DECISION-011` (M1 validator fix, general-remediation cycle); also `DECISION-010`, `DECISION-009`..`001` |
+| Open blockers | None. M1 round 1 found a real blocking finding (validator self-test bug) which is now fixed; round 2's four fresh reviews are in progress |
+| Next required actor | Claude (run all four fresh round-2 milestone reviews against the remediation candidate) |
+| Next permitted action | Commit the remediation candidate, launch fresh independent Claude general + security subagent reviews and `./scripts/run-codex-review.sh milestone-general M1 <SHA>` / `milestone-security M1 <SHA>` against that exact SHA; present all four to the human for milestone acceptance |
 | Actions not yet permitted | Merge without a clean review, publication, deployment, live tenant auth/fetch, or any protected action |
 
 When this repository is adopted for a project, replace the values above and add

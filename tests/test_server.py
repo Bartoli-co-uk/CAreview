@@ -11,6 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import auth  # noqa: E402
 import server  # noqa: E402
 
 
@@ -109,6 +110,60 @@ class ServerIntegrationTests(unittest.TestCase):
         conn.endheaders()
         conn.send(body)
         return conn.getresponse()
+
+    def test_auth_start_success_through_http_handler(self) -> None:
+        # Exercises /api/auth/start at the HTTP layer (Codex GEN-001, milestone
+        # general review): the response must never contain the raw device_code,
+        # only the opaque handle plus user_code/verification_uri/interval.
+        origin = f"http://127.0.0.1:{self.port}"
+        original_start = server.AUTH.start
+        server.AUTH.start = lambda tenant=auth.DEFAULT_TENANT: {  # type: ignore[method-assign]
+            "handle": "opaque-handle-123",
+            "user_code": "ABCD-EFGH",
+            "verification_uri": "https://microsoft.com/devicelogin",
+            "expires_in": 900,
+            "interval": 5,
+        }
+        try:
+            body = json.dumps({"tenant": "organizations"}).encode()
+            resp = self._post("/api/auth/start", f"127.0.0.1:{self.port}", origin, body)
+            data = json.loads(resp.read())
+            self.assertEqual(resp.status, 200)
+            self.assertEqual(data["handle"], "opaque-handle-123")
+            self.assertEqual(data["user_code"], "ABCD-EFGH")
+            self.assertNotIn("device_code", data)
+        finally:
+            server.AUTH.start = original_start
+
+    def test_auth_start_then_poll_success_through_http_handler(self) -> None:
+        # Full start -> poll round trip at the HTTP layer, using a real
+        # AuthManager with a mocked transport (no network).
+        origin = f"http://127.0.0.1:{self.port}"
+        original_auth = server.AUTH
+        device_ok = (200, {
+            "device_code": "DEV", "user_code": "WXYZ",
+            "verification_uri": "https://microsoft.com/devicelogin",
+            "interval": 0, "expires_in": 900,
+        })
+        token_ok = (200, {"access_token": "T", "expires_in": 3600})
+        responses = [device_ok, token_ok]
+        server.AUTH = auth.AuthManager(transport=lambda url, data: responses.pop(0))
+        try:
+            start_body = json.dumps({}).encode()
+            start_resp = self._post("/api/auth/start", f"127.0.0.1:{self.port}", origin, start_body)
+            handle = json.loads(start_resp.read())["handle"]
+
+            poll_body = json.dumps({"handle": handle}).encode()
+            poll_resp = self._post("/api/auth/poll", f"127.0.0.1:{self.port}", origin, poll_body)
+            self.assertEqual(json.loads(poll_resp.read())["state"], "success")
+        finally:
+            server.AUTH = original_auth
+
+    def test_security_headers_present(self) -> None:
+        resp = self._request("/", f"127.0.0.1:{self.port}")
+        resp.read()
+        self.assertIn("nosniff", resp.getheader("X-Content-Type-Options", ""))
+        self.assertIn("default-src 'self'", resp.getheader("Content-Security-Policy", ""))
 
     def test_post_without_origin_rejected(self) -> None:
         resp = self._post("/api/auth/logout", f"127.0.0.1:{self.port}", None, b"{}")

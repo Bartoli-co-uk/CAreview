@@ -541,6 +541,14 @@ def smoke_target_binding_rejections(errors: list[str]) -> None:
         mock = Path(temp_dir) / "mock-codex"
         create_mock(mock, "PASS")
         write_state(root, "MILESTONE_REVIEW", milestone="M1")
+        # make_copy() copies the live repository tree, which may already contain
+        # a real project/milestones/M1.md once a project reaches its own M1
+        # milestone. This fixture must exercise a GENUINELY missing record
+        # regardless of the source repo's current state, so remove any copied
+        # milestone record before asserting rejection.
+        milestone_record = root / "project/milestones/M1.md"
+        if milestone_record.exists():
+            milestone_record.unlink()
         if not initialize(root) or not commit(root, "missing milestone"):
             errors.append("missing-milestone fixture could not initialize")
         else:

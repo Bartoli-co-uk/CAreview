@@ -28,11 +28,11 @@ records described below.
 | Issue repair round | Repair round 2 (final; addressing Codex round-2 findings F-002 status, F-003 handoff, F-004 whitespace; F-001 execution is dispositioned by DECISION-004) |
 | Candidate product commit | Branch HEAD of `ai/ISSUE-0001-server-shell` (repair-round-2 candidate; the launcher binds the exact SHA at review time) |
 | Latest implementation handoff | `project/handoffs/ISSUE-0001-handoff.md` (repair round 2; plan `ISSUE-0001-plan.md`) |
-| Latest Codex review | issue round 2 `project/reviews/issues/ISSUE-0001-f1a9db0be692-codex.json` (BLOCKED; no code defect found; F-001 execution evidence + record-hygiene findings) + response `…-5a239c3225b6-claude-response.md` |
+| Latest Codex review | issue final `project/reviews/issues/ISSUE-0001-39cff76bef15-codex.json` — BLOCKED, **zero substantive findings**; blocked only on the execution-evidence limitation (reviewed product SHA `39cff76`). Clean per DECISION-004 |
 | Last human decision | `DECISION-004` (execution-evidence gate policy); also `DECISION-003` (roadmap), `DECISION-002` (launcher fix), `DECISION-001` (brief) |
 | Open blockers | Structural, dispositioned by DECISION-004: the Codex review sandbox is read-only with no sockets/temp, so it cannot execute checks; issue reviews stay `BLOCKED` on execution evidence. Out-of-band checks pass; the human decides the merge |
-| Next required actor | Claude (final re-review of the repaired candidate), then Human (ISSUE-0001 merge decision) |
-| Next permitted action | Commit the repair-round-2 candidate, run the final `./scripts/run-codex-review.sh issue ISSUE-0001 <BASE> <HEAD>`; if it is `BLOCKED` only on execution evidence with no substantive finding, present the report + out-of-band evidence to the human for the merge decision (per DECISION-004) |
+| Next required actor | Human (ISSUE-0001 merge decision, per DECISION-004) |
+| Next permitted action | Human reviews the clean final Codex report (`ISSUE-0001-39cff76bef15-codex.json`) + out-of-band evidence and decides whether to merge `ai/ISSUE-0001-server-shell` (reviewed product SHA `39cff76`) into `main`. On approval, Claude merges, marks ISSUE-0001 COMPLETE, and starts ISSUE-0002 in a fresh task |
 | Actions not yet permitted | Merge, publication, deployment, live tenant auth/fetch, or any protected action |
 
 When this repository is adopted for a project, replace the values above and add

@@ -1,0 +1,112 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T12:51:03Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f942c-bc9a-7910-8c57-b3b9fa256668"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "840b8ffe3f1a2c9d2b5c36d9f0046a4cde1f5eab",
+    "evidence": [
+      {
+        "detail": "Detached clean checkout HEAD exactly matches the launcher-supplied target SHA; the base object resolves exactly to the supplied base SHA.",
+        "reference": "git status --short --branch; git rev-parse HEAD; git rev-parse 840b8ffe3f1a2c9d2b5c36d9f0046a4cde1f5eab",
+        "source": "command"
+      },
+      {
+        "detail": "The base-to-target diff adds the server shell, static UI, tests, documentation, and issue-governance records. Static inspection found no substantive correctness, security, regression, scope, or maintainability defect in the implementation.",
+        "reference": "git diff 840b8ffe3f1a2c9d2b5c36d9f0046a4cde1f5eab 39cff76bef15e787b1776a965d139671b081d8ac",
+        "source": "diff"
+      },
+      {
+        "detail": "The implementation binds through build_server, rejects non-allowlisted bind strings, validates exact loopback Host values for the actual bound port, exposes the required health response, restricts static routes, and supplies a loopback Origin helper.",
+        "reference": "server.py",
+        "source": "file"
+      },
+      {
+        "detail": "The test suite contains 10 tests covering the health payload, accepted/rejected Hosts, Origin validation, rejection of non-loopback bind arguments, health integration, root HTML, missing/bad Host rejection, and unknown routes.",
+        "reference": "tests/test_server.py",
+        "source": "file"
+      },
+      {
+        "detail": "Whitespace validation completed successfully with no output.",
+        "reference": "git diff --check 840b8ffe3f1a2c9d2b5c36d9f0046a4cde1f5eab 39cff76bef15e787b1776a965d139671b081d8ac",
+        "source": "check"
+      },
+      {
+        "detail": "The required unittest command ran 10 tests but exited 1 because all five socket-based integration tests encountered PermissionError [Errno 1] while binding loopback; five non-socket tests completed before the environment errors.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "command"
+      },
+      {
+        "detail": "The required compile command exited 1 because the read-only checkout prohibited creation of scripts/__pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "command"
+      },
+      {
+        "detail": "The governance validator exited 1 because no writable temporary directory was available.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "command"
+      },
+      {
+        "detail": "The handoff records author-run results of py_compile exit 0, 10 passing tests, successful manual health/root/bad-Host checks, and a passing validator, but explicitly acknowledges that reviewer or CI must independently confirm required checks.",
+        "reference": "project/handoffs/ISSUE-0001-handoff.md",
+        "source": "file"
+      },
+      {
+        "detail": "A recorded human policy decision dispositions the recurring read-only/socket/temp execution limitation and leaves the merge decision to the human when static review finds no substantive defect.",
+        "reference": "project/decisions/DECISION-004-execution-evidence-gate-policy.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected behaviour: the required compile and unittest checks, plus the manual server run, must be independently verified against target commit 39cff76bef15e787b1776a965d139671b081d8ac.",
+          "Observed behaviour: unittest exited 1 because the sandbox denied loopback socket binding; py_compile exited 1 because the checkout denied __pycache__ creation; the manual server run could not be performed under the same socket restriction.",
+          "The handoff contains author-reported successful out-of-band results, but AGENTS.md says agent claims are not test evidence and the handoff itself says reviewer or CI must independently confirm the checks.",
+          "DECISION-004 explicitly permits the human to disposition this structural evidence limitation; it does not turn the failed independent executions into reviewer-verified passing evidence."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 64,
+            "path": "project/handoffs/ISSUE-0001-handoff.md"
+          },
+          {
+            "line": 56,
+            "path": "project/issues/ISSUE-0001.md"
+          }
+        ],
+        "remediation": "No product-code remediation is indicated. Present this static review, the exact target-bound author/CI execution records, and DECISION-004 to the human for the required merge decision, or obtain fresh independently verifiable passing check output from an environment that permits bytecode writes and loopback sockets.",
+        "severity": "medium",
+        "title": "Required execution evidence cannot be independently verified in the review sandbox",
+        "verification": "On the exact target SHA, run `python3 -m py_compile $(git ls-files '*.py')`, `python3 -m unittest discover -s tests`, and the documented server-plus-curl check in a permitted environment; record commands, exit statuses, and relevant output. Otherwise record the human decision under DECISION-004."
+      }
+    ],
+    "limitations": [
+      "The sandbox is read-only, blocks loopback socket creation, and provides no usable writable temporary directory.",
+      "The manual `python3 server.py` plus curl verification could not be performed because socket binding is prohibited.",
+      "Author-reported out-of-band results are available but were not independently reproducible in this review.",
+      "Static review cannot establish runtime behaviour as strongly as successful execution of the required checks.",
+      "The residual accepted product risk remains that another local process or user can access the unauthenticated loopback API; this is recorded as RISK-002 and no sensitive data is handled in ISSUE-0001."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "39cff76bef15e787b1776a965d139671b081d8ac",
+    "schema_version": "1.0",
+    "summary": "Target identity and static scope are correct, and no substantive implementation defect was found. The review remains BLOCKED solely because the required runtime and compile evidence could not be independently produced in the restricted review environment. DECISION-004 records the human-approved process for dispositioning this structural limitation and requires the human merge decision.",
+    "target_id": "ISSUE-0001"
+  },
+  "test_only": false
+}

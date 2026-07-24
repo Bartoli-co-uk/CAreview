@@ -1,6 +1,6 @@
 <!-- claudex-state
-stage: IMPLEMENTATION
-active_issue: none
+stage: ISSUE_REVIEW
+active_issue: ISSUE-0006
 active_milestone: none
 -->
 
@@ -17,17 +17,17 @@ records described below.
 
 | Field | Current value |
 |---|---|
-| Stage | `IMPLEMENTATION` |
+| Stage | `ISSUE_REVIEW` |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v1; APPROVED (DECISION-001) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (binds `179a023`) |
 | Roadmap | `ROADMAP.md` v3; APPROVED (DECISION-003, binds `125d74f`) |
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | `M1` (in progress) |
-| Active issue | None — ISSUE-0005 COMPLETE and merged |
+| Active issue | `ISSUE-0006` (docs + E2E) — status `REVIEWING`, branch `ai/ISSUE-0006-docs-verification`, Starting SHA `4e8e999` |
 | Issue repair round | None |
 | Candidate product commit | `main` at the ISSUE-0005 merge; reviewed product SHA `3dc059f` |
-| Latest implementation handoff | `project/handoffs/ISSUE-0005-handoff.md` |
+| Latest implementation handoff | `project/handoffs/ISSUE-0006-handoff.md` |
 | Latest Codex review | ISSUE-0005 final `ISSUE-0005-3dc059f2b16c-codex.json` — no substantive defect (DECISION-004/007) |
 | Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e`; `ISSUE-0004` `9f3885b`; `ISSUE-0005` `3dc059f` |
 | Last human decision | `DECISION-009` (ISSUE-0004 final round); also `DECISION-008` (evaluability model), `DECISION-007`..`001` |

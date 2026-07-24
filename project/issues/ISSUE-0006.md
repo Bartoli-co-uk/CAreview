@@ -1,12 +1,12 @@
 # ISSUE-0006: Documentation finalization and end-to-end verification
 
-**Status:** `PLANNED`
+**Status:** `REVIEWING`
 **Milestone:** `M1`
 **Approved roadmap:** `ROADMAP.md` version `3` at `125d74f6d4bfe85f1a727293064d0887f2d121c7`
 **Dependencies:** `ISSUE-0001`, `ISSUE-0002`, `ISSUE-0003`, `ISSUE-0004`, `ISSUE-0005`
 **Branch:** `ai/ISSUE-0006-docs-verification`
-**Starting SHA:** `[set at implementation start]`
-**Candidate SHA:** `Not created`
+**Starting SHA:** `4e8e999ef2204ee7089726b205f5895dc73b38b0`
+**Candidate SHA:** `this commit (branch HEAD); launcher binds the exact SHA`
 
 ## Objective
 

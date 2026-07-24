@@ -1,6 +1,6 @@
 # ISSUE-0001: Local HTTP server + static UI shell + health endpoint
 
-**Status:** `REPAIRING`
+**Status:** `COMPLETE`
 **Milestone:** `M1`
 **Approved roadmap:** `ROADMAP.md` version `3` at `125d74f6d4bfe85f1a727293064d0887f2d121c7`
 **Dependencies:** `None`
@@ -88,8 +88,8 @@ acceptable, and the human makes the merge decision.
 
 ## Completion
 
-- Final reviewed product SHA: `[SHA]`
-- Human advance/merge decision: `[path]`
-- Merge/result SHA: `[SHA or N/A]`
-- Residual risks or follow-up: `[list]`
-- Status record updated: `[commit/path]`
+- Final reviewed product SHA: `39cff76bef15e787b1776a965d139671b081d8ac`
+- Human advance/merge decision: `project/decisions/DECISION-005-merge-and-autonomy.md`
+- Merge/result SHA: merged into `main` via no-ff merge commit `23e663380af71c4fd98c854598cd96ba3cba603e`
+- Residual risks or follow-up: RISK-002 (unauthenticated loopback API, accepted); no tokens/tenant data handled here
+- Status record updated: this commit + `project/status/CURRENT.md`

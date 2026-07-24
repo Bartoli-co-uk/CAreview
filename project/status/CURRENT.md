@@ -1,6 +1,6 @@
 <!-- claudex-state
-stage: ISSUE_REPAIR
-active_issue: ISSUE-0001
+stage: IMPLEMENTATION
+active_issue: none
 active_milestone: none
 -->
 
@@ -17,22 +17,23 @@ records described below.
 
 | Field | Current value |
 |---|---|
-| Stage | `ISSUE_REPAIR` |
+| Stage | `IMPLEMENTATION` |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v1; APPROVED (DECISION-001) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (binds `179a023`) |
 | Roadmap | `ROADMAP.md` v3; APPROVED (DECISION-003, binds `125d74f`) |
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
-| Active milestone | None |
-| Active issue | `ISSUE-0001` (server shell) — status `REPAIRING`, branch `ai/ISSUE-0001-server-shell`, Starting SHA `840b8ff` |
-| Issue repair round | Repair round 2 (final; addressing Codex round-2 findings F-002 status, F-003 handoff, F-004 whitespace; F-001 execution is dispositioned by DECISION-004) |
-| Candidate product commit | Branch HEAD of `ai/ISSUE-0001-server-shell` (repair-round-2 candidate; the launcher binds the exact SHA at review time) |
-| Latest implementation handoff | `project/handoffs/ISSUE-0001-handoff.md` (repair round 2; plan `ISSUE-0001-plan.md`) |
-| Latest Codex review | issue final `project/reviews/issues/ISSUE-0001-39cff76bef15-codex.json` — BLOCKED, **zero substantive findings**; blocked only on the execution-evidence limitation (reviewed product SHA `39cff76`). Clean per DECISION-004 |
-| Last human decision | `DECISION-004` (execution-evidence gate policy); also `DECISION-003` (roadmap), `DECISION-002` (launcher fix), `DECISION-001` (brief) |
-| Open blockers | Structural, dispositioned by DECISION-004: the Codex review sandbox is read-only with no sockets/temp, so it cannot execute checks; issue reviews stay `BLOCKED` on execution evidence. Out-of-band checks pass; the human decides the merge |
-| Next required actor | Human (ISSUE-0001 merge decision, per DECISION-004) |
-| Next permitted action | Human reviews the clean final Codex report (`ISSUE-0001-39cff76bef15-codex.json`) + out-of-band evidence and decides whether to merge `ai/ISSUE-0001-server-shell` (reviewed product SHA `39cff76`) into `main`. On approval, Claude merges, marks ISSUE-0001 COMPLETE, and starts ISSUE-0002 in a fresh task |
+| Active milestone | `M1` (in progress) |
+| Active issue | None — ISSUE-0001 COMPLETE and merged |
+| Issue repair round | None |
+| Candidate product commit | `main` at the ISSUE-0001 merge (`23e6633`); reviewed product SHA `39cff76` |
+| Latest implementation handoff | `project/handoffs/ISSUE-0001-handoff.md` |
+| Latest Codex review | ISSUE-0001 final `project/reviews/issues/ISSUE-0001-39cff76bef15-codex.json` — clean (zero substantive findings) per DECISION-004 |
+| Completed issues | `ISSUE-0001` (server shell) — merged `23e6633` |
+| Last human decision | `DECISION-005` (merge ISSUE-0001 + autonomous cadence to M1); also `DECISION-004` (gate policy), `DECISION-003` (roadmap), `DECISION-002` (launcher fix), `DECISION-001` (brief) |
+| Open blockers | None. Standing: Codex issue reviews stay `BLOCKED` on execution evidence (DECISION-004); author runs checks out-of-band |
+| Next required actor | Claude (implement ISSUE-0002 autonomously per DECISION-005) |
+| Next permitted action | Start `ISSUE-0002` (device-code auth) on branch `ai/ISSUE-0002-device-code-auth` from `main`; implement, run checks, Codex review + bounded repair, then merge under DECISION-004/005. Live sign-in remains a protected action; STOP for the human before any real tenant auth |
 | Actions not yet permitted | Merge, publication, deployment, live tenant auth/fetch, or any protected action |
 
 When this repository is adopted for a project, replace the values above and add

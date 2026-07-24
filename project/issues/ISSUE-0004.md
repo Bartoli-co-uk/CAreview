@@ -2,7 +2,7 @@
 
 **Status:** `PLANNED`
 **Milestone:** `M1`
-**Approved roadmap:** `ROADMAP.md` version `2` at `[SHA pending roadmap approval]`
+**Approved roadmap:** `ROADMAP.md` version `3` at `[SHA pending roadmap approval]`
 **Dependencies:** `ISSUE-0003`
 **Branch:** `ai/ISSUE-0004-analyzer`
 **Starting SHA:** `[set at implementation start]`
@@ -22,7 +22,9 @@ findings, fully unit-tested against committed sanitized fixtures.
   report-only vs enabled; overly broad "all users + all apps" grant; missing
   session controls. Each rule declares the **data-contract fields it requires**
   (Codex F-003); a rule whose required fields are absent is **not evaluable** and
-  is excluded from scoring, never counted as pass or fail.
+  is excluded from scoring, never counted as pass or fail. The break-glass rule
+  specifically requires the user-supplied break-glass ID input from ISSUE-0003's
+  contract (Codex F-002); without it the rule is *not evaluable*, not a failure.
 - `analyzer.py` — evaluate rules over the normalized policy set, compute the
   weighted 0–100 score, and emit findings (id, title, severity, rationale,
   affected policies, remediation).

@@ -1,0 +1,176 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T11:16:05Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f93d5-d0fb-7a20-8604-fe16e1d630a1"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "The bound target commit exactly matches repository HEAD.",
+        "reference": "4daf03ca5be5ee07f713f77cb12f3deda54e72b3",
+        "source": "command"
+      },
+      {
+        "detail": "The target record exists and identifies roadmap version 2 as awaiting fresh Codex review and human approval.",
+        "reference": "ROADMAP.md:6",
+        "source": "file"
+      },
+      {
+        "detail": "The approved brief is version 1 and is bound by DECISION-001 to commit 179a02354aecbafa2c9d5aa34f9c9a5a04bbc79a.",
+        "reference": "project/decisions/DECISION-001-brief-approval.md",
+        "source": "file"
+      },
+      {
+        "detail": "Reviewed ROADMAP.md and all six proposed work-item records, ISSUE-0001 through ISSUE-0006, for scope, dependencies, acceptance criteria, checks, documentation, security, and operational coverage.",
+        "reference": "project/issues",
+        "source": "file"
+      },
+      {
+        "detail": "The working tree was clean at review start.",
+        "reference": "git status --short",
+        "source": "command"
+      },
+      {
+        "detail": "Governance validation could not complete because Python could not find a writable temporary directory in the read-only review environment; it raised FileNotFoundError while constructing a TemporaryDirectory.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "The application will expose sensitive policy data through a browser-accessible loopback HTTP service (ROADMAP.md:70-76).",
+          "ISSUE-0005 requires CSP and no-store headers, but no issue requires validation of the HTTP Host header or protection against DNS rebinding.",
+          "DECISION-001 accepts reachability by another local process/user on a trusted machine; it does not explicitly accept a remote website using DNS rebinding to read localhost API responses."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 40,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 7,
+            "path": "project/issues/ISSUE-0001.md"
+          },
+          {
+            "line": 60,
+            "path": "project/issues/ISSUE-0005.md"
+          }
+        ],
+        "remediation": "Add the smallest server-level control to ISSUE-0001 or ISSUE-0005: reject requests whose Host is not an explicit loopback allowlist (including the configured port), and add automated tests for accepted loopback Hosts and rejected attacker-controlled Hosts. For state-changing browser endpoints, also specify an Origin policy or document and test an equivalent CSRF defense.",
+        "severity": "high",
+        "title": "The plan does not mitigate browser DNS-rebinding access to sensitive loopback APIs",
+        "verification": "Run unit/integration HTTP tests showing localhost/127.0.0.1 requests succeed while an attacker-domain Host is rejected, and verify state-changing endpoints reject disallowed Origin values."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "ISSUE-0004 commits to a rule that evaluates whether a break-glass account is excluded but tightly scoped (project/issues/ISSUE-0004.md:18-24).",
+          "ISSUE-0003's prerequisite contract covers user/group/role include/exclude identifiers and whether named locations or directory-role assignments are fetched, but it does not define how break-glass identities are identified (project/issues/ISSUE-0003.md:37-43).",
+          "Conditional Access policy objects can contain excluded object identifiers, but the plan supplies no configuration or directory-data source that establishes which identifiers represent break-glass accounts."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 37,
+            "path": "project/issues/ISSUE-0003.md"
+          },
+          {
+            "line": 18,
+            "path": "project/issues/ISSUE-0004.md"
+          },
+          {
+            "line": 63,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Before implementation, define the rule's evidence source and semantics. Either add an explicit local configuration/data-contract field for sanitized break-glass identifiers, add the necessary read-only Graph lookup with scope and privacy coverage, or mark this starter rule deferred/not evaluable unless that evidence is supplied. Add corresponding strong, weak, and missing-evidence fixtures.",
+        "severity": "medium",
+        "title": "The break-glass rule has no feasible identity-evidence source",
+        "verification": "Inspect the resolved A3/data-contract record and fixtures to confirm the analyzer can distinguish a known break-glass exclusion from an arbitrary excluded user and reports missing identity evidence as not evaluable."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "M1 exit criteria require a live sign-in that lists a tenant's policies with score and findings (ROADMAP.md:86-89).",
+          "The verification strategy says live sign-in/fetch is never a completion precondition and may remain a documented evidence gap (ROADMAP.md:104-111).",
+          "ISSUE-0002 and ISSUE-0003 consistently make live authentication/fetch protected post-approval checks rather than issue completion criteria."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 86,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 104,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 40,
+            "path": "project/issues/ISSUE-0002.md"
+          },
+          {
+            "line": 47,
+            "path": "project/issues/ISSUE-0003.md"
+          }
+        ],
+        "remediation": "State one consistent milestone policy: either live tenant verification is required for M1 and therefore M1 blocks until separately approved and performed, or M1 may complete on mocked evidence with the live behavior recorded as an explicit residual evidence gap requiring human acceptance. Keep the protected-action approval requirement in either case.",
+        "severity": "medium",
+        "title": "Milestone completion contradicts the live-verification policy",
+        "verification": "Confirm the M1 exit criteria, verification strategy, ISSUE-0006 acceptance criteria, and protected-action language all describe the same required or optional live check and its blocking effect."
+      },
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "`python3 scripts/validate_repo.py` terminated before producing a validation result.",
+          "The traceback reports `FileNotFoundError: No usable temporary directory found` while the validator attempted to create a temporary directory.",
+          "Repository review rules require BLOCKED when required non-security evidence cannot be verified."
+        ],
+        "id": "F-004",
+        "locations": [
+          {
+            "line": 104,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Rerun `python3 scripts/validate_repo.py` against the exact target commit in an otherwise read-only environment that provides a writable isolated temporary directory, and record its exit status and relevant output. Do not change the candidate merely to accommodate this review-environment limitation.",
+        "severity": "medium",
+        "title": "Governance validation could not be completed in the review environment",
+        "verification": "The validator completes against commit 4daf03ca5be5ee07f713f77cb12f3deda54e72b3 and exits 0 with its successful result captured."
+      }
+    ],
+    "limitations": [
+      "No implementation exists yet, so implementation compile, unit, live authentication, Graph, UI, and security behavior could not be tested in this plan review.",
+      "Network access and protected live Microsoft authentication were neither authorized nor attempted.",
+      "Governance validation was attempted but could not run because the isolated read-only environment offered no writable temporary directory."
+    ],
+    "mode": "plan",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "4daf03ca5be5ee07f713f77cb12f3deda54e72b3",
+    "schema_version": "1.0",
+    "summary": "The target identity is correct and the six-issue roadmap is generally structured and dependency ordered, but it is not ready for approval. It lacks a DNS-rebinding boundary for sensitive loopback APIs, does not define an evidence source for the planned break-glass rule, and contradicts itself about whether live tenant verification blocks M1. Additionally, the required governance validator could not complete in this read-only environment, so the review is BLOCKED pending fresh validation evidence and roadmap remediation.",
+    "target_id": ""
+  },
+  "test_only": false
+}

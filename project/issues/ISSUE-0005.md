@@ -2,7 +2,7 @@
 
 **Status:** `PLANNED`
 **Milestone:** `M1`
-**Approved roadmap:** `ROADMAP.md` version `2` at `[SHA pending roadmap approval]`
+**Approved roadmap:** `ROADMAP.md` version `3` at `[SHA pending roadmap approval]`
 **Dependencies:** `ISSUE-0003`, `ISSUE-0004`
 **Branch:** `ai/ISSUE-0005-ui-rendering`
 **Starting SHA:** `[set at implementation start]`

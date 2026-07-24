@@ -2,7 +2,7 @@
 
 **Status:** `PLANNED`
 **Milestone:** `M1`
-**Approved roadmap:** `ROADMAP.md` version `2` at `[SHA pending roadmap approval]`
+**Approved roadmap:** `ROADMAP.md` version `3` at `[SHA pending roadmap approval]`
 **Dependencies:** `ISSUE-0002`; A3 (named-locations/roles) resolved and the normalized data contract agreed before implementation (Codex F-003)
 **Branch:** `ai/ISSUE-0003-graph-client`
 **Starting SHA:** `[set at implementation start]`
@@ -42,6 +42,13 @@ users/groups/roles include+exclude, applications, grant/session controls,
 client-app types, named-location references), and whether named locations /
 directory-role assignments are fetched or deferred. ISSUE-0004 rules bind to this
 contract.
+
+The contract also defines an **optional local, user-supplied break-glass input**
+(a small config of sanitized break-glass object IDs the user considers their
+emergency-access accounts). Break-glass accounts cannot be inferred from CA policy
+JSON alone (Codex F-002); the analyzer only evaluates the break-glass rule when
+this input is supplied, and otherwise marks that rule *not evaluable*. No such IDs
+are committed to the repository.
 
 ## Acceptance criteria
 

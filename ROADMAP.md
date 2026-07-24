@@ -3,10 +3,10 @@
 This is the canonical project roadmap for CAreview, a locally-hosted Conditional
 Access policy analyzer.
 
-**Current status:** `ROADMAP_REVIEW` (revised to v2 after Codex round 1; awaiting fresh Codex re-review, then human approval)
-**Roadmap version:** `2`
+**Current status:** `ROADMAP_REVIEW` (revised to v3 after Codex rounds 1–2; two revision rounds used; awaiting human approval)
+**Roadmap version:** `3`
 **Approved brief:** `project/brief/PROJECT_BRIEF.md` v1 at `179a02354aecbafa2c9d5aa34f9c9a5a04bbc79a` (DECISION-001)
-**Codex plan review:** `project/reviews/plans/ROADMAP-691b1427de57-codex.json` (round 1, BLOCKED) + response `project/reviews/plans/ROADMAP-691b1427de57-claude-response.md`
+**Codex plan review:** round 1 `ROADMAP-691b1427de57-codex.json` + response `…-claude-response.md`; round 2 `ROADMAP-4daf03ca5be5-codex.json` + response `ROADMAP-4daf03ca5be5-claude-response.md` (both BLOCKED; see responses)
 **Human approval record:** `Not recorded`
 
 No implementation may begin until a human records approval of the exact roadmap
@@ -28,7 +28,7 @@ third-party Python packages are required.
 
 | User or stakeholder | Need | Measurable success criterion |
 |---|---|---|
-| Security practitioner (owner) | Assess a tenant's CA posture locally | Signs in and sees policies, a 0–100 score, and findings for their tenant |
+| Security practitioner (owner) | Assess a tenant's CA posture locally | Product goal: signs in and sees policies, a 0–100 score, and findings for their tenant. M1 acceptance is proven on mocked/fixture evidence; the live sign-in against a real tenant is a separately approved protected step (a residual evidence gap the human accepts), not an M1 gate (F-003) |
 | Tenant admin (consent) | Grant least-privilege read access | One-time consent to read-only Graph scopes; no standing app registration |
 | Project reviewers | Correct, safe build | Each issue has a committed passing Codex review; milestone passes four blind reviews |
 
@@ -72,6 +72,13 @@ third-party Python packages are required.
   localhost server ↔ Microsoft over TLS (brief Data and security). Tenant-supplied
   strings (policy/display names) are untrusted input and must be rendered safely
   (per Codex F-005).
+- **Loopback hardening (per Codex F-001):** the server rejects any request whose
+  `Host` header is not on an explicit loopback allowlist (`127.0.0.1:<port>`,
+  `[::1]:<port>`, `localhost:<port>`) to defend against DNS-rebinding by a remote
+  site, and applies an Origin/`Sec-Fetch` check on state-changing endpoints
+  (`/api/auth/*`). Implemented and tested in ISSUE-0001. This closes the gap
+  DECISION-001/RISK-002 did not cover (a remote website reading loopback
+  responses).
 - **Deployment:** run-on-demand local tool; no persistence, no telemetry; closing
   the process discards all state and tokens.
 
@@ -85,7 +92,7 @@ human, who makes the milestone decision after seeing all four reports.
 
 | ID | Outcome | Dependencies | Exit criteria | Status |
 |---|---|---|---|---|
-| `M1` | Working MVP: device-code sign-in → fetch CA policies → 0–100 score + findings → per-policy visualization, offline-testable | `None` | All six issues COMPLETE; `python3 server.py` runs; `python3 -m unittest discover -s tests` passes; live sign-in lists a tenant's policies with score and findings; four blind milestone reviews pass | `PLANNED` |
+| `M1` | Working MVP: device-code sign-in → fetch CA policies → 0–100 score + findings → per-policy visualization, offline-testable | `None` | All six issues COMPLETE; `python3 server.py` runs; `python3 -m unittest discover -s tests` passes; the UI renders score/findings/cards against the offline fixture path; four blind milestone reviews pass. Live-tenant sign-in/fetch is **not** an M1 completion criterion (Codex F-003): it is a separate protected step, recorded as an explicit residual evidence gap that the human may accept at the milestone | `PLANNED` |
 
 ## Issue sequence
 
@@ -164,7 +171,8 @@ Critical or high security findings cannot use the default risk-acceptance path.
 
 | Round | Codex review | Claude response | Remaining decision |
 |---:|---|---|---|
-| 1 | `project/reviews/plans/ROADMAP-691b1427de57-codex.json` (BLOCKED, 5 findings) | `project/reviews/plans/ROADMAP-691b1427de57-claude-response.md` (F-002..F-005 accepted; F-001 addressed via prompt convention) | Re-review pending against roadmap v2 |
+| 1 | `ROADMAP-691b1427de57-codex.json` (BLOCKED, 5 findings) | `ROADMAP-691b1427de57-claude-response.md` (F-002..F-005 accepted; F-001 via prompt convention) | Resolved in v2 |
+| 2 | `ROADMAP-4daf03ca5be5-codex.json` (BLOCKED, 4 findings) | `ROADMAP-4daf03ca5be5-claude-response.md` (F-001..F-003 accepted → v3; F-004 is a review-sandbox limitation with out-of-band validator evidence) | Presented to human: approve v3, or request a confirmatory 3rd review (F-004 will recur) |
 
 Maximum two repair rounds. Any remaining material disagreement is shown to the
 human before exact roadmap approval. No workflow loop may exceed five total

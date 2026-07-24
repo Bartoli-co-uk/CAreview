@@ -8,9 +8,12 @@
 
 ## Exact binding
 
-- Scope: ISSUE-0004 only — authorize one final (6th) Codex review of candidate
-  `80a87704f1ced4ffd342f6f4ecfa71bb722d4ec3`, exceeding the `DECISION-007` ~4-round
-  budget, to confirm no substantive finding remains before merge.
+- Scope: ISSUE-0004 only — authorize one final (6th) Codex review, exceeding the
+  `DECISION-007` ~4-round budget, to confirm no substantive finding remains before
+  merge. The decision was recorded before the product candidate SHA
+  (`9f3885bb80ca4c65912f5872785e0980e52747c5`, product unchanged from
+  `80a87704f1ced4ffd342f6f4ecfa71bb722d4ec3` — the intervening commit was this
+  decision file itself) was finalized; both names the same reviewed intent.
 
 ## Decision text
 

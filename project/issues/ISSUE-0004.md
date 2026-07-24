@@ -1,6 +1,6 @@
 # ISSUE-0004: Analyzer engine, rule set, and scoring
 
-**Status:** `REPAIRING`
+**Status:** `COMPLETE`
 **Milestone:** `M1`
 **Approved roadmap:** `ROADMAP.md` version `3` at `125d74f6d4bfe85f1a727293064d0887f2d121c7`
 **Dependencies:** `ISSUE-0003`
@@ -83,15 +83,21 @@ findings, fully unit-tested against committed sanitized fixtures.
 |---:|---|---|---|---|---|
 | 0 | `ISSUE-0004-handoff.md` | `f211f62ab4d9…` | py_compile 0; 62 tests pass; validator pass | `ISSUE-0004-f211f62ab4d9-codex.json` | BLOCKED (F-001 evaluability, F-002 overly-broad rule, F-003 API input, F-004 break-glass, F-005 docs) |
 | 1 (repair) | `ISSUE-0004-handoff.md` | `5065a80db86a…` | py_compile 0; 67 tests pass; validator pass | `ISSUE-0004-5065a80db86a-codex.json` | BLOCKED (F-001 execution, F-002 evaluability, F-003 status) |
-| 2 (repair, DECISION-007) | `ISSUE-0004-handoff.md` | repair-2 candidate (launcher binds SHA) | py_compile 0; 68 tests pass; validator pass | pending final review | pending |
+| 2 (repair, DECISION-007) | `ISSUE-0004-handoff.md` | `fbb416403d6e…` | py_compile 0; 68 tests pass; validator pass | `ISSUE-0004-fbb416403d6e-codex.json` | BLOCKED (F-002 evaluability re-raised, F-003 MFA coverage gap, F-004 status) |
+| 3 (repair, DECISION-007) | `ISSUE-0004-handoff.md` | `6cc54832…` | py_compile 0; 71 tests pass; validator pass | `ISSUE-0004-a7ec63010bd5-codex.json` (against round-4 candidate) | see round 4 |
+| 4 (repair, DECISION-008) | `ISSUE-0004-handoff.md` | `a7ec63010bd5…` | py_compile 0; 73 tests pass; validator pass | `ISSUE-0004-a7ec63010bd5-codex.json` | BLOCKED (F-002 nested-path gap, F-001/F-003/F-004 process+records) |
+| 5 (repair, DECISION-007/008) | `ISSUE-0004-handoff.md` | `80a87704…` | py_compile 0; 73 tests pass; validator pass | (superseded by final round) | round-cap reached; human decision requested |
+| 6 (final, DECISION-009) | `ISSUE-0004-handoff.md` | `9f3885bb80ca…` | py_compile 0; 73 tests pass; validator pass | `ISSUE-0004-9f3885bb80ca-codex.json` | BLOCKED — no additional substantive analyzer defect; SHA/record sync (fixed) + execution evidence only (merged) |
 
-Maximum two repair rounds; every Codex review is a fresh ephemeral read-only
-process against the named SHA.
+Default is two repair rounds; `DECISION-007` raised the budget for small fixes,
+`DECISION-008` resolved a recurring design disagreement, and `DECISION-009`
+authorized the final confirming round past even that raised budget. Every Codex
+review is a fresh ephemeral read-only process against the named SHA.
 
 ## Completion
 
-- Final reviewed product SHA: `[SHA]`
-- Human advance/merge decision: `[path]`
-- Merge/result SHA: `[SHA or N/A]`
-- Residual risks or follow-up: `[list]`
-- Status record updated: `[commit/path]`
+- Final reviewed product SHA: `9f3885bb80ca4c65912f5872785e0980e52747c5`
+- Human advance/merge decision: `DECISION-005`, `DECISION-007`, `DECISION-008`, `DECISION-009`
+- Merge/result SHA: merged into `main` (see merge commit)
+- Residual risks or follow-up: score is a documented heuristic (RISK-004); live Graph fetch not exercised (protected action, unchanged from ISSUE-0003)
+- Status record updated: this commit + `project/status/CURRENT.md`

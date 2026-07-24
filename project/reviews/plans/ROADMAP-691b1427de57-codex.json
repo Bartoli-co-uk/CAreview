@@ -1,0 +1,192 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T11:05:44Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f93cc-1ef1-72d1-81b4-3ed800b9dfc0"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "The checkout HEAD exactly matches the supplied target commit. The commit object identifies parent efb1b43beb6f1b91e6c0a0a853fe467ad9d8d236, but the launcher supplied no base commit and no Target ID.",
+        "reference": "git rev-parse HEAD; git cat-file -p 691b1427de57549baa8fb6ff2395b0d1399587a5",
+        "source": "command"
+      },
+      {
+        "detail": "The committed status record identifies ROADMAP.md v1 as the roadmap candidate awaiting plan review and confirms that implementation is not permitted.",
+        "reference": "project/status/CURRENT.md",
+        "source": "file"
+      },
+      {
+        "detail": "The roadmap is bound to the approved brief v1 at 179a02354aecbafa2c9d5aa34f9c9a5a04bbc79a.",
+        "reference": "ROADMAP.md:8",
+        "source": "file"
+      },
+      {
+        "detail": "The governance validator could not complete because the read-only environment provides no usable temporary directory; it raised FileNotFoundError while creating a TemporaryDirectory.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "The launcher binding leaves both Target ID and Base commit empty.",
+          "The prompt requires exact target identity and explicitly forbids PASS when identity evidence is missing.",
+          "Although ROADMAP.md is named as the target record and HEAD matches the supplied target SHA, the reviewer cannot infer missing launcher-bound identity fields."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 1,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Rerun the plan-review launcher with a non-empty, unambiguous Target ID and the intended base commit (or an explicit documented plan-review convention that no base is applicable).",
+        "severity": "high",
+        "title": "Launcher omitted required target identity",
+        "verification": "Confirm the fresh review prompt contains the expected Target ID, base SHA, and target SHA, then verify the isolated checkout HEAD and target record against those exact values."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "AGENTS.md classifies authenticating or changing credentials/tokens as a protected action requiring separate explicit human approval naming the exact action and target.",
+          "ISSUE-0002 requires a real tenant sign-in but states that no protected actions are introduced.",
+          "ISSUE-0003 likewise requires a signed-in live tenant fetch, while the roadmap schedules these checks without an explicit approval prerequisite."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 55,
+            "path": "project/issues/ISSUE-0002.md"
+          },
+          {
+            "line": 66,
+            "path": "project/issues/ISSUE-0002.md"
+          },
+          {
+            "line": 51,
+            "path": "project/issues/ISSUE-0003.md"
+          }
+        ],
+        "remediation": "Add an explicit stop/prerequisite before each live-tenant check requiring separate human approval for authentication and read-only Graph access against a named tenant/test identity; keep mocked checks runnable when approval is absent and record the live evidence gap.",
+        "severity": "high",
+        "title": "Live authentication checks bypass the protected-action gate",
+        "verification": "Review the revised issues and roadmap to confirm live sign-in/fetch cannot be initiated solely from roadmap or issue approval and that the required exact human authorization and target are recorded before execution."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "ROADMAP.md says the named-location/directory-role uncertainty may remain unresolved until the start of ISSUE-0004.",
+          "ISSUE-0003 must define the normalized policy model consumed by the analyzer and says A3 must be resolved before coding.",
+          "ISSUE-0004 already commits to rules for administrator coverage and break-glass exclusions without defining required source fields, identity configuration, unknown/not-applicable behavior, or rule truth tables."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 62,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 19,
+            "path": "project/issues/ISSUE-0003.md"
+          },
+          {
+            "line": 19,
+            "path": "project/issues/ISSUE-0004.md"
+          }
+        ],
+        "remediation": "Move the A3 decision before ISSUE-0003 implementation and define the minimum normalized data contract plus evaluability/unknown behavior for every starter rule. Defer any rule whose required evidence is unavailable rather than scoring missing evidence as pass or fail.",
+        "severity": "high",
+        "title": "Analyzer rules are sequenced before their data requirements are resolved",
+        "verification": "Map every ISSUE-0004 rule to fields produced by ISSUE-0003 and to deterministic pass/fail/unknown fixtures; confirm optional Graph resources and scopes are decided before the client contract is implemented."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "ISSUE-0002 covers pending, slow_down, success, and generic error states but does not specify device-code expiry, polling interval enforcement, cancellation/logout, access-token expiry, refresh-token handling, or concurrent sign-in attempts.",
+          "ISSUE-0003 assumes an in-memory token remains usable for policy requests, but there is no acceptance criterion for expired-token behavior or clearing token state.",
+          "The roadmap promises a usable run-on-demand application, making token lifecycle behavior part of feasibility rather than an optional enhancement."
+        ],
+        "id": "F-004",
+        "locations": [
+          {
+            "line": 19,
+            "path": "project/issues/ISSUE-0002.md"
+          },
+          {
+            "line": 37,
+            "path": "project/issues/ISSUE-0002.md"
+          },
+          {
+            "line": 39,
+            "path": "project/issues/ISSUE-0003.md"
+          }
+        ],
+        "remediation": "Define the minimum authentication lifecycle: server-controlled polling cadence and expiry, opaque bounded handles, one clear concurrency policy, logout/cancellation and memory clearing, and deterministic behavior when an access token expires. Explicitly decide whether refresh tokens are retained in memory or reauthentication is required.",
+        "severity": "medium",
+        "title": "Device-code and token lifecycle acceptance criteria are incomplete",
+        "verification": "Add mocked tests for expiry, slow_down interval changes, invalid/expired handles, cancellation/logout, concurrent starts, and expired access tokens; verify no token material appears in responses or logs."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "medium",
+        "evidence": [
+          "ISSUE-0005 renders tenant-controlled policy fields and finding content in a privileged local page that can call token-backed endpoints.",
+          "Its acceptance criteria require visual states and absence of console errors but do not require injection-safe DOM rendering or browser security headers.",
+          "Conditional Access display names and other Graph strings must be treated as untrusted input under the repository security rules."
+        ],
+        "id": "F-005",
+        "locations": [
+          {
+            "line": 19,
+            "path": "project/issues/ISSUE-0005.md"
+          },
+          {
+            "line": 36,
+            "path": "project/issues/ISSUE-0005.md"
+          },
+          {
+            "line": 57,
+            "path": "project/issues/ISSUE-0005.md"
+          }
+        ],
+        "remediation": "Add acceptance criteria and tests requiring untrusted policy/finding strings to be inserted as text rather than HTML, prohibit dynamic code execution and external assets, and specify appropriate local response protections such as no-store for sensitive API responses and a restrictive CSP for the page.",
+        "severity": "medium",
+        "title": "UI plan lacks explicit protection against untrusted policy content",
+        "verification": "Render fixtures containing HTML/script-like strings and verify they appear literally without execution; inspect response headers and confirm the UI works with the restrictive CSP and no external requests."
+      }
+    ],
+    "limitations": [
+      "The launcher supplied an empty Target ID and empty base SHA, so the review target could not be fully authenticated according to the binding rules.",
+      "The governance validator did not complete because the read-only environment had no writable temporary directory; repository governance validity is therefore unverified.",
+      "No live Microsoft tenant authentication or Graph access was attempted because this is a read-only plan review and such authentication is a protected action requiring separate approval.",
+      "External claims about the Microsoft first-party client, delegated scope consent, and tenant behavior were not network-verified; the roadmap correctly identifies part of this as live-tenant uncertainty."
+    ],
+    "mode": "plan",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "691b1427de57549baa8fb6ff2395b0d1399587a5",
+    "schema_version": "1.0",
+    "summary": "The roadmap cannot pass this review because the launcher omitted required target identity and the governance check could not run. Independently of those evidence blockers, the plan requires changes to respect the protected authentication gate, resolve analyzer data dependencies before Graph normalization, specify token lifecycle behavior, and require safe rendering of tenant-controlled content.",
+    "target_id": ""
+  },
+  "test_only": false
+}

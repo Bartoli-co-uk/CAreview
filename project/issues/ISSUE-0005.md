@@ -2,7 +2,7 @@
 
 **Status:** `PLANNED`
 **Milestone:** `M1`
-**Approved roadmap:** `ROADMAP.md` version `1` at `[SHA pending roadmap approval]`
+**Approved roadmap:** `ROADMAP.md` version `2` at `[SHA pending roadmap approval]`
 **Dependencies:** `ISSUE-0003`, `ISSUE-0004`
 **Branch:** `ai/ISSUE-0005-ui-rendering`
 **Starting SHA:** `[set at implementation start]`
@@ -41,6 +41,14 @@ findings list, and a simple per-policy flow card
 3. Signed-out, loading, empty, and consent-error states are handled visibly.
 4. The UI renders correctly offline against the sample/fixture path for review.
 5. The score is visibly labeled a heuristic (RISK-004).
+6. **Untrusted-content safety (Codex F-005):** all tenant-supplied and finding
+   strings are inserted as text (e.g. `textContent`), never as HTML; no
+   `innerHTML`/`eval`/dynamic code with untrusted data; a test/fixture containing
+   a policy display name with markup (e.g. `<img onerror>`), quotes, and
+   angle-brackets renders inertly.
+7. The page sets a **restrictive Content-Security-Policy** (no external origins;
+   no inline event handlers) and the server sends **`Cache-Control: no-store`** on
+   sensitive API responses (`/api/policies`, `/api/analysis`).
 
 ## Required checks
 
@@ -58,9 +66,10 @@ findings list, and a simple per-policy flow card
 
 - Threat-model delta: none new; renders already-local data.
 - Data/secret impact: any sample data committed must be sanitized; never render
-  or log tokens.
+  or log tokens. Tenant policy strings are untrusted input and must be rendered
+  as inert text (Codex F-005).
 - Dependency/supply-chain impact: none; no external scripts/styles/fonts — all
-  assets are local.
+  assets are local, enforced by a restrictive CSP.
 - Protected actions: none.
 
 ## Stop conditions

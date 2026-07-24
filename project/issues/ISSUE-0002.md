@@ -2,7 +2,7 @@
 
 **Status:** `PLANNED`
 **Milestone:** `M1`
-**Approved roadmap:** `ROADMAP.md` version `1` at `[SHA pending roadmap approval]`
+**Approved roadmap:** `ROADMAP.md` version `2` at `[SHA pending roadmap approval]`
 **Dependencies:** `ISSUE-0001`
 **Branch:** `ai/ISSUE-0002-device-code-auth`
 **Starting SHA:** `[set at implementation start]`
@@ -36,15 +36,34 @@ token in memory, with the Sign-in UI showing the code and reflecting success.
 
 ## Acceptance criteria
 
-1. `/api/auth/start` returns a real device code and verification URI for the
-   configured client and tenant.
-2. `/api/auth/poll` transitions pending → success once the user approves, and
-   surfaces `authorization_pending`/`slow_down`/errors without crashing.
-3. The access token is held only in memory; it is never written to disk, logs,
-   response bodies beyond a success flag, or the repository.
-4. Unit tests cover the poll state machine with a mocked token endpoint.
-5. Manual evidence: a real device-code sign-in against a tenant yields a token
-   (recorded in the handoff, without the token value).
+Completion is gated on the mocked checks below (criteria 1–9). Criterion 10 (live
+sign-in) is a protected action and is NOT a completion precondition (Codex F-002).
+
+1. `/api/auth/start` builds a correct device-code request for the configured
+   client and tenant and returns an **opaque, bounded polling handle** plus the
+   `user_code` and `verification_uri` (never the raw `device_code`).
+2. `/api/auth/poll` transitions pending → success, and surfaces
+   `authorization_pending`/`slow_down`/`expired_token`/`access_denied`/errors
+   without crashing.
+3. **Polling cadence is server-controlled:** the server enforces the interval
+   returned by Microsoft (honouring `slow_down`) rather than trusting the client.
+4. **Device-code expiry** is handled: after `expires_in`, the handle is invalidated
+   and a re-start is required.
+5. **Logout / cancellation** clears the token and any pending handle from memory.
+6. **Access-token expiry** is deterministic: an expired token yields a clear
+   "re-authenticate" state rather than a failed Graph call surfacing as a crash.
+7. **Refresh-token decision (explicit):** the MVP does **not** persist refresh
+   tokens; on access-token expiry the user re-authenticates. Documented in code.
+8. **Single-concurrency policy:** at most one active sign-in/session at a time; a
+   new `start` supersedes any pending handle.
+9. The access token is held only in memory; never written to disk, logs, response
+   bodies beyond a success flag, or the repository.
+10. (Protected, post-approval) A real device-code sign-in against a **named**
+    tenant yields a usable token — performed only after separate human approval
+    (see Security and privacy impact); evidence recorded without the token value.
+
+Unit tests cover criteria 1–8 against a mocked token endpoint (pending, slow_down,
+expired, denied, success, expiry, logout, concurrency).
 
 ## Required checks
 
@@ -63,11 +82,16 @@ token in memory, with the Sign-in UI showing the code and reflecting success.
 - Threat-model delta: introduces token acquisition and storage; tokens in memory only.
 - Data/secret impact: access/refresh tokens are sensitive; must never be logged or persisted.
 - Dependency/supply-chain impact: none; `urllib` only.
-- Protected actions: none new. No client secret is introduced (public client).
+- Protected actions (Codex F-002): performing a **real device-code sign-in
+  against a named tenant** is a protected action (authentication) requiring
+  separate, explicit human approval that names the tenant/test identity.
+  Automated completion uses mocked checks only; the launcher and unit tests never
+  trigger a real sign-in. No client secret is introduced (public client).
 
 ## Stop conditions
 
-- Any need to persist tokens, add a client secret, add a dependency, or if the
+- Any need to persist tokens/refresh tokens, add a client secret, add a
+  dependency, perform a live sign-in without recorded human approval, or if the
   first-party client cannot obtain the scopes (record and escalate per RISK-001).
 
 ## Implementation and review rounds

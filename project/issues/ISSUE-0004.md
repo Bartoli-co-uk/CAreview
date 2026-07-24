@@ -2,7 +2,7 @@
 
 **Status:** `PLANNED`
 **Milestone:** `M1`
-**Approved roadmap:** `ROADMAP.md` version `1` at `[SHA pending roadmap approval]`
+**Approved roadmap:** `ROADMAP.md` version `2` at `[SHA pending roadmap approval]`
 **Dependencies:** `ISSUE-0003`
 **Branch:** `ai/ISSUE-0004-analyzer`
 **Starting SHA:** `[set at implementation start]`
@@ -20,13 +20,16 @@ findings, fully unit-tested against committed sanitized fixtures.
   auth; MFA for admins; MFA for all users; device compliance/hybrid join;
   sign-in/user risk policy present; break-glass excluded but scoped;
   report-only vs enabled; overly broad "all users + all apps" grant; missing
-  session controls.
+  session controls. Each rule declares the **data-contract fields it requires**
+  (Codex F-003); a rule whose required fields are absent is **not evaluable** and
+  is excluded from scoring, never counted as pass or fail.
 - `analyzer.py` — evaluate rules over the normalized policy set, compute the
   weighted 0–100 score, and emit findings (id, title, severity, rationale,
   affected policies, remediation).
 - `server.py` — `/api/analysis` returns score + findings for the current policies.
-- `tests/` + `tests/fixtures/` — sanitized "strong" and "weak" tenant fixtures
-  with expected deterministic scores and findings.
+- `tests/` + `tests/fixtures/` — sanitized "strong", "weak", and "incomplete"
+  tenant fixtures with expected deterministic scores and findings, where
+  "incomplete" exercises the *not evaluable* path.
 
 ## Out of scope
 
@@ -41,9 +44,12 @@ findings, fully unit-tested against committed sanitized fixtures.
 1. `python3 -m unittest discover -s tests` passes.
 2. A strong-baseline fixture scores high and a weak fixture scores low, with
    deterministic, documented numbers.
-3. Each rule's weight and each finding's severity are documented in `rules.py`.
+3. Each rule's weight, required data-contract fields, and finding severity are
+   documented in `rules.py`.
 4. Findings are returned severity-sorted (critical → info).
 5. The score is labeled a heuristic (RISK-004), not a compliance measure.
+6. A rule lacking its required evidence is reported *not evaluable* and excluded
+   from the score (never pass/fail); the "incomplete" fixture proves this.
 
 ## Required checks
 

@@ -2,8 +2,8 @@
 
 **Status:** `PLANNED`
 **Milestone:** `M1`
-**Approved roadmap:** `ROADMAP.md` version `1` at `[SHA pending roadmap approval]`
-**Dependencies:** `ISSUE-0002`
+**Approved roadmap:** `ROADMAP.md` version `2` at `[SHA pending roadmap approval]`
+**Dependencies:** `ISSUE-0002`; A3 (named-locations/roles) resolved and the normalized data contract agreed before implementation (Codex F-003)
 **Branch:** `ai/ISSUE-0003-graph-client`
 **Starting SHA:** `[set at implementation start]`
 **Candidate SHA:** `Not created`
@@ -34,13 +34,29 @@ analyzer and UI consume, and surface consent/permission errors clearly.
 
 - `graph.py`, `server.py`, `tests/**`
 
+### A3 prerequisite (Codex F-003)
+
+Before implementation, record the resolved A3 decision and the **normalized policy
+data contract**: the exact fields the analyzer consumes (state, conditions,
+users/groups/roles include+exclude, applications, grant/session controls,
+client-app types, named-location references), and whether named locations /
+directory-role assignments are fetched or deferred. ISSUE-0004 rules bind to this
+contract.
+
 ## Acceptance criteria
 
-1. `/api/policies` returns the tenant's normalized CA policies for a signed-in user.
+Completion is gated on the mocked checks (criteria 1–5). Criterion 6 (live fetch)
+is a protected action, not a completion precondition (Codex F-002).
+
+1. `/api/policies` returns policies normalized to the documented data contract.
 2. Multi-page responses are fully followed via `@odata.nextLink`.
 3. A `403`/consent error returns a clear, actionable message rather than a crash.
-4. Unit tests cover paging and normalization against mocked responses/fixtures.
+4. Unit tests cover paging and normalization to the data contract against mocked
+   responses/fixtures (single page, multi-page, 403).
 5. No policy JSON or token is written to disk or logs.
+6. (Protected, post-approval) A live fetch against a **named** tenant returns that
+   tenant's policies — performed only after separate human approval; evidence
+   recorded without embedding real policy data.
 
 ## Required checks
 
@@ -60,7 +76,10 @@ analyzer and UI consume, and surface consent/permission errors clearly.
 - Threat-model delta: reads sensitive tenant configuration into memory.
 - Data/secret impact: policy JSON is sensitive; keep in memory, never persist/log.
 - Dependency/supply-chain impact: none; `urllib` only.
-- Protected actions: none; adding any non-Graph egress host is reviewable.
+- Protected actions (Codex F-002): a **live Graph fetch against a named tenant**
+  requires the signed-in token and is gated behind the same separate human
+  approval as ISSUE-0002's live sign-in. Adding any non-Graph egress host is a
+  separate reviewable change.
 
 ## Stop conditions
 

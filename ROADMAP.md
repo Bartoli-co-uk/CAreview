@@ -3,10 +3,10 @@
 This is the canonical project roadmap for CAreview, a locally-hosted Conditional
 Access policy analyzer.
 
-**Current status:** `ROADMAP_REVIEW` (awaiting fresh Codex plan review, then human approval)
-**Roadmap version:** `1`
+**Current status:** `ROADMAP_REVIEW` (revised to v2 after Codex round 1; awaiting fresh Codex re-review, then human approval)
+**Roadmap version:** `2`
 **Approved brief:** `project/brief/PROJECT_BRIEF.md` v1 at `179a02354aecbafa2c9d5aa34f9c9a5a04bbc79a` (DECISION-001)
-**Codex plan review:** `Not yet run`
+**Codex plan review:** `project/reviews/plans/ROADMAP-691b1427de57-codex.json` (round 1, BLOCKED) + response `project/reviews/plans/ROADMAP-691b1427de57-claude-response.md`
 **Human approval record:** `Not recorded`
 
 No implementation may begin until a human records approval of the exact roadmap
@@ -52,15 +52,28 @@ third-party Python packages are required.
 
 - **Auth:** device-code flow against the Microsoft Graph PowerShell first-party
   public client (`14d82eec-204b-4c2f-b7e8-296a70dab67e`) with `organizations`
-  authority; must be confirmed against a real tenant in ISSUE-0002 (brief A1/A2,
-  DECISION-001).
+  authority (brief A1/A2, DECISION-001).
+- **Protected-action gate (per Codex F-002):** performing a real device-code
+  sign-in or a live Graph fetch against a named tenant is a protected action
+  under `AGENTS.md` and requires separate, explicit human approval naming the
+  tenant/test identity. Issue completion is gated on the **mocked** checks; live
+  evidence is recorded only after such approval and is otherwise a documented
+  evidence gap. No issue may perform live authentication as a precondition of
+  completion.
+- **Analyzer data contract (per Codex F-003):** the A3 uncertainty (whether named
+  locations / directory roles are needed) is resolved **before ISSUE-0003
+  implementation**. ISSUE-0003 defines the normalized policy data contract the
+  analyzer consumes; ISSUE-0004 defines, per rule, the required source fields and
+  the behaviour when evidence is unknown or not applicable (a rule with missing
+  required evidence is marked *not evaluable* and excluded from scoring rather
+  than counted as pass or fail).
 - **Data classification:** sensitive tenant configuration; rendered locally only,
   never transmitted anywhere except Microsoft; trust boundary is local-user ↔
-  localhost server ↔ Microsoft over TLS (brief Data and security).
+  localhost server ↔ Microsoft over TLS (brief Data and security). Tenant-supplied
+  strings (policy/display names) are untrusted input and must be rendered safely
+  (per Codex F-005).
 - **Deployment:** run-on-demand local tool; no persistence, no telemetry; closing
   the process discards all state and tokens.
-- **Open uncertainty:** whether the MVP rules need named locations / directory
-  roles must be resolved by the start of ISSUE-0004 (brief A3).
 
 ## Milestones
 
@@ -82,16 +95,16 @@ Issues run sequentially. Each is small enough for one fresh Claude issue task
 | Order | Issue | Objective | Depends on | Acceptance and checks | Risk | Status |
 |---:|---|---|---|---|---|---|
 | 1 | `ISSUE-0001` | Local HTTP server + static UI shell + `/api/health`; run/verify scaffolding | `None` | `python3 server.py` serves `index.html` and `/api/health` returns `{"status":"ok"}`; `python3 -m py_compile` clean; `python3 -m unittest discover -s tests` runs (health test) | Low | `PLANNED` |
-| 2 | `ISSUE-0002` | Device-code auth: `/api/auth/start` + `/api/auth/poll`, in-memory token store; Sign-in UI shows code + link and reflects success | `ISSUE-0001` | Unit tests cover device-code request/poll handling with a mocked token endpoint; a real sign-in against a tenant yields a token (manual evidence recorded); no token written to disk/logs | Medium (brief A1) | `PLANNED` |
-| 3 | `ISSUE-0003` | Graph client: `/api/policies` fetches and normalizes CA policies (paged), read-only bearer calls | `ISSUE-0002` | Unit tests cover paging and normalization against mocked Graph responses/fixtures; manual live fetch returns the tenant's policies; 403 surfaces a clear consent message | Medium | `PLANNED` |
-| 4 | `ISSUE-0004` | Analyzer engine + data-driven rule set + 0–100 scoring; unit tests + sanitized fixtures | `ISSUE-0003` | `python3 -m unittest discover -s tests` passes; fixtures produce documented, deterministic scores and severity-sorted findings across strong/weak samples | Medium | `PLANNED` |
-| 5 | `ISSUE-0005` | UI rendering: score gauge, findings list, per-policy flow cards; wire `/api/policies` + analysis into the page | `ISSUE-0003`, `ISSUE-0004` | Loading the page after sign-in renders score, findings, and cards from a fixture-backed or live response; no console errors; renders offline against a fixture endpoint for review | Low | `PLANNED` |
+| 2 | `ISSUE-0002` | Device-code auth: `/api/auth/start` + `/api/auth/poll`, in-memory token store with a full lifecycle; Sign-in UI shows code + link and reflects success | `ISSUE-0001` | Completion gated on mocked checks: unit tests cover the poll state machine, device-code expiry, server-controlled polling cadence, opaque bounded handle, logout/cancel + memory clear, access-token-expiry behaviour, the refresh-token decision, and single-concurrency; no token on disk/logs. Live sign-in is a protected action (F-002) recorded only after human approval | Medium (brief A1) | `PLANNED` |
+| 3 | `ISSUE-0003` | Graph client: `/api/policies` fetches and normalizes CA policies (paged), read-only bearer calls, against a defined data contract | `ISSUE-0002`, A3 resolved | Completion gated on mocked checks: unit tests cover paging, normalization to the documented data contract, and 403→consent message. Live fetch is a protected action (F-002) recorded only after human approval | Medium | `PLANNED` |
+| 4 | `ISSUE-0004` | Analyzer engine + data-driven rule set + 0–100 scoring; per-rule required-field + not-evaluable behaviour; unit tests + sanitized fixtures | `ISSUE-0003` | `python3 -m unittest discover -s tests` passes; fixtures produce documented, deterministic scores and severity-sorted findings across strong/weak/incomplete samples; a rule with missing required evidence is marked *not evaluable*, not pass/fail | Medium | `PLANNED` |
+| 5 | `ISSUE-0005` | UI rendering: score gauge, findings list, per-policy flow cards; wire `/api/policies` + analysis; XSS-safe rendering of untrusted policy content | `ISSUE-0003`, `ISSUE-0004` | Renders offline against a fixture endpoint for review; tenant/finding strings inserted as text (not HTML); restrictive CSP; `no-store` on sensitive API responses; no external assets; no console errors | Low | `PLANNED` |
 | 6 | `ISSUE-0006` | Documentation finalization + end-to-end verification notes + lint/test polish | `ISSUE-0001..0005` | README run/verify steps accurate from a clean checkout; `py_compile` and `unittest` clean; a documented end-to-end walkthrough exists | Low | `PLANNED` |
 
 ## Verification strategy
 
 - Unit checks: `python3 -m unittest discover -s tests` (auth handling, Graph paging/normalization, analyzer scoring on fixtures, health).
-- Integration checks: manual, human-run live sign-in + policy fetch against a real tenant (device-code cannot be automated headlessly); evidence recorded per issue.
+- Integration checks: manual, human-run live sign-in + policy fetch against a real tenant is a **protected action** requiring separate human approval naming the tenant (Codex F-002); it is never a completion precondition. Issue completion relies on mocked checks; live evidence is recorded per issue only after approval, otherwise noted as an evidence gap.
 - Security checks: `python3 -m py_compile $(git ls-files '*.py')`; manual review that tokens/policy data never reach disk, logs, or the repo; milestone security review.
 - Documentation checks: run README steps from a clean checkout in ISSUE-0006.
 - Clean-environment / onboarding check: fresh clone → `python3 server.py` with no installs.
@@ -151,7 +164,7 @@ Critical or high security findings cannot use the default risk-acceptance path.
 
 | Round | Codex review | Claude response | Remaining decision |
 |---:|---|---|---|
-| 0 | `Not yet run` | `—` | `—` |
+| 1 | `project/reviews/plans/ROADMAP-691b1427de57-codex.json` (BLOCKED, 5 findings) | `project/reviews/plans/ROADMAP-691b1427de57-claude-response.md` (F-002..F-005 accepted; F-001 addressed via prompt convention) | Re-review pending against roadmap v2 |
 
 Maximum two repair rounds. Any remaining material disagreement is shown to the
 human before exact roadmap approval. No workflow loop may exceed five total

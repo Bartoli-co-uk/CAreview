@@ -1,12 +1,12 @@
 # ISSUE-0005: UI rendering — score, findings, and policy flow cards
 
-**Status:** `PLANNED`
+**Status:** `COMPLETE`
 **Milestone:** `M1`
 **Approved roadmap:** `ROADMAP.md` version `3` at `125d74f6d4bfe85f1a727293064d0887f2d121c7`
 **Dependencies:** `ISSUE-0003`, `ISSUE-0004`
 **Branch:** `ai/ISSUE-0005-ui-rendering`
-**Starting SHA:** `[set at implementation start]`
-**Candidate SHA:** `Not created`
+**Starting SHA:** `67283f7e4a499af5e813a3f7d325bc81f9ddace8`
+**Candidate SHA:** `this commit (branch HEAD); launcher binds the exact SHA`
 
 ## Objective
 
@@ -81,15 +81,17 @@ findings list, and a simple per-policy flow card
 
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
-| 0 | `[path]` | `[SHA]` | `[path/summary]` | `[path]` | `[outcome]` |
+| 0 | `ISSUE-0005-handoff.md` | `c88819f52ce0…` | py_compile 0; 75 tests pass; validator pass | `ISSUE-0005-c88819f52ce0-codex.json` | CHANGES_REQUIRED (F-001 sign-out leak, F-002 conditions, F-003 hostile-markup test, F-004 README) |
+| 1 (repair) | `ISSUE-0005-handoff.md` | `5f0af237d2f4…` | py_compile 0; 79 tests pass; validator pass | `ISSUE-0005-5f0af237d2f4-codex.json` | BLOCKED (F-001 async race) |
+| 2 (repair, DECISION-007) | `ISSUE-0005-handoff.md` | `3dc059f2b16c…` | py_compile 0; 80 tests pass; validator pass | `ISSUE-0005-3dc059f2b16c-codex.json` | BLOCKED — no substantive defect; process/execution only (merged) |
 
 Maximum two repair rounds; every Codex review is a fresh ephemeral read-only
 process against the named SHA.
 
 ## Completion
 
-- Final reviewed product SHA: `[SHA]`
-- Human advance/merge decision: `[path]`
-- Merge/result SHA: `[SHA or N/A]`
-- Residual risks or follow-up: `[list]`
-- Status record updated: `[commit/path]`
+- Final reviewed product SHA: `3dc059f2b16c16169c4968e3b2b5b25ac0adff03`
+- Human advance/merge decision: `DECISION-005` + `DECISION-007`
+- Merge/result SHA: merged into `main` (see merge commit)
+- Residual risks or follow-up: live in-browser hostile-markup rendering was not confirmed (no browser tool this session; static-sink test + fixture cover it); a human can verify visually
+- Status record updated: this commit + `project/status/CURRENT.md`

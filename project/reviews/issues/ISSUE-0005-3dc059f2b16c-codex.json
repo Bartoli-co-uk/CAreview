@@ -1,0 +1,99 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T16:04:53Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f94dd-fe4f-7ce3-b9d6-cec5e24e6e7f"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "67283f7e4a499af5e813a3f7d325bc81f9ddace8",
+    "evidence": [
+      {
+        "detail": "HEAD exactly matched the launcher-supplied target SHA; the base commit resolved exactly; the detached worktree was clean.",
+        "reference": "git status --short --branch; git rev-parse HEAD; git rev-parse 67283f7e4a499af5e813a3f7d325bc81f9ddace8",
+        "source": "command"
+      },
+      {
+        "detail": "Reviewed the complete base-to-target diff. It adds API-backed and sample-backed UI rendering, policy cards, findings, score presentation, CSP, no-store response headers, tests, documentation, and workflow records.",
+        "reference": "git diff 67283f7e4a499af5e813a3f7d325bc81f9ddace8..3dc059f2b16c16169c4968e3b2b5b25ac0adff03",
+        "source": "diff"
+      },
+      {
+        "detail": "The repair uses a monotonic generation counter, invalidates pending result loads before logout, clears rendered tenant data immediately, and checks the captured generation after asynchronous fetch and body-parsing boundaries.",
+        "reference": "web/app.js:98",
+        "source": "file"
+      },
+      {
+        "detail": "Tenant and finding values are rendered through createElement/textContent. The reviewed application code contains no innerHTML, outerHTML, insertAdjacentHTML, document.write, eval, or Function constructor sink.",
+        "reference": "web/app.js:129",
+        "source": "file"
+      },
+      {
+        "detail": "The page includes a restrictive same-origin CSP with base, form, and object restrictions; sensitive successful policy and analysis responses receive Cache-Control: no-store.",
+        "reference": "web/index.html:6; server.py:129; server.py:195; server.py:214",
+        "source": "file"
+      },
+      {
+        "detail": "The committed fixture contains hostile markup in a policy display name, and static safety tests cover forbidden sinks, fixture presence, and the generation-guard structure.",
+        "reference": "tests/test_ui_safety.py:22",
+        "source": "file"
+      },
+      {
+        "detail": "README documents live rendering, the offline sample button, heuristic scoring, and local verification commands.",
+        "reference": "README.md:38",
+        "source": "file"
+      },
+      {
+        "detail": "git diff --check completed with exit 0, and web/sample-data.json parsed successfully with python3 -m json.tool.",
+        "reference": "git diff --check 67283f7e4a499af5e813a3f7d325bc81f9ddace8..3dc059f2b16c16169c4968e3b2b5b25ac0adff03; python3 -m json.tool web/sample-data.json",
+        "source": "check"
+      },
+      {
+        "detail": "The prescribed unit-test command ran 80 tests but exited 1: 19 server integration tests could not bind a loopback socket because the review sandbox returned PermissionError [Errno 1]. No assertion failure was observed before the environment errors.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "The prescribed compile command exited 1 because the read-only checkout prohibited creation of __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "The governance validator exited 1 because no writable temporary directory was available in the review sandbox.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The handoff claims compile exit 0, 80 passing tests, validator success, and curl-based inspection, but explicitly records that browser execution was unavailable. Author claims are not independent review evidence.",
+        "reference": "project/handoffs/ISSUE-0005-handoff.md",
+        "source": "file"
+      },
+      {
+        "detail": "DECISION-004 documents that this read-only, socket-restricted, temp-less launcher environment cannot run the prescribed checks and requires Codex to report that evidence limitation rather than PASS.",
+        "reference": "project/decisions/DECISION-004-execution-evidence-gate-policy.md",
+        "source": "file"
+      }
+    ],
+    "findings": [],
+    "limitations": [
+      "Required independent execution evidence is incomplete: unit tests, compilation, and governance validation could not complete because the review environment prohibits loopback socket binding, bytecode-cache writes, and temporary-directory creation.",
+      "Acceptance criteria 1, 4, and 6 require real browser rendering/no-console-error and hostile-markup behavior evidence. No browser was available, and the handoff expressly records that live in-browser hostile-fixture verification was not performed.",
+      "A live tenant run was not performed because it would require authentication/network access outside this review's available authority and environment.",
+      "Static review found no unresolved substantive correctness or security defect. Residual risk remains around browser/runtime behavior and live Graph integration until the required manual render checks are executed against this exact SHA."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "3dc059f2b16c16169c4968e3b2b5b25ac0adff03",
+    "schema_version": "1.0",
+    "summary": "Static review of ISSUE-0005 repair round 2 found no unresolved substantive defect. The async result/sign-out race is guarded, sensitive content is cleared immediately, rendering uses inert text sinks, policy conditions are represented, CSP/no-store requirements are implemented, and documentation is updated. The review is BLOCKED solely because mandatory independent execution and browser evidence could not be obtained in the read-only, socket-restricted, temp-less review environment; DECISION-004 assigns disposition of this recurring evidence-only blocker to the human after considering the author's out-of-band evidence.",
+    "target_id": "ISSUE-0005"
+  },
+  "test_only": false
+}

@@ -1,6 +1,6 @@
 <!-- claudex-state
-stage: IMPLEMENTATION
-active_issue: none
+stage: ISSUE_REPAIR
+active_issue: ISSUE-0005
 active_milestone: none
 -->
 
@@ -17,18 +17,18 @@ records described below.
 
 | Field | Current value |
 |---|---|
-| Stage | `IMPLEMENTATION` |
+| Stage | `ISSUE_REPAIR` |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v1; APPROVED (DECISION-001) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (binds `179a023`) |
 | Roadmap | `ROADMAP.md` v3; APPROVED (DECISION-003, binds `125d74f`) |
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | `M1` (in progress) |
-| Active issue | None — ISSUE-0004 COMPLETE and merged |
-| Issue repair round | None |
+| Active issue | `ISSUE-0005` (UI rendering) — status `REPAIRING`, branch `ai/ISSUE-0005-ui-rendering`, Starting SHA `67283f7` |
+| Issue repair round | Repair round 1 (Codex F-001 sign-out leak, F-002 conditions, F-003 hostile-markup, F-004 README) |
 | Candidate product commit | `main` at the ISSUE-0004 merge; reviewed product SHA `9f3885b` |
-| Latest implementation handoff | `project/handoffs/ISSUE-0004-handoff.md` |
-| Latest Codex review | ISSUE-0004 final `ISSUE-0004-9f3885bb80ca-codex.json` — no additional substantive analyzer defect; blocked only on SHA/record sync (fixed here) + execution evidence (DECISION-004) |
+| Latest implementation handoff | `project/handoffs/ISSUE-0005-handoff.md` |
+| Latest Codex review | ISSUE-0005 round 0 `ISSUE-0005-c88819f52ce0-codex.json` (CHANGES_REQUIRED: F-001..F-004) + response; repair-1 candidate pending re-review |
 | Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e`; `ISSUE-0004` `9f3885b` |
 | Last human decision | `DECISION-009` (ISSUE-0004 final round); also `DECISION-008` (evaluability model), `DECISION-007`..`001` |
 | Open blockers | None. Standing: Codex issue reviews stay `BLOCKED` on execution evidence (DECISION-004); author runs checks out-of-band |

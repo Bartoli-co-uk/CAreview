@@ -3,11 +3,11 @@
 This is the canonical project roadmap for CAreview, a locally-hosted Conditional
 Access policy analyzer.
 
-**Current status:** `ROADMAP_REVIEW` (revised to v3 after Codex rounds 1–2; two revision rounds used; awaiting human approval)
+**Current status:** `APPROVED` (roadmap v3 approved by the human; implementation authorized)
 **Roadmap version:** `3`
 **Approved brief:** `project/brief/PROJECT_BRIEF.md` v1 at `179a02354aecbafa2c9d5aa34f9c9a5a04bbc79a` (DECISION-001)
 **Codex plan review:** round 1 `ROADMAP-691b1427de57-codex.json` + response `…-claude-response.md`; round 2 `ROADMAP-4daf03ca5be5-codex.json` + response `ROADMAP-4daf03ca5be5-claude-response.md` (both BLOCKED; see responses)
-**Human approval record:** `Not recorded`
+**Human approval record:** `project/decisions/DECISION-003-roadmap-approval.md` (APPROVE, binds v3 at `125d74f6d4bfe85f1a727293064d0887f2d121c7`)
 
 No implementation may begin until a human records approval of the exact roadmap
 version and commit.

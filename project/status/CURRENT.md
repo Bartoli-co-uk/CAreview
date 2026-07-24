@@ -1,5 +1,5 @@
 <!-- claudex-state
-stage: ROADMAP_REVIEW
+stage: IMPLEMENTATION
 active_issue: none
 active_milestone: none
 -->
@@ -17,22 +17,22 @@ records described below.
 
 | Field | Current value |
 |---|---|
-| Stage | `ROADMAP_REVIEW` |
+| Stage | `IMPLEMENTATION` |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v1; APPROVED (DECISION-001) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (binds `179a023`) |
-| Roadmap | `ROADMAP.md` v3; Codex rounds 1–2 done (both BLOCKED), findings addressed; awaiting human approval |
-| Roadmap approval | Not recorded |
+| Roadmap | `ROADMAP.md` v3; APPROVED (DECISION-003, binds `125d74f`) |
+| Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | None |
 | Active issue | None |
 | Issue repair round | None |
 | Candidate product commit | None |
 | Latest implementation handoff | None |
 | Latest Codex review | round 2 `project/reviews/plans/ROADMAP-4daf03ca5be5-codex.json` (BLOCKED) + response `…-4daf03ca5be5-claude-response.md` |
-| Last human decision | `DECISION-001` (brief), `DECISION-002` (launcher fix) |
-| Open blockers | Codex F-004: review sandbox cannot run `validate_repo.py` (no writable temp); out-of-band validator evidence recorded in the round-2 response. Structural — recurs every plan review |
-| Next required actor | Human (roadmap approval decision) |
-| Next permitted action | Human reviews `ROADMAP.md` v3 (+ the two Codex reports and responses) and either approves the exact v3 commit or requests a third confirmatory Codex review. No implementation until roadmap approval is recorded |
+| Last human decision | `DECISION-003` (roadmap v3 approval); also `DECISION-001` (brief), `DECISION-002` (launcher fix) |
+| Open blockers | None gating implementation. Accepted residual: Codex review sandbox cannot run `validate_repo.py` (F-004) — run it out-of-band per issue |
+| Next required actor | Claude (implement ISSUE-0001 in a fresh issue task) |
+| Next permitted action | Start `ISSUE-0001` on branch `ai/ISSUE-0001-server-shell`: write implementation plan, implement server + UI shell + `/api/health` + Host-allowlist, run checks, commit, set stage `ISSUE_REVIEW` with `active_issue: ISSUE-0001`, then run `./scripts/run-codex-review.sh issue ISSUE-0001 <BASE> <HEAD>` |
 | Actions not yet permitted | Roadmap approval, implementation, review of product code, merge, publication, deployment, or any protected action |
 
 When this repository is adopted for a project, replace the values above and add

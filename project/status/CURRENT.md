@@ -1,6 +1,6 @@
 <!-- claudex-state
-stage: ISSUE_REPAIR
-active_issue: ISSUE-0005
+stage: IMPLEMENTATION
+active_issue: none
 active_milestone: none
 -->
 
@@ -17,23 +17,23 @@ records described below.
 
 | Field | Current value |
 |---|---|
-| Stage | `ISSUE_REPAIR` |
+| Stage | `IMPLEMENTATION` |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v1; APPROVED (DECISION-001) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (binds `179a023`) |
 | Roadmap | `ROADMAP.md` v3; APPROVED (DECISION-003, binds `125d74f`) |
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` |
 | Active milestone | `M1` (in progress) |
-| Active issue | `ISSUE-0005` (UI rendering) — status `REPAIRING`, branch `ai/ISSUE-0005-ui-rendering`, Starting SHA `67283f7` |
-| Issue repair round | Repair round 1 (Codex F-001 sign-out leak, F-002 conditions, F-003 hostile-markup, F-004 README) |
-| Candidate product commit | `main` at the ISSUE-0004 merge; reviewed product SHA `9f3885b` |
+| Active issue | None — ISSUE-0005 COMPLETE and merged |
+| Issue repair round | None |
+| Candidate product commit | `main` at the ISSUE-0005 merge; reviewed product SHA `3dc059f` |
 | Latest implementation handoff | `project/handoffs/ISSUE-0005-handoff.md` |
-| Latest Codex review | ISSUE-0005 round 0 `ISSUE-0005-c88819f52ce0-codex.json` (CHANGES_REQUIRED: F-001..F-004) + response; repair-1 candidate pending re-review |
-| Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e`; `ISSUE-0004` `9f3885b` |
+| Latest Codex review | ISSUE-0005 final `ISSUE-0005-3dc059f2b16c-codex.json` — no substantive defect (DECISION-004/007) |
+| Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e`; `ISSUE-0004` `9f3885b`; `ISSUE-0005` `3dc059f` |
 | Last human decision | `DECISION-009` (ISSUE-0004 final round); also `DECISION-008` (evaluability model), `DECISION-007`..`001` |
 | Open blockers | None. Standing: Codex issue reviews stay `BLOCKED` on execution evidence (DECISION-004); author runs checks out-of-band |
-| Next required actor | Claude (implement ISSUE-0005 autonomously per DECISION-005) |
-| Next permitted action | Start `ISSUE-0005` (UI rendering) on branch `ai/ISSUE-0005-ui-rendering` from `main`; wire `/api/policies` + `/api/analysis` into the page (score gauge, findings, per-policy cards), XSS-safe rendering (Codex F-005), CSP + no-store; run checks, Codex review, merge under DECISION-004/005/007 |
+| Next required actor | Claude (implement ISSUE-0006 autonomously per DECISION-005) |
+| Next permitted action | Start `ISSUE-0006` (docs finalization + E2E verification) on branch `ai/ISSUE-0006-docs-verification` from `main`; verify README from a clean-checkout perspective, run full checks, Codex review, merge under DECISION-004/005/007 — then present M1 for the milestone gate |
 | Actions not yet permitted | Merge without a clean review, publication, deployment, live tenant auth/fetch, or any protected action |
 
 When this repository is adopted for a project, replace the values above and add

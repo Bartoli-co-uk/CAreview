@@ -1,0 +1,143 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T12:38:34Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f9421-1ae7-70c3-905e-6d1830d3805c"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "840b8ffe3f1a2c9d2b5c36d9f0046a4cde1f5eab",
+    "evidence": [
+      {
+        "detail": "Clean checkout HEAD exactly matched the launcher-supplied target SHA; the base and target commits both resolved exactly.",
+        "reference": "git status --short; git rev-parse HEAD; git rev-parse 840b8ffe3f1a2c9d2b5c36d9f0046a4cde1f5eab; git rev-parse 5a239c3225b6a7a190fccf6eb2ffa9b4efdc9bf6",
+        "source": "command"
+      },
+      {
+        "detail": "The exact base-to-target diff adds 510 lines and removes 5 across 11 files. Product implementation consists of server.py, tests/, and web/; workflow records were also added or updated.",
+        "reference": "git diff --stat; git diff --name-status 840b8ffe3f1a2c9d2b5c36d9f0046a4cde1f5eab..5a239c3225b6a7a190fccf6eb2ffa9b4efdc9bf6",
+        "source": "diff"
+      },
+      {
+        "detail": "The independent test run could not complete in the read-only sandbox: 4 helper tests passed, but all 5 integration tests errored when binding an ephemeral loopback socket returned PermissionError: [Errno 1] Operation not permitted. Exit status 1.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "The exact compile command could not complete because Python attempted to create scripts/__pycache__ in the read-only checkout. Exit status 1.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not complete because no writable temporary directory was available. Exit status 1 with FileNotFoundError: No usable temporary directory found.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "Static inspection confirms main() passes the constant HOST='127.0.0.1' to build_server, /api/health returns health_payload(), GET requests undergo Host validation, and origin_allowed rejects missing, null, cross-origin, and wrong-port values.",
+        "reference": "server.py:22, server.py:65, server.py:124, server.py:143, server.py:155",
+        "source": "file"
+      },
+      {
+        "detail": "git diff --check reported trailing whitespace in project/handoffs/ISSUE-0001-plan.md line 40.",
+        "reference": "git diff --check 840b8ffe3f1a2c9d2b5c36d9f0046a4cde1f5eab..5a239c3225b6a7a190fccf6eb2ffa9b4efdc9bf6",
+        "source": "check"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the issue requires README Run/Verify wording to remain accurate for the delivered shell.",
+          "Observed: README still says application code does not exist, instructs the user to click Sign in even though the button is disabled and auth is out of scope, describes the current tests as analyzer fixture scoring, and labels Run instructions as conditional on future issues.",
+          "The candidate handoff claims the README already matches the shell, but the committed text contradicts the newly added implementation and tests."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 9,
+            "path": "README.md"
+          },
+          {
+            "line": 37,
+            "path": "README.md"
+          },
+          {
+            "line": 48,
+            "path": "README.md"
+          }
+        ],
+        "remediation": "Update only the permitted README Run/Verify/status wording so it accurately describes the current server shell, health endpoint, disabled sign-in, and current server tests. Avoid claiming analyzer fixtures or authentication are already implemented.",
+        "severity": "medium",
+        "title": "README remains stale after the server shell landed",
+        "verification": "Read the updated README against server.py and tests/test_server.py, then follow its shell run and verification commands in an environment that permits loopback sockets and bytecode output."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: project/status/CURRENT.md explicitly requires the machine-readable state block and human-readable table to remain synchronized and provide the current gate, candidate, handoff, and next permitted action.",
+          "Observed: the state block says ISSUE_REVIEW with active_issue ISSUE-0001, while the table still says IMPLEMENTATION, Active issue None, Candidate product commit None, Latest implementation handoff None, and directs Claude to begin ISSUE-0001.",
+          "This prevents a fresh task from reconstructing a single authoritative current state from repository files."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 17,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Synchronize the table with the committed ISSUE_REVIEW state and exact ISSUE-0001 candidate/handoff information, and state that the next permitted action is review handling rather than starting implementation.",
+        "severity": "medium",
+        "title": "Committed workflow status record is internally contradictory",
+        "verification": "Run the governance validator and manually confirm every table field agrees with the claudex-state block, ISSUE-0001 record, candidate SHA, and handoff."
+      },
+      {
+        "blocking": false,
+        "classification": "ADVISORY",
+        "confidence": "medium",
+        "evidence": [
+          "Expected: loopback-only binding should remain an invariant of this server API, consistent with acceptance criterion 3 and the protected-action boundary.",
+          "Observed: main() binds safely, but build_server accepts any caller-provided host without validating that it is loopback; build_server('0.0.0.0', port) would expose the listener if reused by later code.",
+          "Current tests exercise only 127.0.0.1 and do not assert rejection of non-loopback bind addresses."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 143,
+            "path": "server.py"
+          }
+        ],
+        "remediation": "Prefer removing the host parameter and always binding HOST, or validate that the supplied address is an explicitly supported loopback address. Add a unit test proving non-loopback binding cannot be requested without actually opening a socket.",
+        "severity": "low",
+        "title": "Reusable server factory does not enforce loopback-only binding",
+        "verification": "Run a non-socket unit test showing a non-loopback host is rejected, plus the full integration suite in a socket-capable environment."
+      }
+    ],
+    "limitations": [
+      "The mandatory independent tests were not successfully executed because this review sandbox prohibits loopback socket binding. The author-recorded 9-pass result is a claim, not substitute evidence.",
+      "The mandatory exact compile command was not successfully executed because the read-only checkout prevents __pycache__ creation.",
+      "The manual server-and-curl check could not be independently performed because the sandbox prohibits socket binding.",
+      "Governance validation could not run because the sandbox exposes no writable temporary directory.",
+      "No browser-level UI execution was possible; HTML, JavaScript, and CSS were reviewed statically.",
+      "Because required execution evidence is unavailable, repository rules and the launcher binding prohibit a PASS outcome even apart from the required documentation/status changes."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "5a239c3225b6a7a190fccf6eb2ffa9b4efdc9bf6",
+    "schema_version": "1.0",
+    "summary": "Review identity is exact, and static inspection found a coherent loopback server shell with Host and Origin helpers. The review is BLOCKED because required checks could not execute in the read-only/socket-restricted environment. Two committed documentation/governance defects also require correction: README describes a pre-implementation state, and CURRENT.md contradicts its own ISSUE_REVIEW state block. Any repair creates a new candidate and requires fresh checks and review.",
+    "target_id": "ISSUE-0001"
+  },
+  "test_only": false
+}

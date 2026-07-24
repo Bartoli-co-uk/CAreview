@@ -140,12 +140,22 @@ class CAReviewHandler(BaseHTTPRequestHandler):
         return
 
 
+# Bind addresses this server is permitted to listen on. Loopback-only is an
+# invariant: the server must never be exposed on a routable interface.
+_LOOPBACK_BIND_ADDRESSES = frozenset({"127.0.0.1", "localhost", "::1"})
+
+
 def build_server(host: str = HOST, port: int = DEFAULT_PORT) -> ThreadingHTTPServer:
     """Create (but do not start) a loopback-bound server on ``host``/``port``.
 
     Passing ``port=0`` binds an ephemeral port (used by tests); the handler is
     told the *actual* bound port so its Host allowlist matches real requests.
+
+    ``host`` must be a loopback address; a non-loopback bind (e.g. ``0.0.0.0``)
+    is rejected so this factory cannot be reused to expose the listener.
     """
+    if host not in _LOOPBACK_BIND_ADDRESSES:
+        raise ValueError(f"refusing non-loopback bind address: {host!r}")
     handler = type("BoundHandler", (CAReviewHandler,), {})
     server = ThreadingHTTPServer((host, port), handler)
     handler.port = server.server_address[1]

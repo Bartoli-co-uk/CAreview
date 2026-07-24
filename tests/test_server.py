@@ -32,6 +32,12 @@ class HelperTests(unittest.TestCase):
         for origin in ("https://evil.com", "http://127.0.0.1:9999", "", None):
             self.assertFalse(server.origin_allowed(origin, 8765), repr(origin))
 
+    def test_build_server_rejects_non_loopback_bind(self) -> None:
+        # No socket is opened: the guard runs before binding.
+        for host in ("0.0.0.0", "::", "192.168.1.10", "example.com"):
+            with self.assertRaises(ValueError):
+                server.build_server(host, 0)
+
 
 class ServerIntegrationTests(unittest.TestCase):
     def setUp(self) -> None:

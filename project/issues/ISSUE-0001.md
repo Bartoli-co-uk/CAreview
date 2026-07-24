@@ -1,6 +1,6 @@
 # ISSUE-0001: Local HTTP server + static UI shell + health endpoint
 
-**Status:** `REVIEWING`
+**Status:** `REPAIRING`
 **Milestone:** `M1`
 **Approved roadmap:** `ROADMAP.md` version `3` at `125d74f6d4bfe85f1a727293064d0887f2d121c7`
 **Dependencies:** `None`

@@ -6,10 +6,11 @@ security best practice, and flags configuration weaknesses. It is inspired by
 [`Jhope188/ca-policy-analyzer`](https://github.com/Jhope188/ca-policy-analyzer)
 but runs entirely on your own machine.
 
-> **Status: in development.** The application code does not exist yet. This
-> repository currently holds the governance skeleton and project records. Work is
-> built one reviewed issue at a time under the workflow described below, so the
-> `Run it` commands become real as the implementing issues land.
+> **Status: in development (MVP).** The local server shell exists: `python3
+> server.py` serves the UI and a `/api/health` endpoint on the loopback
+> interface. Device-code **sign-in** and **policy analysis** are not implemented
+> yet (the Sign-in button is disabled) — they arrive in later issues. Work is
+> built one reviewed issue at a time under the workflow described below.
 
 ## Design goals
 
@@ -34,26 +35,27 @@ CIS-17 alignment, the FOCI database, persona scoring, baseline comparison, and
 PowerPoint/deployment-bundle exports are tracked as later roadmap items, not part
 of the MVP.
 
-## Run it (once the implementing issues have landed)
+## Run it
 
 ```sh
-python3 server.py            # serves http://localhost:8765
+python3 server.py            # serves http://127.0.0.1:8765 (override with CAREVIEW_PORT)
 ```
 
-Then open the URL, click *Sign in*, and approve the device code with a work or
-school account that can read Conditional Access policies. Reading policies
-requires admin consent to `Policy.Read.All` in your tenant, exactly as the
-original tool does.
+Open the URL to see the shell and a live server-health check. *Sign in* is
+disabled until the device-code auth issue lands; once it does, you will click it,
+approve a device code at `microsoft.com/devicelogin`, and (with admin consent to
+`Policy.Read.All`) the app will list and score your Conditional Access policies.
 
 ## Verify it (offline)
 
 ```sh
-python3 -m unittest discover -s tests    # analyzer scores sample fixtures
+python3 -m unittest discover -s tests    # server shell tests today; analyzer tests as issues land
 python3 -m py_compile $(git ls-files '*.py')
 ```
 
-The analyzer is unit-tested against committed sample-policy JSON fixtures, so its
-scoring is verifiable without signing in.
+The server shell is covered by unit and loopback integration tests today. As the
+Graph and analyzer issues land, the analyzer is additionally unit-tested against
+committed **sanitized** sample-policy fixtures, verifiable without signing in.
 
 ## How this project is built — governance
 

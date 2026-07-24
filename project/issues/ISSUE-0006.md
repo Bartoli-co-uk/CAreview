@@ -1,6 +1,6 @@
 # ISSUE-0006: Documentation finalization and end-to-end verification
 
-**Status:** `REPAIRING`
+**Status:** `COMPLETE`
 **Milestone:** `M1`
 **Approved roadmap:** `ROADMAP.md` version `3` at `125d74f6d4bfe85f1a727293064d0887f2d121c7`
 **Dependencies:** `ISSUE-0001`, `ISSUE-0002`, `ISSUE-0003`, `ISSUE-0004`, `ISSUE-0005`
@@ -70,15 +70,17 @@ be frozen for its four reviews.
 |---:|---|---|---|---|---|
 | 0 | `ISSUE-0006-handoff.md` | `30a75c425bf1…` | py_compile 0; 80 tests pass; validator pass | `ISSUE-0006-30a75c425bf1-codex.json` | BLOCKED (F-002 port URL, F-003 disk-write claim, F-004 status) |
 | 1 (repair) | `ISSUE-0006-handoff.md` | `cc98f4e616af…` | py_compile 0; 80 tests pass; validator pass | `ISSUE-0006-cc98f4e616af-codex.json` | BLOCKED (F-002 status staleness, F-003 README overclaim) |
-| 2 (repair, DECISION-007) | `ISSUE-0006-handoff.md` | repair-2 candidate (launcher binds SHA) | py_compile 0; 80 tests pass; validator pass | pending final review | pending |
+| 2 (repair, DECISION-007) | `ISSUE-0006-handoff.md` | `e95edf2b4cb5…` | py_compile 0; 80 tests pass; validator pass | `ISSUE-0006-e95edf2b4cb5-codex.json` | BLOCKED (F-002 status staleness only; no product finding) |
+| 3 (metadata) | n/a | `d15f47c5fb15…` | py_compile 0; 80 tests pass; validator pass | `ISSUE-0006-d15f47c5fb15-codex.json` | BLOCKED (record-churn only; no product finding). Closed per DECISION-010 |
 
-Maximum two repair rounds; every Codex review is a fresh ephemeral read-only
-process against the named SHA.
+Default is two repair rounds; `DECISION-007` raised the budget, and `DECISION-010`
+closed the issue out after four rounds of pure record-keeping churn (no product
+finding in the last three).
 
 ## Completion
 
-- Final reviewed product SHA: `[SHA]`
-- Human advance/merge decision: `[path]`
-- Merge/result SHA: `[SHA or N/A]`
-- Residual risks or follow-up: `[list]`
-- Status record updated: `[commit/path]`
+- Final reviewed product SHA: `d15f47c5fb15f4c929dae603afbc622baaeea428`
+- Human advance/merge decision: `DECISION-005`, `DECISION-007`, `DECISION-010`
+- Merge/result SHA: merged into `main` (see merge commit)
+- Residual risks or follow-up: none; documentation-only issue, no product code touched
+- Status record updated: this commit + `project/status/CURRENT.md`

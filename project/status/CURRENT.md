@@ -1,5 +1,5 @@
 <!-- claudex-state
-stage: BRIEF_REVIEW
+stage: ROADMAP_REVIEW
 active_issue: none
 active_milestone: none
 -->
@@ -17,11 +17,11 @@ records described below.
 
 | Field | Current value |
 |---|---|
-| Stage | `BRIEF_REVIEW` |
+| Stage | `ROADMAP_REVIEW` |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
-| Project brief | `project/brief/PROJECT_BRIEF.md` v1; DRAFT, awaiting human approval |
-| Brief approval | Not recorded |
-| Roadmap | Template only; not approved |
+| Project brief | `project/brief/PROJECT_BRIEF.md` v1; APPROVED (DECISION-001) |
+| Brief approval | `project/decisions/DECISION-001-brief-approval.md` (binds `179a023`) |
+| Roadmap | `ROADMAP.md` v1; candidate, awaiting Codex plan review then human approval |
 | Roadmap approval | Not recorded |
 | Active milestone | None |
 | Active issue | None |
@@ -31,8 +31,8 @@ records described below.
 | Latest Codex review | None |
 | Last human decision | None |
 | Open blockers | None |
-| Next required actor | Human (brief approval) |
-| Next permitted action | Human reviews `project/brief/PROJECT_BRIEF.md` v1 and records approval or rejection of this exact commit (answering the four questions in the brief). On approval, a fresh Claude planning task drafts the roadmap. No roadmap or implementation work until approval is recorded |
+| Next required actor | Claude (launch Codex plan review), then Human (roadmap approval) |
+| Next permitted action | Run `./scripts/run-codex-review.sh plan <ROADMAP-HEAD-SHA>` against the committed roadmap candidate, record the report under `project/reviews/plans/`, respond to findings (≤2 rounds), then stop for the human to approve the exact roadmap. No implementation until roadmap approval is recorded |
 | Actions not yet permitted | Roadmap approval, implementation, review of product code, merge, publication, deployment, or any protected action |
 
 When this repository is adopted for a project, replace the values above and add

@@ -1,6 +1,6 @@
 # Project brief: CAreview — Conditional Access policy analyzer
 
-**Status:** `DRAFT`
+**Status:** `APPROVED`
 **Version:** `1`
 **Source description:** `project/intake/PROJECT_DESCRIPTION.md` at `19e5863d19f856b635df878234a37333f391b4e9`
 **Prepared by:** `Claude Code requirements session (2026-07-24)`
@@ -191,4 +191,4 @@ This brief is not approved until a human decision record names this exact path,
 version, and commit SHA. Approval permits roadmap drafting only; it does not
 permit implementation or protected actions.
 
-**Decision record:** `Not yet recorded`
+**Decision record:** `project/decisions/DECISION-001-brief-approval.md` (APPROVE, binds v1 at `179a02354aecbafa2c9d5aa34f9c9a5a04bbc79a`)

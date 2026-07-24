@@ -127,15 +127,29 @@ def _str_list(value: object) -> list[str]:
     return [item for item in value if isinstance(item, str)]
 
 
-def normalize_policy(raw: dict) -> dict:
-    """Reduce a raw Graph CA policy to the internal data contract."""
-    conditions = raw.get("conditions") or {}
-    users = conditions.get("users") or {}
-    apps = conditions.get("applications") or {}
-    locations = conditions.get("locations") or {}
-    platforms = conditions.get("platforms") or {}
-    grant = raw.get("grantControls") or {}
-    session = raw.get("sessionControls") or {}
+def _as_dict(value: object) -> dict:
+    """Return ``value`` if it is a dict, else an empty dict.
+
+    Graph nested objects are attacker/tenant-influenced; a malformed non-dict
+    (list, string, null) must not crash normalization.
+    """
+    return value if isinstance(value, dict) else {}
+
+
+def normalize_policy(raw: object) -> dict:
+    """Reduce a raw Graph CA policy to the internal data contract.
+
+    Defensive against malformed nested objects: any field that is not the
+    expected type is coerced to an empty default rather than raising.
+    """
+    raw = _as_dict(raw)
+    conditions = _as_dict(raw.get("conditions"))
+    users = _as_dict(conditions.get("users"))
+    apps = _as_dict(conditions.get("applications"))
+    locations = _as_dict(conditions.get("locations"))
+    platforms = _as_dict(conditions.get("platforms"))
+    grant = _as_dict(raw.get("grantControls"))
+    session = _as_dict(raw.get("sessionControls"))
 
     # Which session controls are actually ENABLED. Graph nests each control as an
     # object that may carry ``isEnabled: false`` (present but off) or, for CAE, a

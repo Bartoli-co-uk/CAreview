@@ -162,6 +162,9 @@ class CAReviewHandler(BaseHTTPRequestHandler):
             }.get(exc.code, HTTPStatus.BAD_GATEWAY)
             self._send_json(status, {"error": exc.code, "message": str(exc)})
             return
+        except Exception:  # noqa: BLE001 — never leak an internal error/stack to the client
+            self._send_json(HTTPStatus.BAD_GATEWAY, {"error": "graph_error", "message": "unexpected error"})
+            return
         self._send_json(HTTPStatus.OK, {"policies": policies, "count": len(policies)})
 
     def _read_json_body(self) -> dict | None:

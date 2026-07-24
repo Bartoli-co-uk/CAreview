@@ -1,0 +1,127 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-24T14:49:24Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019f9498-9831-7aa0-ad87-cf54b5497a7b"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "98a20bc479b55b1cdab5e8958ed3630bff0e044a",
+    "evidence": [
+      {
+        "detail": "HEAD is detached at the supplied target SHA; both supplied commit objects exist and the worktree is clean.",
+        "reference": "git status --short --branch; git rev-parse HEAD; git cat-file -t",
+        "source": "command"
+      },
+      {
+        "detail": "The exact base-to-target diff adds graph.py, /api/policies integration, tests, and issue records.",
+        "reference": "git diff 98a20bc479b55b1cdab5e8958ed3630bff0e044a 8733e07402e7f21fb619cc4353b77d699690f88e",
+        "source": "diff"
+      },
+      {
+        "detail": "The test command ran 51 tests: 38 passed before 13 server integration tests errored because the review sandbox forbids loopback socket binding; exit 1.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Compile could not run because py_compile attempted to create __pycache__ in the read-only checkout; exit 1.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not complete because tempfile creation is forbidden in this sandbox; exit 1.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "Whitespace validation passed and the worktree remained clean.",
+        "reference": "git diff --check 98a20bc479b55b1cdab5e8958ed3630bff0e044a 8733e07402e7f21fb619cc4353b77d699690f88e; git status --short",
+        "source": "check"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: malformed or schema-drifted Graph policy fields should be normalized safely or converted into a structured graph_error response, preserving the endpoint's documented error behavior.",
+          "Observed: normalize_policy assumes nested values such as conditions.users, applications, locations, grantControls, and sessionControls are dictionaries and calls .get on them without type checks.",
+          "An independent probe with {'id':'x','conditions':{'users':'bad'}} raised AttributeError at graph.py:161.",
+          "GraphClient.fetch_policies calls normalize_policy without translating normalization exceptions to GraphError, and server._policies catches only GraphError, so this path can terminate the request without a structured response."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 128,
+            "path": "graph.py"
+          },
+          {
+            "line": 161,
+            "path": "graph.py"
+          },
+          {
+            "line": 222,
+            "path": "graph.py"
+          },
+          {
+            "line": 156,
+            "path": "server.py"
+          }
+        ],
+        "remediation": "Validate each nested Graph object before accessing it, defaulting non-dictionaries to an empty dictionary or rejecting malformed policy payloads with GraphError(\"graph_error\", ...). Ensure /api/policies returns a structured 502 rather than allowing an uncaught normalization exception.",
+        "severity": "medium",
+        "title": "Malformed nested policy objects can crash /api/policies",
+        "verification": "Add mocked client tests for non-dictionary conditions/users/applications/locations/grantControls/sessionControls values and an endpoint-level test confirming malformed Graph data produces a structured response; rerun the full suite."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: committed verification records accurately state the checks associated with the exact candidate.",
+          "Observed: the handoff introduction says 51 tests pass, while its verification table still records 46 passed. The issue round-2 row records 51 passed, so the durable evidence is internally inconsistent.",
+          "The handoff's changed-files table also describes tests/test_server.py as adding only the unauthenticated test although this repair adds success, consent, and graph-error endpoint tests."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 14,
+            "path": "project/handoffs/ISSUE-0003-handoff.md"
+          },
+          {
+            "line": 57,
+            "path": "project/handoffs/ISSUE-0003-handoff.md"
+          },
+          {
+            "line": 74,
+            "path": "project/handoffs/ISSUE-0003-handoff.md"
+          }
+        ],
+        "remediation": "Update the handoff so its candidate-bound test count and changed-files description consistently reflect repair round 2 and the exact recorded execution evidence.",
+        "severity": "low",
+        "title": "Repair-round handoff contains stale verification metadata",
+        "verification": "Compare the corrected handoff against the final out-of-band check transcript and confirm all candidate SHA, test-count, and changed-file descriptions agree."
+      }
+    ],
+    "limitations": [
+      "Required execution evidence is incomplete in this read-only sandbox: compilation failed on __pycache__ creation, governance validation failed on temporary-directory creation, and all 13 server integration tests were blocked by denied socket binding. Repository rules require BLOCKED when evidence cannot be independently verified.",
+      "The handoff claims successful out-of-band checks, but author claims are not independent review evidence and its test count is internally inconsistent.",
+      "No live tenant fetch was attempted because it is explicitly a protected action and not an ISSUE-0003 completion prerequisite."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "8733e07402e7f21fb619cc4353b77d699690f88e",
+    "schema_version": "1.0",
+    "summary": "BLOCKED: required checks could not be independently completed in the review sandbox, and the candidate has a reproducible malformed-response crash plus stale verification metadata. The supplied base and target identities otherwise match, and the checkout remained read-only and clean.",
+    "target_id": "ISSUE-0003"
+  },
+  "test_only": false
+}

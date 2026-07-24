@@ -99,12 +99,12 @@ is a protected action, not a completion precondition (Codex F-002).
 |---:|---|---|---|---|---|
 | 0 | `ISSUE-0003-handoff.md` | `2495c32df08e…` | py_compile 0; 42 tests pass; validator pass | `ISSUE-0003-2495c32df08e-codex.json` | BLOCKED (F-001 SSRF, F-003 paging, F-002 contract, F-004 metadata) |
 | 1 (repair) | `ISSUE-0003-handoff.md` | `25621bb389b1…` | py_compile 0; 46 tests pass; validator pass | `ISSUE-0003-25621bb389b1-codex.json` | BLOCKED (F-001 session controls, F-002 endpoint tests, F-003 metadata, F-004 paging test) |
-| 2 (repair) | `ISSUE-0003-handoff.md` | repair-2 candidate (launcher binds SHA) | py_compile 0; 51 tests pass; validator pass | pending final review | pending |
+| 2 (repair) | `ISSUE-0003-handoff.md` | `8733e07402e7…` | py_compile 0; 51 tests pass; validator pass | `ISSUE-0003-8733e07402e7-codex.json` | BLOCKED (F-001 malformed-policy crash; F-002 stale metadata) |
+| 3 (repair, DECISION-007) | `ISSUE-0003-handoff.md` | repair-3 candidate (launcher binds SHA) | py_compile 0; 52 tests pass; validator pass | pending final review | pending |
 
-Maximum two repair rounds (both used); every Codex review is a fresh ephemeral
-read-only process against the named SHA. Per `DECISION-004`, a `BLOCKED` outcome
-whose only basis is the execution-evidence limitation is acceptable and the human
-merges.
+Default is two repair rounds; `DECISION-007` raised the budget for small,
+clearly-correct fixes. Per `DECISION-004`, a `BLOCKED` outcome whose only basis is
+the execution-evidence limitation is acceptable and the human merges.
 
 ## Completion
 

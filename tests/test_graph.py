@@ -91,6 +91,15 @@ class GraphClientTests(unittest.TestCase):
             graph.GraphClient(transport=SeqTransport([])).fetch_policies("")
         self.assertEqual(ctx.exception.code, "not_authenticated")
 
+    def test_normalize_handles_malformed_nested_objects(self) -> None:
+        # Non-dict nested fields must not crash normalization.
+        raw = {"id": "x", "conditions": ["oops"], "grantControls": "bad", "sessionControls": 7}
+        p = graph.normalize_policy(raw)
+        self.assertEqual(p["conditions"]["includeUsers"], [])
+        self.assertEqual(p["grantControls"]["builtInControls"], [])
+        self.assertEqual(p["sessionControls"], [])
+        self.assertEqual(graph.normalize_policy("not-a-dict")["id"], "")
+
     def test_normalize_handles_missing_fields(self) -> None:
         p = graph.normalize_policy({"id": "x"})
         self.assertEqual(p["displayName"], "")

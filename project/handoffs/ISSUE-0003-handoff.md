@@ -1,4 +1,12 @@
-# Claude handoff: ISSUE-0003, repair round 2
+# Claude handoff: ISSUE-0003, repair round 3
+
+**Repair round 3** (this candidate; authorized by DECISION-007) addresses Codex
+round-2 findings: F-001 — `normalize_policy` now defensively coerces every nested
+object with `_as_dict`, and `/api/policies` has a catch-all → structured 502, so a
+malformed policy payload cannot crash the handler; F-002 — corrected the stale
+handoff test count. 52 tests pass. Round-2 reviewed product SHA:
+`8733e07402e7f21fb619cc4353b77d699690f88e`.
+
 
 **Repair round 1** (candidate `25621bb389b184f8eb23b89821e530f769595647`) addressed
 Codex round-0 F-001 (token-exfil via unvalidated next links → `is_graph_url` +
@@ -72,7 +80,7 @@ scoring), never scored as pass or fail. ISSUE-0004 consumes exactly this shape.
 | Check | Exact command | Actual result/exit | Evidence limitation |
 |---|---|---|---|
 | Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 | none |
-| Tests | `python3 -m unittest discover -s tests` | 46 passed, exit 0 | none |
+| Tests | `python3 -m unittest discover -s tests` | 52 passed, exit 0 | none |
 | Governance | `python3 scripts/validate_repo.py` | passes (out-of-band; sandbox cannot per DECISION-004) | none |
 
 ## Security and residual risk

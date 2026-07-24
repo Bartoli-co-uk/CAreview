@@ -6,11 +6,11 @@ security best practice, and flags configuration weaknesses. It is inspired by
 [`Jhope188/ca-policy-analyzer`](https://github.com/Jhope188/ca-policy-analyzer)
 but runs entirely on your own machine.
 
-> **Status: in development (MVP).** The local server shell exists: `python3
-> server.py` serves the UI and a `/api/health` endpoint on the loopback
-> interface. Device-code **sign-in** and **policy analysis** are not implemented
-> yet (the Sign-in button is disabled) — they arrive in later issues. Work is
-> built one reviewed issue at a time under the workflow described below.
+> **Status: in development (MVP).** The local server and **device-code sign-in**
+> exist: `python3 server.py` serves the UI, a `/api/health` endpoint, and the
+> `/api/auth/*` sign-in flow on the loopback interface. **Policy fetch and
+> analysis** are not implemented yet — they arrive in later issues. Work is built
+> one reviewed issue at a time under the workflow described below.
 
 ## Design goals
 

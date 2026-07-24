@@ -85,6 +85,39 @@ class ServerIntegrationTests(unittest.TestCase):
         resp = self._request("/nope", f"127.0.0.1:{self.port}")
         self.assertEqual(resp.status, 404)
 
+    def _post(self, path: str, host: str, origin: str | None, body: bytes) -> http.client.HTTPResponse:
+        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)
+        conn.putrequest("POST", path, skip_host=True, skip_accept_encoding=True)
+        conn.putheader("Host", host)
+        if origin is not None:
+            conn.putheader("Origin", origin)
+        conn.putheader("Content-Type", "application/json")
+        conn.putheader("Content-Length", str(len(body)))
+        conn.endheaders()
+        conn.send(body)
+        return conn.getresponse()
+
+    def test_post_without_origin_rejected(self) -> None:
+        resp = self._post("/api/auth/logout", f"127.0.0.1:{self.port}", None, b"{}")
+        self.assertEqual(resp.status, 403)
+
+    def test_post_cross_origin_rejected(self) -> None:
+        resp = self._post("/api/auth/logout", f"127.0.0.1:{self.port}", "https://evil.com", b"{}")
+        self.assertEqual(resp.status, 403)
+
+    def test_logout_same_origin_ok(self) -> None:
+        origin = f"http://127.0.0.1:{self.port}"
+        resp = self._post("/api/auth/logout", f"127.0.0.1:{self.port}", origin, b"{}")
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(json.loads(resp.read()), {"state": "signed_out"})
+
+    def test_poll_unknown_handle_returns_error(self) -> None:
+        origin = f"http://127.0.0.1:{self.port}"
+        body = json.dumps({"handle": "nope"}).encode()
+        resp = self._post("/api/auth/poll", f"127.0.0.1:{self.port}", origin, body)
+        self.assertEqual(resp.status, 200)
+        self.assertEqual(json.loads(resp.read())["state"], "error")
+
 
 if __name__ == "__main__":
     unittest.main()

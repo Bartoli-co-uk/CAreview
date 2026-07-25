@@ -182,9 +182,14 @@ The analyzer is unit-tested against committed **sanitized** fixtures
 tenant data): the strong tenant scores 100 and the weak tenant scores low,
 deterministically.
 
-`scripts/validate_repo.py` runs the same free, local checks as CI (required
-files, JSON/TOML syntax, Markdown links and anchors, governance language, action
-pinning, and a self-test of the review launcher). It calls no model, no GitHub,
+GitHub Actions runs exactly these three commands on every push and pull request
+(plus a PowerShell syntax check of the review launcher), so the checks you run
+locally are the checks that gate the repository — see
+[`.github/workflows/validate.yml`](.github/workflows/validate.yml).
+
+`scripts/validate_repo.py` covers the governance surface: required files,
+JSON/TOML syntax, Markdown links and anchors, governance language, Action commit
+pinning, and a self-test of the review launcher. It calls no model, no GitHub,
 and no network — and it does not prove the process was followed.
 
 ## Design goals and scope

@@ -46,6 +46,10 @@ python3 scripts/validate_repo.py               # required files, links, governan
 git diff --check                               # whitespace
 ```
 
+CI runs the first three of these on every push and pull request, plus a
+PowerShell syntax check of the review launcher, so a local pass should mean a
+green build.
+
 When behaviour changes, update the tests, documentation, prompts, templates, and
 security limitations in the same contribution. A model's statement that checks
 passed is not evidence; record the command and its real result.

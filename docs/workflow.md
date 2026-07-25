@@ -48,6 +48,8 @@ After brief approval:
 
 Use no more than two repair rounds. Then show the human the remaining disagreement, both positions, evidence, consequences, and the effect of each choice. The human approves the exact final roadmap. GitHub issues may be created after this approval, but creating or changing GitHub objects remains a separate external action.
 
+No implementation begins until both the brief and the roadmap have been approved by the human at their exact committed versions. A draft, a reviewed candidate, or permission to write one is not an approval.
+
 ## 3. Prepare one issue
 
 Choose only a dependency-ready issue from the approved roadmap. Create exactly `project/issues/<ISSUE-ID>.md` from `project/templates/work-item.md` and an isolated branch such as:
@@ -134,7 +136,7 @@ decision; `20` changes required for plan, issue, or milestone-general mode (or
 remediation required in milestone-security mode); `30` blocked (or
 inconclusive in milestone-security mode); `40` user decision required for plan
 or issue mode; `64` usage/precondition failure; `65` malformed or missing
-outcome; `69` Codex unavailable, unauthenticated, or failed; and `78` an
+outcome; `69` Codex unavailable, unauthenticated, or execution failed; and `78` an
 explicit non-authoritative test-provider result. Any non-zero
 result blocks automatic advance. Tool, authentication, or execution failure
 never waives review. `REMEDIATION_REQUIRED` and `INCONCLUSIVE` are valid only
@@ -187,8 +189,8 @@ full reviewed commit; never reuse a report after any candidate change.
 
 Run these initial reports in fresh top-level processes:
 
-1. Claude general review.
-2. Codex general review, without seeing Claude's conclusion.
+1. Claude full general review.
+2. Codex full general review, without seeing Claude's conclusion.
 3. Reconcile general findings. Repair if required, then rerun all four reviews against the new candidate.
 4. Claude security review.
 5. Codex security review, without seeing Claude's security conclusion.
@@ -275,6 +277,8 @@ rather than removing a control.
 ## Repository-only restart
 
 At issue closeout, save and commit the handoff, every Codex report, real check evidence, issue status, decision, and updated `project/status/CURRENT.md`. A later Claude or Codex task must be able to reconstruct state without chat history by reading `AGENTS.md`, current status, linked approved artifacts, root `ROADMAP.md`, and the active issue. If the next action is not explicit in those files, no implementation action is permitted.
+
+Starting a fresh task limits context carry-over between issues, but it is a convention only: it does not delete provider-side records and does not prove zero retention.
 
 ## Failure and stopping
 

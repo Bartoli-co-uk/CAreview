@@ -9,11 +9,8 @@ step.
 It is inspired by [`Jhope188/ca-policy-analyzer`](https://github.com/Jhope188/ca-policy-analyzer),
 re-scoped to run entirely locally.
 
-> **Status: MVP complete.** Milestone M1 — the entire approved MVP scope — was
-> accepted by the repository owner on 2026-07-24
-> ([`DECISION-012`](project/decisions/DECISION-012-m1-milestone-acceptance.md))
-> after four independent reviews of one frozen commit. Sign-in, policy fetch,
-> scoring, findings and the UI are all implemented and unit-tested offline.
+> **Status: MVP complete.** Sign-in, policy fetch, scoring, findings and the UI
+> are all implemented and unit-tested offline.
 > **One tracked gap:** the device-code sign-in and Graph fetch have only been
 > exercised against mocked transports — a live sign-in against a real tenant has
 > not yet been performed. See [Known limitations](#known-limitations).
@@ -27,13 +24,14 @@ re-scoped to run entirely locally.
 - [Step-by-step setup for beginners (Windows)](#step-by-step-setup-for-beginners-windows)
 - [What it checks](#what-it-checks)
 - [How the score works](#how-the-score-works)
-- [Repository map](#repository-map)
+- [How the code fits together](#how-the-code-fits-together)
 - [HTTP API](#http-api)
 - [Verify it offline](#verify-it-offline)
 - [Design goals and scope](#design-goals-and-scope)
 - [Security model](#security-model)
 - [Known limitations](#known-limitations)
-- [How this project is built — governance](#how-this-project-is-built-governance)
+- [Contributing](#contributing)
+- [How this project is built](#how-this-project-is-built)
 - [Licence](#licence)
 
 ---
@@ -212,9 +210,7 @@ never silently scored as a pass or a fail. Two things make a rule not evaluable:
 The implementation is in [`analyzer.py`](analyzer.py); the evaluability model is
 documented at the bottom of [`rules.py`](rules.py).
 
-## Repository map
-
-### The application
+## How the code fits together
 
 | Path | What it does |
 |---|---|
@@ -226,18 +222,9 @@ documented at the bottom of [`rules.py`](rules.py).
 | [`web/`](web/) | The UI — `index.html`, `app.js`, `style.css`, and the sanitized `sample-data.json`. No frameworks, no external assets. Untrusted tenant strings are inserted as text, never HTML. |
 | [`tests/`](tests/) | 83 unit tests plus sanitized fixtures (`strong`, `weak`, `incomplete` tenants). Fully offline — no sign-in, no network. |
 
-### The build process
-
-| Path | What it does |
-|---|---|
-| [`START_HERE.md`](START_HERE.md) | Onboarding for a fresh agent or contributor: what to read, in what order. |
-| [`AGENTS.md`](AGENTS.md) / [`CLAUDE.md`](CLAUDE.md) | The operating rules every agent follows, and the Claude-specific additions. |
-| [`ROADMAP.md`](ROADMAP.md) | The approved roadmap: milestones, issues, acceptance criteria, risks, definitions of done. |
-| [`docs/`](docs/workflow.md) | The workflow itself — [workflow](docs/workflow.md), [roles](docs/roles-and-responsibilities.md), [approvals and reviews](docs/approvals-and-reviews.md), [security boundaries](docs/security-boundaries.md), [model assignment](docs/model-assignment.md). |
-| [`project/`](project/README.md) | Durable project memory: the intake description, approved brief, issues, handoffs, every review report, human decisions, risks, milestones, and [`project/status/CURRENT.md`](project/status/CURRENT.md). |
-| [`prompts/`](prompts/README.md) | The copy-paste session prompts for each workflow step. |
-| [`scripts/`](scripts/) | [`validate_repo.py`](scripts/validate_repo.py) (governance validator, also run by CI) and [`run_codex_review.py`](scripts/run_codex_review.py) plus its `.sh`/`.ps1` wrappers (the Codex review launcher). |
-| [`.claude/`](.claude/rules/workflow.md) / [`.codex/`](.codex/config.toml) | Agent definitions, per-role rules, and reviewer configuration. |
+The remaining top-level directories (`docs/`, `project/`, `prompts/`,
+`scripts/`, `.claude/`, `.codex/`) belong to the build process rather than the
+application — see [How this project is built](#how-this-project-is-built).
 
 ## HTTP API
 
@@ -274,11 +261,6 @@ GitHub Actions runs exactly these three commands on every push and pull request
 (plus a PowerShell syntax check of the review launcher), so the checks you run
 locally are the checks that gate the repository — see
 [`.github/workflows/validate.yml`](.github/workflows/validate.yml).
-
-`scripts/validate_repo.py` covers the governance surface: required files,
-JSON/TOML syntax, Markdown links and anchors, governance language, Action commit
-pinning, and a self-test of the review launcher. It calls no model, no GitHub,
-and no network — and it does not prove the process was followed.
 
 ## Design goals and scope
 
@@ -327,7 +309,7 @@ These are the recorded, accepted residual risks (tracked in
 
 | ID | Limitation |
 |---|---|
-| **Live sign-in unverified** | Tracked follow-up from `DECISION-012`. Auth and Graph access have only been exercised against mocked transports. Whether the chosen first-party client can obtain `Policy.Read.All` by device code in a given real tenant is not yet confirmed. |
+| **Live sign-in unverified** | Auth and Graph access have only been exercised against mocked transports. Whether the chosen first-party client can obtain `Policy.Read.All` by device code in a given real tenant is not yet confirmed. |
 | **RISK-001** | A tenant may block first-party device-code sign-in or withhold `Policy.Read.All` consent. The app-registration fallback is deferred, not part of the MVP. |
 | **RISK-002** | The local API has no authentication beyond loopback binding plus the Host/Origin allowlists. Another process running as the same user on the same machine could reach it while a token is in memory. Acceptable for a single-user local tool — **do not run it on a shared or multi-user host.** |
 | **RISK-004** | The 0–100 score is a documented heuristic across a starter rule set. It is not a compliance certification and not a substitute for professional assessment. |
@@ -336,108 +318,50 @@ These are the recorded, accepted residual risks (tracked in
 CAreview has not been independently security tested. Two AI reviews passing is
 not a certification.
 
-## How this project is built — governance
+## Contributing
 
-CAreview is a working application, but it is also a demonstration of a governed
-AI build process. **Claude** is the planner and the sole implementation author,
-**Codex** is an independent read-only reviewer, and the **human owner** approves
-every gate. The repository — not chat history — is the durable memory, so any
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) — note that changes here follow the
+governed workflow described below. [`SUPPORT.md`](SUPPORT.md) covers where to
+ask questions, and [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) applies to all
+project spaces.
+
+## How this project is built
+
+CAreview is a working application, but it was also built as a demonstration of a
+governed AI development process: **Claude** plans and writes all the code,
+**Codex** independently reviews it read-only, and the **human owner** approves
+every gate. The repository — not chat history — is the durable memory, so a
 fresh session can reconstruct the exact state from committed files.
 
-Every fresh agent task reads, in order: [`START_HERE.md`](START_HERE.md),
-[`AGENTS.md`](AGENTS.md), [`ROADMAP.md`](ROADMAP.md),
-[`docs/workflow.md`](docs/workflow.md), [`project/README.md`](project/README.md)
-and [`project/status/CURRENT.md`](project/status/CURRENT.md), then states the
-current stage and next allowed action before changing anything.
+**If you are an AI agent picking this repository up, start at
+[`START_HERE.md`](START_HERE.md)**, then follow the reading order it gives you.
+Do not begin material work until you can state the current stage and the next
+permitted action from the repository files alone.
 
-The flow is: project description → **Claude brief** (human approves) →
-**roadmap** reviewed by a fresh **Codex** process (human approves) → implement
-each issue on its own branch with a **mandatory fresh Codex review** before
-completion → four blind reviews at each milestone.
-**No implementation begins until** both the brief and the roadmap are approved.
+| Path | Purpose |
+|---|---|
+| [`START_HERE.md`](START_HERE.md) | Entry point for a fresh agent or contributor: what to read, in what order. |
+| [`AGENTS.md`](AGENTS.md) / [`CLAUDE.md`](CLAUDE.md) | The operating rules every agent follows, plus the Claude-specific additions. |
+| [`docs/`](docs/workflow.md) | The workflow itself — [workflow](docs/workflow.md), [roles](docs/roles-and-responsibilities.md), [approvals and reviews](docs/approvals-and-reviews.md), [security boundaries](docs/security-boundaries.md), [model assignment](docs/model-assignment.md). |
+| [`ROADMAP.md`](ROADMAP.md) | The approved roadmap: milestones, issues, acceptance criteria, risks, definitions of done. |
+| [`project/`](project/README.md) | Durable project memory: intake, approved brief, issues, handoffs, every review report, human decisions, risks, milestones, and [`project/status/CURRENT.md`](project/status/CURRENT.md) — the authoritative current-state index. |
+| [`prompts/`](prompts/README.md) | Copy-paste session prompts for each workflow step. |
+| [`scripts/`](scripts/) | [`validate_repo.py`](scripts/validate_repo.py) (governance validator, also run by CI) and the [Codex review launcher](scripts/run_codex_review.py) with its `.sh`/`.ps1` wrappers. |
+| [`.claude/`](.claude/rules/workflow.md) / [`.codex/`](.codex/config.toml) | Agent definitions, per-role rules, and reviewer configuration. |
 
-At each milestone one frozen candidate receives four fresh, blind reviews
-against the **same commit**:
-a **Claude full general review**, a **Codex full general review**,
-a **Claude security review**, and a **Codex security review**.
-Any repair creates a new candidate and reruns all four.
-
-Starting a fresh task reduces context carry-over but it
-**does not delete provider-side records** and does not prove zero retention.
-
-Everything this produced is in the open: the
+Everything the process produced is in the open: the
 [approved brief](project/brief/PROJECT_BRIEF.md), every
-[issue](project/issues/README.md), every [handoff](project/handoffs/README.md),
-every [review report](project/reviews/README.md), every
-[human decision](project/decisions/README.md), and the
+[issue](project/issues/README.md), [handoff](project/handoffs/README.md),
+[review report](project/reviews/README.md) and
+[human decision](project/decisions/README.md), plus the
 [M1 milestone record](project/milestones/M1.md).
 
-### Codex review launcher
-
-After each implementation candidate is committed, Claude runs the review
-launcher, which starts a fresh, ephemeral, read-only `codex exec` process against
-that exact commit and validates a schema-bound JSON report:
-
-```sh
-./scripts/run-codex-review.sh plan  <HEAD-SHA>
-./scripts/run-codex-review.sh issue <ISSUE-ID> <BASE-SHA> <HEAD-SHA>
-./scripts/run-codex-review.sh milestone-general  <MILESTONE-ID> <SHA>
-./scripts/run-codex-review.sh milestone-security <MILESTONE-ID> <SHA>
-```
-
-A PowerShell equivalent (`scripts/run-codex-review.ps1`) takes the same
-arguments. Reports are staged under `.git/claudex/reviews/` and committed into
-[`project/reviews/`](project/reviews/README.md). The launcher fails closed: no
-nonzero or unknown result is ever treated as a pass.
-
-| Exit | Meaning |
-|---:|---|
-| `0` | `PASS` |
-| `10` | `PASS_WITH_NOTES` — human review still required |
-| `20` | `CHANGES_REQUIRED` / milestone-security `REMEDIATION_REQUIRED` |
-| `30` | `BLOCKED` / milestone-security `INCONCLUSIVE` |
-| `40` | `USER_DECISION_REQUIRED` |
-| `64` | Invalid usage or repository precondition |
-| `65` | Missing or malformed evidence |
-| `69` | Codex unavailable, unauthenticated, or execution failed |
-| `78` | Explicit test-provider run; never valid review evidence |
-
-See [`docs/workflow.md`](docs/workflow.md) for the full gate detail and
-[`prompts/README.md`](prompts/README.md) for the session prompts.
+The governance layer is project-agnostic and can be lifted into another
+repository — [`START_HERE.md`](START_HERE.md) explains how.
 
 The workflow is a set of documented conventions and manual review gates. It is
 not a hard security boundary and not a certification — a local user or agent
 with sufficient access can bypass it.
-
-### Reusing this workflow
-
-The governance layer (`AGENTS.md`, `CLAUDE.md`, `docs/`, `prompts/`, `scripts/`,
-`project/templates/`, `.claude/`, `.codex/`) is project-agnostic and can be
-lifted into another repository. To do that, copy those directories, empty the
-live records under `project/` (keeping the templates), reset
-[`project/status/CURRENT.md`](project/status/CURRENT.md) to your starting stage,
-write your own `project/intake/PROJECT_DESCRIPTION.md`, and begin at
-[`prompts/01-project-brief.md`](prompts/01-project-brief.md).
-
-### Prerequisites
-
-To **run CAreview**, you need only Python 3.10+.
-
-To **develop it under the governed workflow**, you also need:
-
-- Git.
-- Claude Code, for planning and implementation.
-- The Codex CLI, authenticated, for the review gates.
-- Python 3.11+ if you want the validator to check TOML as well.
-- A Microsoft Entra ID (work/school) account able to read Conditional Access
-  policies, to exercise the app against a real tenant.
-
-## Contributing
-
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) — note that changes here follow the
-governed workflow above. [`SUPPORT.md`](SUPPORT.md) covers where to ask
-questions, and [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) applies to all project
-spaces.
 
 ## Licence
 

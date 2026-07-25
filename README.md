@@ -24,6 +24,7 @@ re-scoped to run entirely locally.
 
 - [What it does](#what-it-does)
 - [Quick start](#quick-start)
+- [Step-by-step setup for beginners (Windows)](#step-by-step-setup-for-beginners-windows)
 - [What it checks](#what-it-checks)
 - [How the score works](#how-the-score-works)
 - [Repository map](#repository-map)
@@ -58,6 +59,10 @@ closing the process discards everything.
 
 Requires **Python 3.10 or newer**. Nothing to `pip install`.
 
+On Windows, or if you have not used Git or Python before, follow
+[Step-by-step setup for beginners (Windows)](#step-by-step-setup-for-beginners-windows)
+instead — it covers installing both from scratch.
+
 ```sh
 git clone https://github.com/Bartoli-co-uk/CAreview.git
 cd CAreview
@@ -80,6 +85,89 @@ To use a different port: `CAREVIEW_PORT=8888 python3 server.py`.
 
 Reading Conditional Access policies requires delegated consent to
 `Policy.Read.All`; a **Security Reader** directory role is sufficient.
+
+## Step-by-step setup for beginners (Windows)
+
+Never used Git or Python before? Follow these steps in order, copy-pasting
+each command into **PowerShell** (open it from the Start menu — search for
+"PowerShell"). Command Prompt works too; the commands below are the same
+either way unless noted.
+
+1. **Install Git** (skip if you already have it — check with `git --version`).
+   Easiest way, in PowerShell:
+   ```powershell
+   winget install --id Git.Git -e --source winget
+   ```
+   No `winget`? Download the installer from
+   [git-scm.com/downloads](https://git-scm.com/downloads) and run it, keeping
+   the default options.
+
+   After installing, **close and reopen PowerShell** so it picks up the new
+   command.
+
+2. **Check whether Python is already installed:**
+   ```powershell
+   python --version
+   ```
+   If you see something like `Python 3.11.4`, you're set — skip to step 4.
+   If instead you see an error, or it opens the Microsoft Store, Python isn't
+   properly installed yet — continue to step 3.
+
+3. **Install Python** (only if step 2 didn't show a version number):
+   ```powershell
+   winget install --id Python.Python.3.12 -e
+   ```
+   No `winget`? Download the installer from
+   [python.org/downloads](https://python.org/downloads), run it, and make sure
+   you **tick "Add python.exe to PATH"** on the first screen before clicking
+   Install.
+
+   After installing, **close and reopen PowerShell**, then confirm it worked:
+   ```powershell
+   python --version
+   ```
+
+4. **Download this repository.** Pick one:
+   - With Git:
+     ```powershell
+     git clone https://github.com/Bartoli-co-uk/CAreview.git
+     ```
+   - Without Git: on this page, click the green **Code** button → **Download
+     ZIP**, then right-click the downloaded file and choose **Extract All**.
+
+5. **Move into the folder you just downloaded:**
+   ```powershell
+   cd CAreview
+   ```
+   (If you used "Download ZIP" and extracted it somewhere else, `cd` to that
+   extracted folder instead — e.g. `cd Downloads\CAreview-main`.)
+
+6. **Run CAreview:**
+   ```powershell
+   python server.py
+   ```
+   If PowerShell says `python` isn't recognized, try:
+   ```powershell
+   py server.py
+   ```
+
+7. **Open it in your browser:** go to
+   [http://127.0.0.1:8765](http://127.0.0.1:8765). You should see a health
+   badge reading "ok". Click **Sign in** to connect to your tenant, or **View
+   a sample analysis** to try it without signing in.
+
+8. **To stop it**, go back to the PowerShell window and press `Ctrl+C`.
+
+**Troubleshooting:**
+
+- `python`/`py` "is not recognized as the name of a cmdlet..." → Python isn't
+  on your PATH. Reopen PowerShell first; if that doesn't fix it, reinstall
+  Python and make sure "Add python.exe to PATH" is ticked.
+- `git` "is not recognized..." → same fix, but for Git: reopen PowerShell, or
+  reinstall Git.
+- Port `8765` already in use → run
+  `$env:CAREVIEW_PORT=8888; python server.py` to use a different port, then
+  open `http://127.0.0.1:8888` instead.
 
 ## What it checks
 

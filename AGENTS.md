@@ -1,6 +1,6 @@
 # Shared agent rules
 
-This repository is a reusable, documentation-led skeleton for projects where Claude plans and implements work and Codex independently reviews it.
+This repository holds **CAreview** (a local Conditional Access policy analyzer — see [`README.md`](README.md)) together with the reusable, documentation-led workflow it is built under: Claude plans and implements the work, Codex independently reviews it, and the human owner approves every gate. These rules govern that workflow and apply to any agent working here.
 
 These rules are operating conventions and manual gates. They do not create a security boundary, technically prevent an agent from misbehaving, or replace human review, sandboxing, access controls, testing, or professional assurance.
 

@@ -1,6 +1,12 @@
 # Security boundaries and limitations
 
-This skeleton improves consistency and review discipline. It is not a sandbox, policy engine, access-control system, security product, penetration test, or certification framework.
+This document covers two things: the boundaries of the **governed Claude + Codex
+workflow** used to build this repository, and the boundaries of the **CAreview
+application** itself. The application-specific rules are in
+[CAreview application boundaries](#careview-application-boundaries); everything
+else applies to the workflow.
+
+The workflow improves consistency and review discipline. It is not a sandbox, policy engine, access-control system, security product, penetration test, or certification framework.
 
 Markdown instructions can be ignored or overridden by a process with sufficient access. Fresh sessions and multiple model reviews reduce some common errors but do not prove independence, confidentiality, retention, correctness, or security.
 
@@ -76,17 +82,21 @@ cannot be read.
 CAreview authenticates to Microsoft Graph and reads tenant Conditional Access
 policies, so these project-specific rules apply on top of the general boundaries:
 
-- **Tokens are ephemeral and in-memory only.** Access and refresh tokens obtained
-  through the device-code flow must live only in the running process. Never
-  write them to disk, logs, tracked files, prompts, or review reports.
+- **Tokens are ephemeral and in-memory only.** The access token obtained through
+  the device-code flow must live only in the running process. Never write it to
+  disk, logs, tracked files, prompts, or review reports. The MVP deliberately
+  does not request `offline_access`, so no refresh token exists to leak; the user
+  re-authenticates when the access token expires.
 - **No secrets in the repository.** The first-party public `client_id` is public
   by design; there is no client secret. Never add one, and never commit a tenant
   ID, policy export, or any account data.
 - **Least privilege.** Request only the delegated Graph scopes needed to read
   policies (`Policy.Read.All`, `Application.Read.All`, `Directory.Read.All`).
   Adding a write scope or a broader permission is a protected change.
-- **Local binding.** The server binds to `localhost` only. Exposing it on a
-  routable interface, adding a public tunnel, or changing the bind address is a
+- **Local binding.** The server binds to `127.0.0.1` and its factory refuses any
+  non-loopback bind address. Requests must also carry a loopback `Host` header,
+  and state-changing `POST`s a loopback `Origin`. Exposing the server on a
+  routable interface, adding a public tunnel, or relaxing those checks is a
   protected action requiring explicit human approval.
 - **Egress is Microsoft only.** The application's only network egress is to
   Microsoft identity and Graph endpoints. Adding any other outbound host is a
@@ -122,7 +132,7 @@ dependency's install or test script solely because it is conventional.
 
 Default to no network access for reviewers and no network access for implementation unless the issue requires named endpoints. Provider access itself may transmit context externally. Do not claim local-only processing unless it has been independently established.
 
-GitHub, package registries, cloud systems, and messaging tools are external side effects. Read before write, use least privilege, avoid duplicate creation, and stop when an outcome is ambiguous. This skeleton documents that discipline but does not implement idempotency automatically.
+GitHub, package registries, cloud systems, and messaging tools are external side effects. Read before write, use least privilege, avoid duplicate creation, and stop when an outcome is ambiguous. This workflow documents that discipline but does not implement idempotency automatically.
 
 ## Provider spending, credits, and runtime
 

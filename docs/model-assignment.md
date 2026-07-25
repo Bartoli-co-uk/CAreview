@@ -10,7 +10,7 @@ sensitive work.
 
 ## Tiers
 
-Two tiers, referred to by **alias** rather than a dated model id so the skeleton
+Two tiers, referred to by **alias** rather than a dated model id so this policy
 stays durable as model versions roll:
 
 - **strong** (`opus`): high-stakes reasoning where a mistake is expensive or

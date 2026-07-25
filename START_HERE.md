@@ -1,14 +1,31 @@
 # Start here
 
-This repository is designed to survive a completely new chat. Git-tracked files,
-not conversation history, are the project memory.
+This is **CAreview**, a locally-hosted Microsoft Entra ID Conditional Access
+policy analyzer. See [`README.md`](README.md) for what it does and how to run it.
+
+It is built under a governed Claude + Codex workflow, and this file is the
+entry point for that side of the repository. The design goal is that the project
+survives a completely new chat: **Git-tracked files, not conversation history,
+are the project memory.**
+
+## Where the project currently stands
+
+Read [`project/status/CURRENT.md`](project/status/CURRENT.md) — it is the single
+authoritative index of the current stage, the approved artifacts, open blockers,
+and the next permitted action. Everything below tells you how to interpret it.
+
+Do not trust this section over that file. If the two ever disagree, the status
+file and the records it links to win, and the disagreement itself should be
+repaired before any other work.
 
 ## What a fresh agent must do
 
 Before proposing or changing anything:
 
-1. Read `AGENTS.md`, `ROADMAP.md`, `docs/workflow.md`, `project/README.md`, and
-   `project/status/CURRENT.md`.
+1. Read [`AGENTS.md`](AGENTS.md), [`ROADMAP.md`](ROADMAP.md),
+   [`docs/workflow.md`](docs/workflow.md),
+   [`project/README.md`](project/README.md), and
+   [`project/status/CURRENT.md`](project/status/CURRENT.md).
 2. Read the approved brief, current issue, relevant decisions, and latest
    reviews named by the status file. Do not assume a draft is approved.
 3. Report the current branch and commit, workflow stage, approved artifacts,
@@ -36,10 +53,17 @@ Before proposing or changing anything:
 These are transparent repository conventions and review gates. They improve
 discipline but are not a hard security boundary or a security certification.
 
-## Starting a new project
+## Reusing this workflow on another project
 
-The checked-in status is `TEMPLATE_READY`. In a newly derived repository, first
-complete and commit the README customization checklist. Then add the project
-description to `project/intake/PROJECT_DESCRIPTION.md` and use
-`prompts/01-project-brief.md` in a new Claude task. Implementation must not begin
-until separate brief and roadmap approvals have been recorded in Git.
+The governance layer here is project-agnostic: `AGENTS.md`, `CLAUDE.md`,
+[`docs/`](docs/workflow.md), [`prompts/`](prompts/README.md),
+[`scripts/`](scripts/validate_repo.py), `project/templates/`, `.claude/`, and
+`.codex/` contain nothing specific to Conditional Access.
+
+To start a different project from it: copy those paths into a new repository,
+clear the live records under `project/` while keeping `project/templates/`, reset
+[`project/status/CURRENT.md`](project/status/CURRENT.md) to your starting stage,
+write your project description into `project/intake/PROJECT_DESCRIPTION.md`, and
+begin with [`prompts/01-project-brief.md`](prompts/01-project-brief.md) in a new
+Claude task. Implementation must not begin until separate brief and roadmap
+approvals have been recorded in Git.

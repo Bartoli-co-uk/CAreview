@@ -146,3 +146,23 @@ two required findings plus the accepted sandbox execution-evidence residual:
   which the launcher's exact-match regex rejected; corrected to contain
   only the backtick-quoted SHA.
 - This is round 1 of at most two permitted issue repair rounds.
+
+## Round-1 review result and stop point
+
+The round-1 Codex re-review (`project/reviews/issues/ISSUE-0008-205125474389-codex.json`,
+candidate `205125474389932f02e7c484dd59ad612892ac4b`) returned `BLOCKED` with
+`findings: []` — zero actionable defects. The sole blocker is the same
+sandbox execution-evidence limitation present in round 0: the read-only
+checkout cannot bind loopback sockets, write `__pycache__`, or create a temp
+directory, so the three required repository-wide checks cannot complete
+independently inside the review process itself, even though they pass
+locally and their real output is recorded above. Only 1 of 2 permitted
+repair rounds was needed.
+
+Per `AGENTS.md`'s completion standard ("the human has made any required
+advance or merge decision") and the `DECISION-010`/`DECISION-016` precedent
+— the same sandbox-only-blocker pattern on `ISSUE-0006` and `ISSUE-0007`,
+both of which required an explicit human closeout decision despite zero
+product findings — this Claude task stops here and presents the clean
+round-1 result to the human rather than unilaterally marking `ISSUE-0008`
+complete or starting `ISSUE-0009`.

@@ -3,17 +3,17 @@
 This is the canonical project roadmap for CAreview, a locally-hosted Conditional
 Access policy analyzer.
 
-**Current status:** `DRAFT` (roadmap v4 candidate — supersedes approved v3 pending a new Codex plan review and a new exact human approval; **not** implementation-authorizing)
+**Current status:** `APPROVED` (roadmap v4 approved by the human; M2 implementation authorized)
 **Roadmap version:** `4`
 **Approved brief:** `project/brief/PROJECT_BRIEF.md` v1 at `179a02354aecbafa2c9d5aa34f9c9a5a04bbc79a` (DECISION-001) — governs M1
 **Amending brief:** `project/brief/PROJECT_BRIEF.md` v2 at `9ccf835`, approved by `DECISION-013`; open questions resolved by `DECISION-014` — governs M2 below
-**Codex plan review:** v3 rounds recorded in Planning reconciliation below. **v4: not yet reviewed** — a fresh `./scripts/run-codex-review.sh plan <V4-HEAD-SHA>` is required before this version may be put to the human
-**Human approval record:** `project/decisions/DECISION-003-roadmap-approval.md` (APPROVE, binds **v3** at `125d74f6d4bfe85f1a727293064d0887f2d121c7`). **v4: not yet recorded**
-**Delivery status:** `M1` COMPLETE and accepted (`DECISION-012`); all six issues merged. `M2` is `PLANNED` and unapproved. Current state: `project/status/CURRENT.md`.
+**Codex plan review:** v3 rounds recorded in Planning reconciliation below. v4: four rounds recorded below (`ROADMAP-71f7ba60b045-*`, `ROADMAP-605c282c5c81-*`, `ROADMAP-76a09c46a57d-*`, `ROADMAP-faf5ec70bf00-*`); the review/repair loop's absolute five-iteration cap (`AGENTS.md`) was reached, and the human approved directly from that record
+**Human approval record:** `project/decisions/DECISION-003-roadmap-approval.md` (APPROVE, binds v3 at `125d74f6d4bfe85f1a727293064d0887f2d121c7`); `project/decisions/DECISION-015-roadmap-v4-approval.md` (APPROVE, binds **v4** at `9e5ba6d`)
+**Delivery status:** `M1` COMPLETE and accepted (`DECISION-012`); all six issues merged. `M2` is `PLANNED`, approved (`DECISION-015`), issues not yet started. Current state: `project/status/CURRENT.md`.
 
 No implementation may begin until a human records approval of the exact roadmap
-version and commit. Roadmap v3 remains the approved artifact until a decision
-record binds v4; no M2 issue may start on the strength of this draft alone.
+version and commit. Roadmap v4 (this version) is now the approved artifact;
+`ISSUE-0007` may start under the same governed per-issue workflow used for M1.
 
 ## Project outcome
 
@@ -343,26 +343,34 @@ by the human (`DECISION-014`) rather than accepted or inferred by an agent.
 | 5 (v4, confirmatory) | `ROADMAP-76a09c46a57d-codex.json` (`CHANGES_REQUIRED`, 2 findings) | `ROADMAP-76a09c46a57d-claude-response.md` — findings presented to the human before any edit (revision cap already used); human directed both be fixed | Fixed: brief/roadmap secret-lifecycle wording contradiction, and ISSUE-0010's static-only UI verification gap |
 | 6 (v4, confirmatory) | `ROADMAP-faf5ec70bf00-codex.json` (BLOCKED, 3 findings + 1 advisory) | This response — the repository's absolute five-iteration cap (`AGENTS.md`) is exhausted at this point, so no further automated Codex re-review is run; the human decided to have these findings fixed and then approve directly from this record | Fixed at the current commit: bounded input-validation criteria for `ISSUE-0009`'s tenant/client-id/secret fields; dropped provider-supplied error text entirely (stable local labels only) instead of relying on literal-only secret scrubbing; refreshed the stale top-level project outcome/stakeholder/definition-of-done narrative for the dual-mode M2 scope. F-001 (governance validator unavailable in the sandbox) is, again, the same structural limitation — out-of-band validator evidence: `python3 scripts/validate_repo.py` passes (67 required files checked) outside the review sandbox. **No further Codex plan review will be run for v4; the human approves directly from this reconciliation record and the response files above.** |
 
-### v4 reconciliation note
+### v4 reconciliation note (closed)
 
-This v4 delta has had no independent review yet. Specifically, and stated so no
-later reader infers otherwise:
+Recorded so no later reader has to reconstruct the v4 approval path from
+scratch:
 
-- No Codex plan review has been run against roadmap v4. The v3 reviews
-  (`ROADMAP-691b1427de57`, `ROADMAP-4daf03ca5be5`) reviewed a roadmap that
-  contained no M2, no app-only mode, and no client secret; they say nothing
-  about this content and cannot be carried forward to it.
-- `DECISION-003` binds roadmap **v3** at `125d74f`. It does not extend to v4.
-  Until a new decision record names v4 at its exact commit, v3 is the approved
-  roadmap and no M2 issue may begin.
-- The expected sequence is: commit v4 → fresh Codex plan review at that SHA →
-  Claude responds to every finding (at most two revision rounds) → human
-  approves the exact final v4 → `ISSUE-0007` starts in a new top-level Claude
-  task.
+- Four Codex plan-review rounds were run against successive v4 candidates
+  (rows 3–6 above): one initial `BLOCKED` review, the two revision rounds
+  `AGENTS.md` permits, and two further confirmatory rounds run at the human's
+  explicit direction after the repository's absolute five-iteration cap was
+  reached. Every actionable finding across all four rounds was fixed; the
+  recurring blocker was the review sandbox's inability to run real checks
+  (governance validator, full unit suite, compile cache), addressed each time
+  with out-of-band evidence that those checks pass against the exact reviewed
+  commit — the same class of limitation recorded for the v3 roadmap's own
+  round-2 review.
+- `DECISION-003` binds roadmap **v3** at `125d74f` and still governs M1; it
+  never extended to v4. `DECISION-015` binds roadmap **v4** at `9e5ba6d` and
+  is the approval that authorizes M2. Both decisions stand; neither
+  invalidates the other.
 - Unlike the reverted `origin/claude/graph-auth-without-cli-8om0zw` draft this
-  supersedes, brief v2 Questions 3/5/6 are already resolved (`DECISION-014`)
-  before this v4 candidate was written, so no open question blocks
-  `ISSUE-0008` beyond the plan review and roadmap approval themselves.
+  roadmap's M2 content was independently re-derived from (brief v2 and
+  `DECISION-013`/`DECISION-014` were approved fresh in this cycle, not
+  resurrected), brief v2 Questions 3/5/6 were already resolved before this v4
+  candidate was first drafted, so no open brief question blocked `ISSUE-0008`
+  beyond the plan-review and roadmap-approval steps themselves.
+- Permitted next action: `ISSUE-0007` starts in a new top-level Claude issue
+  task, under the same governed per-issue workflow used for all six M1
+  issues.
 
 Maximum two repair rounds. Any remaining material disagreement is shown to the
 human before exact roadmap approval. No workflow loop may exceed five total

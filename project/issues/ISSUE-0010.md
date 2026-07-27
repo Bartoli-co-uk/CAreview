@@ -106,7 +106,8 @@ device-code flow, wired to `ISSUE-0009`'s `POST /api/auth/app` endpoint.
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
 | 0 | `project/handoffs/ISSUE-0010-handoff.md` | `1d557b3840f716ad0d25a0f6d4be407cdeeb221b` | 172 tests pass; compile clean; validator passed; manual walkthrough (failure-path submit only) | `project/reviews/issues/ISSUE-0010-1d557b3840f7-codex.json` | `BLOCKED` — F-001 (secret not cleared on a rejected/failed fetch) + F-002 (missing successful-submit browser evidence) |
-| 1 | `project/handoffs/ISSUE-0010-handoff.md` (Repair round 1 section) | this commit | 173 tests pass; compile clean; validator passed; manual walkthrough (all 5 checkpoints, incl. successful submit) | pending | pending |
+| 1 | `project/handoffs/ISSUE-0010-handoff.md` (Repair round 1 section) | `451dbe236769760c2384ab3f198c1f5b11f7c1ae` | 173 tests pass; compile clean; validator passed; manual walkthrough (all 5 checkpoints, incl. successful submit) | `project/reviews/issues/ISSUE-0010-451dbe236769-codex.json` | `BLOCKED` — F-001 (`project/status/CURRENT.md` still described the obsolete round-0 candidate/state instead of round 1) |
+| 2 | `project/handoffs/ISSUE-0010-handoff.md` (Repair round 2 section) | this commit | 173 tests pass; compile clean; validator passed | pending | pending |
 
 Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
 No workflow loop may exceed five total iterations; the tighter two-round issue

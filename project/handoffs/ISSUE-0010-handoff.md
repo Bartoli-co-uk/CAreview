@@ -205,3 +205,25 @@ findings:
 
 All five checkpoints required by acceptance criterion 9 (submit — both
 outcomes, mode switch, logout) are now covered.
+
+## Repair round 2
+
+Round-1 Codex re-review
+(`project/reviews/issues/ISSUE-0010-451dbe236769-codex.json`, candidate
+`451dbe236769760c2384ab3f198c1f5b11f7c1ae`) returned `BLOCKED` with one
+finding:
+
+- **F-001 fix (medium):** `project/status/CURRENT.md` had not been updated
+  before committing the round-1 candidate — it still described round 0 as
+  awaiting its first review, reported "None open" for the repair round,
+  reported 172 rather than 173 tests, and pointed the next launcher
+  invocation at the obsolete round-0 candidate SHA. Fixed by rewriting
+  `CURRENT.md` to correctly describe repair round 1 (round-0 findings,
+  round-1 candidate `451dbe236769760c2384ab3f198c1f5b11f7c1ae`, 173 tests,
+  and the correct next re-review command).
+- Rechecked after the fix: `python3 -m unittest discover -s tests` → 173
+  passed, exit 0; `python3 -m py_compile $(git ls-files '*.py')` → exit 0;
+  `python3 scripts/validate_repo.py` → "Repository validation passed (67
+  required files checked)." (No product/test/UI source changed in this
+  round — metadata-only fix.)
+- This is round 2 of at most two permitted issue repair rounds (final).

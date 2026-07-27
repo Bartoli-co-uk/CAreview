@@ -1,0 +1,113 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-27T22:43:17Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa5bd-d465-70d1-b340-78aaf85ac139"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "f3b5414a4f2d3104d11bbb1ce6d5669a58123e79",
+    "evidence": [
+      {
+        "detail": "HEAD and the launcher target both resolve to 451dbe236769760c2384ab3f198c1f5b11f7c1ae; the worktree was clean.",
+        "reference": "git rev-parse HEAD; git status --short",
+        "source": "command"
+      },
+      {
+        "detail": "The exact base-to-target diff modifies README.md, web/index.html, web/app.js, web/style.css, tests/test_ui_safety.py, and issue governance/evidence records. Product-source changes remain within the roadmap's allowed product paths.",
+        "reference": "git diff --name-status f3b5414a4f2d3104d11bbb1ce6d5669a58123e79..451dbe236769760c2384ab3f198c1f5b11f7c1ae",
+        "source": "diff"
+      },
+      {
+        "detail": "The repair places secret-field clearing in a finally block around POST /api/auth/app, covering resolved and rejected requests. Static inspection found no console, web-storage, cookie, URL, query-string, dangerous HTML sink, external-asset, or CSP relaxation regression.",
+        "reference": "web/app.js:163",
+        "source": "file"
+      },
+      {
+        "detail": "The focused UI safety suite independently passed: 16 tests, exit 0.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_ui_safety",
+        "source": "check"
+      },
+      {
+        "detail": "Whitespace/error-marker validation passed with exit 0.",
+        "reference": "git diff --check f3b5414a4f2d3104d11bbb1ce6d5669a58123e79..451dbe236769760c2384ab3f198c1f5b11f7c1ae",
+        "source": "check"
+      },
+      {
+        "detail": "The full suite ran 173 tests but exited 1 with 68 errors because the read-only sandbox denied loopback socket binding with PermissionError: [Errno 1] Operation not permitted.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "The compile check exited 1 because the read-only sandbox denied creation of __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "The governance validator exited 1 because no writable temporary directory was available to its launcher smoke tests.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The handoff records author-run results of 173 passing tests, successful compilation and validation, plus a human-performed browser walkthrough covering mode switching, failed submit, mocked successful submit, and logout. These are relevant committed claims but do not replace independent execution evidence.",
+        "reference": "project/handoffs/ISSUE-0010-handoff.md:149",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: project/status/CURRENT.md must be an accurate repository-only index of the current gate, reviewed candidate, blockers, and next permitted action.",
+          "Observed: the candidate and issue record identify repair round 1 after the round-0 review, but CURRENT.md repeatedly says round 0 is awaiting its first review, says no repair round is open, reports 172 rather than 173 tests, and directs the launcher to review the obsolete round-0 candidate.",
+          "A fresh task following CURRENT.md would reconstruct the wrong review iteration and could invoke the wrong next action."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 27,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 45,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 53,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 75,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Update CURRENT.md consistently to identify repair round 1, target commit 451dbe236769760c2384ab3f198c1f5b11f7c1ae, the recorded round-0 review, 173-test author evidence, and the correct round-1 review action. Because this changes committed review metadata, run a fresh review against the resulting candidate SHA.",
+        "severity": "medium",
+        "title": "Current-state index still describes the obsolete round-0 candidate",
+        "verification": "From a fresh checkout, compare every CURRENT.md round, candidate, review, check-count, actor, and next-action field with project/issues/ISSUE-0010.md and project/handoffs/ISSUE-0010-handoff.md; then run the governance validator and launch a fresh commit-bound review."
+      }
+    ],
+    "limitations": [
+      "Independent required execution evidence is incomplete: the full unit suite, py_compile, and governance validator could not pass in this read-only sandbox for environmental reasons. Under the repository review rules and launcher binding, this requires BLOCKED even though the focused UI suite passed and the failures do not indicate a candidate-code defect.",
+      "The browser walkthrough was human-performed and partly used an uncommitted local mock-success helper. Its recorded observations and setup cannot be independently reproduced from this isolated checkout.",
+      "No live Entra authentication or Microsoft Graph request was performed; this is explicitly outside the issue completion requirements and requires separate protected-action approval.",
+      "The checkout is shallow/grafted, but both supplied commit objects were available and the exact base-to-target diff was inspectable."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "451dbe236769760c2384ab3f198c1f5b11f7c1ae",
+    "schema_version": "1.0",
+    "summary": "BLOCKED. The app-only UI repair appears technically sound under static review, the focused 16-test UI safety suite passes, and the rejected-fetch clearing defect is fixed. However, the mandatory full checks could not be independently completed in the read-only sandbox, and CURRENT.md materially misidentifies this repair-round-1 candidate as the initial round-0 review.",
+    "target_id": "ISSUE-0010"
+  },
+  "test_only": false
+}

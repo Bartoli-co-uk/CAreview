@@ -54,16 +54,26 @@ skip or substitute.
 | Next permitted action | Once a fresh Codex plan review of the exact v4 commit is obtained and Claude has responded to any findings, the human may approve the exact final v4 roadmap. Only after that may `ISSUE-0007` begin, in a new top-level Claude issue task, on an isolated branch |
 | Actions not yet permitted | Any M2 implementation; merge without a clean review; publication; deployment; live tenant auth/fetch in either mode; any other protected action |
 
-## Verification evidence at the reviewed commit
+## Verification evidence at the reviewed M1 commit
 
 Re-runnable from a clean checkout; see `project/milestones/M1.md` for the
-commit-bound record captured at the gate.
+commit-bound record captured at the gate. Unaffected by the v4 roadmap draft
+below, since no product file has changed since `6311a11a`.
 
 | Check | Command | Result |
 |---|---|---|
 | Tests | `python3 -m unittest discover -s tests` | 83 passed, exit 0 |
 | Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 |
 | Governance | `python3 scripts/validate_repo.py` | passed |
+
+## Real checks run against the v4 roadmap candidate (`c8185a0`)
+
+| Check | Command | Result |
+|---|---|---|
+| Tests | `python3 -m unittest discover -s tests` | 83 passed, exit 0 (unchanged — no product file touched) |
+| Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 |
+| Governance | `python3 scripts/validate_repo.py` | **exit 1, 1 error**: `wrong stage did not fail before provider execution/report staging: exit 78, marker=True, reports=1`. This is a known, previously documented latent self-test defect (flagged as a non-blocking follow-up in `DECISION-002`'s Notes): `smoke_target_binding_rejections`'s "wrong stage" fixture copies the live working tree and assumes it is never legitimately committed at `stage: ROADMAP_REVIEW`. It now legitimately is, so the fixture's own assumption breaks, not the launcher's real gating behaviour. It is expected to self-resolve once the stage moves off `ROADMAP_REVIEW` (roadmap approval or reversion). Not fixed here: fixing a governance script is itself a protected action needing its own separate human approval, per the same precedent (`DECISION-002`, `DECISION-011`) |
+| **Mandatory Codex plan review** | `./scripts/run-codex-review.sh plan c8185a0387d457c48675efeb75484e2a89f9da35` | **exit 69: "Codex CLI is unavailable; no review was recorded."** Real, reproduced command output, not an inference. Per `AGENTS.md` rule 13 this **blocks** roadmap v4 from proceeding to human approval — it is not something an agent may skip, reinterpret, or substitute with a Claude-only review. Resolving this requires running the launcher (or an equivalent fresh, independent, read-only Codex process) somewhere Codex is installed and authenticated, then committing the resulting report under `project/reviews/plans/` |
 
 A fresh task must read `AGENTS.md`, this file, and the artifacts linked here,
 then restate the current stage and next permitted action before doing material

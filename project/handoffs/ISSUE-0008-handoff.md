@@ -116,3 +116,33 @@ The reviewer or CI must independently confirm required checks; this handoff is n
 
 - Base SHA: `e088b33fb78953e9b351618ae3d23bb751bf690f`
 - Head SHA: (this commit; recorded by the launcher)
+
+## Repair round 1
+
+Round-0 Codex review (`project/reviews/issues/ISSUE-0008-88a4a6d355eb-codex.json`,
+candidate `88a4a6d355eb96b6739010744b1b7f7f76751c35`) returned `BLOCKED` with
+two required findings plus the accepted sandbox execution-evidence residual:
+
+- **F-001 fix (medium):** `build_client_credentials_request()` took a caller-
+  overridable `scope` parameter defaulting to `APP_ONLY_SCOPE`, so nothing
+  actually prevented a caller from substituting another scope. Removed the
+  parameter entirely — the function now always serializes `APP_ONLY_SCOPE`
+  with no override path. Added `test_no_scope_override_parameter_exists`
+  (asserts the signature has no `scope` parameter and that passing one
+  raises `TypeError`) and `test_every_generated_request_carries_exactly_default_scope`.
+- **F-002 fix (low):** the required device-code-`start()`-supersedes-app-only
+  race cases were missing. Added
+  `test_inflight_start_app_only_interrupted_by_device_code_start` and
+  `test_inflight_renewal_interrupted_by_device_code_start`, both using the
+  same synchronous transport-callback race pattern as the existing tests,
+  distinguishing device-code vs. app-only calls by `grant_type` in the
+  posted form body (both hit the same `/oauth2/v2.0/token` URL).
+- Rechecked after both fixes: `python3 -m unittest discover -s tests` → 116
+  passed, exit 0; `python3 -m py_compile $(git ls-files '*.py')` → exit 0;
+  `python3 scripts/validate_repo.py` → "Repository validation passed (67
+  required files checked)."
+- Also fixed a launcher-usage defect found while invoking round 0: the
+  issue file's `**Starting SHA:**` line had trailing text after the SHA,
+  which the launcher's exact-match regex rejected; corrected to contain
+  only the backtick-quoted SHA.
+- This is round 1 of at most two permitted issue repair rounds.

@@ -7,6 +7,7 @@ is involved.
 from __future__ import annotations
 
 import contextlib
+import inspect
 import io
 import json
 import logging
@@ -290,6 +291,23 @@ class AppOnlyRequestBuildingTests(unittest.TestCase):
         url, _ = auth.build_client_credentials_request("contoso.onmicrosoft.com", FAKE_CLIENT_ID, FAKE_SECRET)
         self.assertIn("contoso.onmicrosoft.com", url)
 
+    def test_no_scope_override_parameter_exists(self) -> None:
+        # ISSUE-0008 F-001: the builder must have no supported path that
+        # substitutes another scope — assert the signature itself accepts no
+        # scope argument, positionally or by keyword.
+        params = list(inspect.signature(auth.build_client_credentials_request).parameters)
+        self.assertEqual(params, ["tenant", "client_id", "client_secret"])
+        with self.assertRaises(TypeError):
+            auth.build_client_credentials_request(
+                FAKE_TENANT, FAKE_CLIENT_ID, FAKE_SECRET, scope="https://graph.microsoft.com/SomethingElse"
+            )
+
+    def test_every_generated_request_carries_exactly_default_scope(self) -> None:
+        for tenant in (FAKE_TENANT, "contoso.onmicrosoft.com"):
+            _, data = auth.build_client_credentials_request(tenant, FAKE_CLIENT_ID, FAKE_SECRET)
+            parsed = urllib.parse.parse_qs(data.decode("utf-8"))
+            self.assertEqual(parsed["scope"], ["https://graph.microsoft.com/.default"])
+
     def test_invalid_tenant_rejected_before_any_state_or_network(self) -> None:
         clock = FakeClock()
         calls: list[str] = []
@@ -471,6 +489,58 @@ class AppOnlyLifecycleTests(unittest.TestCase):
         mgr.get_token()
         self.assertEqual(mgr._app_only_secret, "test-only-newer-fake-secret")
         self.assertNotEqual(mgr._access_token, "STALE-RENEWED-TOKEN")
+
+    def test_inflight_start_app_only_interrupted_by_device_code_start(self) -> None:
+        # ISSUE-0008 F-002: a device-code start() issued while an initial
+        # app-only request is outstanding must supersede it via the shared
+        # generation counter — the stale app-only response must not install a
+        # token or retain the secret, and the newer device-code session must
+        # remain authoritative.
+        clock = FakeClock()
+        holder: dict = {}
+
+        def transport(url: str, data: bytes) -> tuple[int, dict]:
+            parsed = urllib.parse.parse_qs(data.decode("utf-8"))
+            if parsed.get("grant_type") == ["client_credentials"]:
+                holder["mgr"].start()  # device-code sign-in starts mid-flight
+                return APP_ONLY_OK
+            return DEVICE_OK
+
+        mgr = auth.AuthManager(transport=transport, clock=clock)
+        holder["mgr"] = mgr
+        with self.assertRaises(auth.AuthError) as ctx:
+            mgr.start_app_only(FAKE_TENANT, FAKE_CLIENT_ID, FAKE_SECRET)
+        self.assertEqual(str(ctx.exception), "superseded")
+        self.assertIsNone(mgr._app_only_secret)
+        self.assertFalse(mgr.is_authenticated())
+        self.assertIsNotNone(mgr._session)  # the newer device-code session stands
+
+    def test_inflight_renewal_interrupted_by_device_code_start(self) -> None:
+        # ISSUE-0008 F-002: a device-code start() issued while a silent
+        # app-only renewal is outstanding must supersede it — the stale
+        # renewal response must not resurrect a token, and the newer
+        # device-code session must remain authoritative.
+        clock = FakeClock()
+        holder: dict = {}
+        app_only_calls: list[int] = []
+
+        def transport(url: str, data: bytes) -> tuple[int, dict]:
+            parsed = urllib.parse.parse_qs(data.decode("utf-8"))
+            if parsed.get("grant_type") == ["client_credentials"]:
+                app_only_calls.append(1)
+                if len(app_only_calls) == 1:
+                    return APP_ONLY_OK
+                holder["mgr"].start()  # device-code sign-in starts mid-renewal
+                return (200, {"access_token": "STALE-RENEWED-TOKEN", "expires_in": 3600})
+            return DEVICE_OK
+
+        mgr = auth.AuthManager(transport=transport, clock=clock)
+        holder["mgr"] = mgr
+        mgr.start_app_only(FAKE_TENANT, FAKE_CLIENT_ID, FAKE_SECRET)
+        clock.advance(3601)
+        self.assertIsNone(mgr.get_token())  # stale renewal must not install
+        self.assertIsNone(mgr._app_only_secret)
+        self.assertIsNotNone(mgr._session)  # the newer device-code session stands
 
 
 class AppOnlySecretLeakTests(unittest.TestCase):

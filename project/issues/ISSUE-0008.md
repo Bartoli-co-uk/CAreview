@@ -121,7 +121,8 @@ client secret instead of the device-code flow.
 
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
-| 0 | `project/handoffs/ISSUE-0008-handoff.md` | (this branch HEAD) | 112 tests pass; compile clean; validator passed | pending | pending |
+| 0 | `project/handoffs/ISSUE-0008-handoff.md` | `88a4a6d355eb96b6739010744b1b7f7f76751c35` | 112 tests pass; compile clean; validator passed | `project/reviews/issues/ISSUE-0008-88a4a6d355eb-codex.json` | `BLOCKED` — F-001 (scope override possible) + F-002 (missing device-code-supersedes-app-only race tests) + sandbox execution-evidence limitation (accepted residual, `DECISION-015`) |
+| 1 | `project/handoffs/ISSUE-0008-handoff.md` (Repair round 1 section) | (this branch HEAD) | 116 tests pass; compile clean; validator passed | pending | pending |
 
 Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
 No workflow loop may exceed five total iterations; the tighter two-round issue

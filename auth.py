@@ -125,15 +125,18 @@ def _app_only_authority(tenant: str) -> str:
 
 
 def build_client_credentials_request(
-    tenant: str, client_id: str, client_secret: str, scope: str = APP_ONLY_SCOPE
+    tenant: str, client_id: str, client_secret: str
 ) -> tuple[str, bytes]:
+    # No caller-supplied scope: app-only mode always requests exactly
+    # APP_ONLY_SCOPE (brief A7 — narrower app-only scopes cannot be requested;
+    # ISSUE-0008 F-001 — the scope must not be overridable at all).
     url = f"{_app_only_authority(tenant)}/oauth2/v2.0/token"
     data = urllib.parse.urlencode(
         {
             "grant_type": "client_credentials",
             "client_id": client_id,
             "client_secret": client_secret,
-            "scope": scope,
+            "scope": APP_ONLY_SCOPE,
         }
     ).encode("utf-8")
     return url, data

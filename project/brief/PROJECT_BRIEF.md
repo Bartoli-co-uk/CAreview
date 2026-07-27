@@ -1,6 +1,6 @@
 # Project brief: CAreview — Conditional Access policy analyzer
 
-**Status:** `APPROVED` (v2 amendment approved by `DECISION-013`, binding commit `9ccf835`; Questions 3/5/6 resolved by `DECISION-014`)
+**Status:** `APPROVED` (v2 amendment approved by `DECISION-013`, binding commit `9ccf835`; Questions 3/5/6 resolved by `DECISION-014`). **Post-approval correction** (this commit): the Data and security section's secret-lifecycle wording was still stale — it described a per-request "discard" that `DECISION-014` had already superseded with session-lifetime retention and silent renewal. Corrected to match `DECISION-014` exactly; no scope, question, or decision changes as a result, so this does not reopen brief approval.
 **Version:** `2`
 **Amends:** v1, approved by `DECISION-001` at `179a02354aecbafa2c9d5aa34f9c9a5a04bbc79a`
 **Source description:** `project/intake/PROJECT_DESCRIPTION.md` at `19e5863d19f856b635df878234a37333f391b4e9`
@@ -226,10 +226,12 @@ has one with app-only `Policy.Read.All`, not a requirement.)
   browser's JS runtime for the session. It must still never be written to
   disk, logs, tracked files, review reports, or echoed back in any API
   response (including error bodies). It is held in server process memory
-  only; the exact retention lifetime (discard after first token request vs.
-  retain for the session with silent renewal) is decided in `DECISION-014`
-  before `ISSUE-0008` starts, not assumed here. Browser-side, the field must
-  be `autocomplete="off"` and its value must not be logged to the console.
+  **retained for the app-only session's lifetime and reused to silently renew
+  the token on expiry** — resolved by `DECISION-014` in favor of no hourly
+  re-entry, trading a wider retention window for that usability — and cleared
+  on logout, on supersession by a new sign-in, and on process exit. Browser-side,
+  the field must be `autocomplete="off"` and its value must not be logged to
+  the console.
 - Material abuse or failure cases: token left in memory readable by another local
   process (A4); a malicious/typo tenant value directing auth elsewhere; over-broad
   scopes; accidental logging of tokens or policy data; SSRF if any user-supplied
@@ -245,9 +247,11 @@ has one with app-only `Policy.Read.All`, not a requirement.)
   introduces that the device-code path does not have.
 - Required external isolation or expert review: none mandated for a local
   read-only tool; the milestone security review covers the threat model. The
-  security review for the app-only issue must explicitly address secret
-  handling end-to-end (UI field → POST body → memory → outbound token
-  request → discard) as a named check, not folded into general review.
+  security review for the app-only issue must explicitly address the secret's
+  full lifecycle — UI field → POST body → server memory, retained for the
+  session and reused for silent renewal, cleared on logout/supersession/process
+  exit (per `DECISION-014`; never a per-request discard) — as a named check,
+  not folded into general review.
 
 ## Deployment and operation
 

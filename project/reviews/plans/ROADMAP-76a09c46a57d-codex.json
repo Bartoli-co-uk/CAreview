@@ -1,0 +1,114 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-27T18:28:18Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa4cf-d2c9-78d0-9fa6-b46d2b59dff9"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "The repository HEAD exactly matches the launcher-bound target commit.",
+        "reference": "76a09c46a57d0a187303564f8e4db01ebe1fdeab",
+        "source": "command"
+      },
+      {
+        "detail": "ROADMAP.md exists at the target commit and identifies itself as draft roadmap v4 awaiting this review and exact human approval.",
+        "reference": "ROADMAP.md:6",
+        "source": "file"
+      },
+      {
+        "detail": "The M2 roadmap defines five sequential work items, per-issue boundaries, verification, documentation, risks, and definitions of done.",
+        "reference": "ROADMAP.md:190",
+        "source": "file"
+      },
+      {
+        "detail": "The approved brief still specifies the named app-only security check as ending with secret discard after the outbound token request, despite DECISION-014 and roadmap v4 requiring session-lifetime retention and silent renewal.",
+        "reference": "project/brief/PROJECT_BRIEF.md:246",
+        "source": "file"
+      },
+      {
+        "detail": "ISSUE-0010 relies on static source assertions to verify several runtime browser behaviors, including clearing the secret after submission, mode changes, and logout.",
+        "reference": "ROADMAP.md:204",
+        "source": "file"
+      },
+      {
+        "detail": "The governance validator could not execute because the read-only review environment had no usable temporary directory; it failed before producing a validation result.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "The approved brief requires the app-only security review to follow the lifecycle “UI field → POST body → memory → outbound token request → discard” at project/brief/PROJECT_BRIEF.md:246-250.",
+          "DECISION-014 requires retaining the secret for the app-only session and silently renewing tokens, and ROADMAP.md:131-145 and :174 adopt that model.",
+          "A milestone reviewer following the approved brief literally could require immediate discard, while one following the decision and roadmap could require retention and renewal. This makes the security acceptance target contradictory."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 246,
+            "path": "project/brief/PROJECT_BRIEF.md"
+          },
+          {
+            "line": 131,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Amend the brief's named security-check lifecycle to say the secret is retained in server memory for the app-only session, reused for silent renewal, and cleared on logout, supersession, and process exit, explicitly binding that clarification to DECISION-014. Keep the roadmap wording aligned.",
+        "severity": "high",
+        "title": "Approved brief contradicts the decided secret-retention lifecycle",
+        "verification": "Re-read the brief, DECISION-014, and roadmap and confirm all three specify the same retention, renewal, and clearing events with no remaining immediate-discard requirement."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "ROADMAP.md:204 makes clearing the browser field after submit, mode switch, and logout an acceptance criterion but names only static assertions over committed web sources as its verification.",
+          "Static source inspection can confirm that clearing assignments exist, but cannot establish that the relevant event paths execute successfully or that the secret does not remain referenced in JavaScript state.",
+          "The verification strategy at ROADMAP.md:219-221 likewise describes UI coverage only as static-safety assertions."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 204,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 219,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Add a concrete offline behavioral verification method for the app-only UI lifecycle, covering submit success and failure, mode switch, and logout. This may be a documented manual browser walkthrough with synthetic credentials and mocked/local responses if adding a JavaScript test toolchain would violate the zero-dependency constraint; record observable expected results and evidence.",
+        "severity": "medium",
+        "title": "Runtime secret-clearing behavior is covered only by static assertions",
+        "verification": "Execute the specified offline behavioral check and record evidence that each relevant event clears the field and leaves no secret in application-controlled browser state, while retaining the existing static safety checks."
+      }
+    ],
+    "limitations": [
+      "The governance validator could not run in the read-only environment because Python could not create a temporary directory. No validator pass is claimed.",
+      "No live Microsoft identity or Graph operation was performed; the roadmap correctly classifies those operations as separately approved protected actions and a residual evidence gap.",
+      "No standalone ISSUE-0007 through ISSUE-0011 records exist yet. project/issues/README.md says issue files are created for approved roadmap issues, so the detailed roadmap rows were treated as the proposed work items for this pre-approval review."
+    ],
+    "mode": "plan",
+    "outcome": "CHANGES_REQUIRED",
+    "reviewed_sha": "76a09c46a57d0a187303564f8e4db01ebe1fdeab",
+    "schema_version": "1.0",
+    "summary": "The v4 roadmap is substantially detailed and sensibly sequenced, but it cannot pass until the approved brief and roadmap agree on the central secret-retention lifecycle and ISSUE-0010 has behavioral evidence for its runtime secret-clearing criteria. Target identity is valid. Governance validation was unavailable due the read-only environment's lack of a usable temporary directory.",
+    "target_id": ""
+  },
+  "test_only": false
+}

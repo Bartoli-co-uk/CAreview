@@ -1,0 +1,100 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-27T21:20:17Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa571-e7b6-7db3-a648-e7d05598d43a"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "e088b33fb78953e9b351618ae3d23bb751bf690f",
+    "evidence": [
+      {
+        "detail": "Detached checkout HEAD exactly matched the launcher-supplied target; the working tree remained clean throughout the review.",
+        "reference": "git status --short --branch; git rev-parse HEAD",
+        "source": "command"
+      },
+      {
+        "detail": "The base and target objects both resolved exactly as supplied. The reviewed diff was e088b33fb78953e9b351618ae3d23bb751bf690f..205125474389932f02e7c484dd59ad612892ac4b.",
+        "reference": "git rev-parse e088b33fb78953e9b351618ae3d23bb751bf690f; git rev-parse 205125474389932f02e7c484dd59ad612892ac4b",
+        "source": "command"
+      },
+      {
+        "detail": "Product changes are confined to auth.py and tests/test_auth.py. graph.py, server.py, and web/ are unchanged; remaining diff paths are issue governance records.",
+        "reference": "git diff --name-status e088b33fb78953e9b351618ae3d23bb751bf690f..205125474389932f02e7c484dd59ad612892ac4b",
+        "source": "diff"
+      },
+      {
+        "detail": "The request builder has no scope parameter and always serializes https://graph.microsoft.com/.default. Tenant validation precedes state mutation and transport invocation.",
+        "reference": "auth.py:119",
+        "source": "file"
+      },
+      {
+        "detail": "App-only state retains the tenant, client ID, and secret after successful acquisition; get_token() renews an expired token from that retained state. logout() and device-code start() clear it.",
+        "reference": "auth.py:338",
+        "source": "file"
+      },
+      {
+        "detail": "The shared generation counter prevents stale initial or renewal responses from restoring state after logout, a new app-only start, or a device-code start.",
+        "reference": "auth.py:350",
+        "source": "file"
+      },
+      {
+        "detail": "The repaired tests include initial-request and renewal races superseded by device-code start(), along with fixed-scope assertions and the broader acceptance-criteria coverage.",
+        "reference": "tests/test_auth.py:493",
+        "source": "file"
+      },
+      {
+        "detail": "The issue-specific auth suite independently passed: 53 tests ran successfully with exit status 0.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_auth",
+        "source": "check"
+      },
+      {
+        "detail": "All 13 Python files could be parsed independently with ast.parse, and git diff --check reported no errors.",
+        "reference": "python3 -c <AST parse>; git diff --check e088b33f..20512547",
+        "source": "check"
+      },
+      {
+        "detail": "The required full suite ran 116 tests but exited 1 because all 22 server integration tests were denied loopback socket binding by the review sandbox.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not complete because the read-only sandbox offered no writable temporary directory.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The required py_compile command could not complete because bytecode cache creation was denied by the read-only sandbox.",
+        "reference": "python3 -B -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "The committed handoff records successful out-of-band results at this candidate: 116 tests passed, py_compile exited 0, and governance validation passed. Under the review rules these author-supplied results are claims, not independently verified command evidence.",
+        "reference": "project/handoffs/ISSUE-0008-handoff.md",
+        "source": "file"
+      }
+    ],
+    "findings": [],
+    "limitations": [
+      "The full required unittest command could not pass in this read-only review environment because tests/test_server.py requires binding a loopback socket; 22 tests errored with PermissionError while 94 tests completed without reported failure.",
+      "The governance validator could not create its temporary directories, so its committed passing result could not be independently reproduced.",
+      "The required py_compile command could not create __pycache__, so compile success could not be independently reproduced. AST parsing is useful supporting evidence but is not the required command.",
+      "No live Microsoft tenant authentication was attempted. This is intentionally outside ISSUE-0008 and requires separate protected-action approval.",
+      "Residual accepted design risks remain: the client secret is retained in process memory for the app-only session, and .default may produce a token containing every application permission already granted to the registration."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "205125474389932f02e7c484dd59ad612892ac4b",
+    "schema_version": "1.0",
+    "summary": "Static review and all 53 auth tests found no unresolved implementation defect, and the round-1 fixes address the prior scope-override and device-code-supersession coverage gaps. The review is nevertheless BLOCKED because the mandatory full suite, py_compile, and governance checks could not be independently completed in the read-only sandbox; repository policy forbids PASS when required execution evidence is unavailable.",
+    "target_id": "ISSUE-0008"
+  },
+  "test_only": false
+}

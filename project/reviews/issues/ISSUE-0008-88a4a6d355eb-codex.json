@@ -1,0 +1,132 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-27T21:15:28Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa56d-687d-7ee2-8a71-2a8b88ed3bb6"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "e088b33fb78953e9b351618ae3d23bb751bf690f",
+    "evidence": [
+      {
+        "detail": "The clean checkout HEAD exactly matched the launcher target.",
+        "reference": "git status --short; git rev-parse HEAD",
+        "source": "command"
+      },
+      {
+        "detail": "The diff changes auth.py, tests/test_auth.py, and governance records. graph.py, server.py, and web/ are unchanged.",
+        "reference": "git diff --name-status e088b33fb78953e9b351618ae3d23bb751bf690f..88a4a6d355eb96b6739010744b1b7f7f76751c35",
+        "source": "diff"
+      },
+      {
+        "detail": "All 49 focused authentication tests passed independently.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_auth -v — Ran 49 tests, OK",
+        "source": "check"
+      },
+      {
+        "detail": "The required full suite ran 112 tests but failed with 22 server-test errors because the read-only sandbox prohibits loopback socket binding.",
+        "reference": "python3 -m unittest discover -s tests — FAILED (errors=22), each caused by PermissionError: [Errno 1] Operation not permitted in server_bind",
+        "source": "check"
+      },
+      {
+        "detail": "The required compile check could not create __pycache__ in the read-only checkout.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py') — [Errno 1] Operation not permitted: '__pycache__'",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not create its required temporary directory.",
+        "reference": "python3 scripts/validate_repo.py — FileNotFoundError: No usable temporary directory",
+        "source": "check"
+      },
+      {
+        "detail": "No whitespace errors were found in the candidate diff.",
+        "reference": "git diff --check e088b33fb78953e9b351618ae3d23bb751bf690f..88a4a6d355eb96b6739010744b1b7f7f76751c35",
+        "source": "check"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Acceptance criterion 1 requires the request builder to use https://graph.microsoft.com/.default.",
+          "auth.py exposes a caller-controlled scope argument and directly serializes it into the OAuth request, so callers can construct a narrower or unrelated scope.",
+          "The request-shape test exercises only the default and does not prove that overriding the required scope is impossible."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 115,
+            "path": "auth.py"
+          },
+          {
+            "line": 124,
+            "path": "auth.py"
+          },
+          {
+            "line": 266,
+            "path": "tests/test_auth.py"
+          }
+        ],
+        "remediation": "Remove the public scope parameter from build_client_credentials_request and always serialize APP_ONLY_SCOPE. Add a regression test showing the builder has no supported path that substitutes another scope.",
+        "severity": "medium",
+        "title": "Client-credentials request builder does not enforce the required .default scope",
+        "verification": "Run the focused auth tests and inspect the builder signature/body to confirm every generated client-credentials request contains exactly https://graph.microsoft.com/.default."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Acceptance criterion 6 explicitly requires race tests for logout or a new start()/start_app_only() while an initial or renewal request is outstanding.",
+          "The candidate tests initial acquisition against logout and start_app_only, and renewal against logout and start_app_only.",
+          "There is no corresponding initial-acquisition or renewal race test where device-code start() supersedes the in-flight app-only operation. The implementation's shared generation counter appears intended to handle this, but the mandated evidence is absent."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 392,
+            "path": "tests/test_auth.py"
+          },
+          {
+            "line": 410,
+            "path": "tests/test_auth.py"
+          },
+          {
+            "line": 429,
+            "path": "tests/test_auth.py"
+          },
+          {
+            "line": 450,
+            "path": "tests/test_auth.py"
+          }
+        ],
+        "remediation": "Add deterministic callback-race tests in which start() runs during both an initial start_app_only request and an app-only renewal. Assert the stale response cannot install a token or restore app-only secret state and that the newer device-code session remains authoritative.",
+        "severity": "low",
+        "title": "Required device-code supersession race cases are not tested",
+        "verification": "Run tests.test_auth and confirm both new start()-during-initial-request and start()-during-renewal cases pass."
+      }
+    ],
+    "limitations": [
+      "The sandbox prevented independent completion of all three mandatory commands: loopback binding is prohibited, bytecode output cannot be written, and no writable temporary directory is available.",
+      "The committed handoff reports 112 tests passing plus clean compile and governance validation outside this review sandbox, but author-recorded results are not independent command evidence.",
+      "No live Microsoft tenant authentication was performed; the approved issue explicitly excludes that protected action.",
+      "Because mandatory execution evidence is incomplete, repository rules require BLOCKED regardless of the independently passing focused authentication tests or the substantive findings."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "88a4a6d355eb96b6739010744b1b7f7f76751c35",
+    "schema_version": "1.0",
+    "summary": "Review blocked by the sandbox's inability to complete the mandatory full test, compile, and governance checks. Independent focused authentication tests pass, but two required changes were identified: the request builder permits callers to override the mandated .default scope, and the acceptance-required device-code start() supersession race cases are missing from the tests.",
+    "target_id": "ISSUE-0008"
+  },
+  "test_only": false
+}

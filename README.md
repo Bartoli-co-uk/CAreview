@@ -239,7 +239,8 @@ carry a loopback `Host` header; every `POST` must also carry a loopback
 | `GET` | `/api/analysis` | Score and findings for the current tenant. Requires a signed-in session. |
 | `POST` | `/api/auth/start` | Begin device-code sign-in. Body: `{"tenant": "organizations"}`. |
 | `POST` | `/api/auth/poll` | Poll for completion. Body: `{"handle": "<opaque handle>"}`. |
-| `POST` | `/api/auth/logout` | Clear the in-memory token and session. |
+| `POST` | `/api/auth/app` | App-only sign-in via client credentials. Body: `{"tenant": "<GUID or domain>", "client_id": "<GUID>", "client_secret": "<secret>"}`. Rejects `organizations`/`common`/`consumers` and malformed/oversized fields with 400 before any outbound request. |
+| `POST` | `/api/auth/logout` | Clear the in-memory token, session, and any retained app-only secret. |
 | `POST` | `/api/breakglass` | Supply break-glass account object IDs (GUIDs, memory only). Body: `{"ids": [...]}`; an empty list clears them. |
 
 Static routes: `/`, `/index.html`, `/app.js`, `/style.css`, `/sample-data.json`.

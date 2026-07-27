@@ -1,12 +1,13 @@
 # ISSUE-0007: Trim delegated Graph scope to Policy.Read.All
 
-**Status:** `REVIEWING`
+**Status:** `COMPLETE`
 **Milestone:** `M2`
 **Approved roadmap:** `ROADMAP.md` version `4` at `9e5ba6d2f6c2b7f7efa81dcfc415e1f787aaa458` (approved by `DECISION-015`)
 **Dependencies:** `None` (brief v2 approved, `DECISION-013`)
-**Branch:** `ai/ISSUE-0007-trim-scopes`
+**Branch:** `ai/ISSUE-0007-trim-scopes` (merged into `main`)
 **Starting SHA:** `d1df24760a878cf976f69fd153eb3954c3a5e028`
-**Candidate SHA:** `this commit (branch HEAD); the launcher records the full SHA`
+**Candidate SHA:** `b314d82087f36b5fadae3119410e838ec2255997` (round 2, final reviewed candidate)
+**Merge SHA:** `0c35851cc06ed87c5dda453c4c1b1b39b87dbde3` (merge commit on `main`)
 
 ## Objective
 
@@ -93,11 +94,8 @@ the human.
 - Final reviewed product SHA: `b314d82087f36b5fadae3119410e838ec2255997` — clean of
   all actionable findings; `BLOCKED` solely on the accepted sandbox
   execution-evidence residual.
-- Human advance/merge decision: `pending` — per `AGENTS.md`'s completion
-  standard and the `DECISION-010` precedent for the analogous ISSUE-0006
-  case, this requires an explicit human decision even though no product
-  defect remains; this Claude task does not decide it.
-- Merge/result SHA: `pending`
+- Human advance/merge decision: `APPROVE` — `project/decisions/DECISION-016-issue-0007-advance-and-merge.md`.
+- Merge/result SHA: `0c35851cc06ed87c5dda453c4c1b1b39b87dbde3` (merge commit on `main`).
 - Residual risks or follow-up: none identified beyond the accepted,
   previously-approved sandbox execution-evidence limitation.
 - Status record updated: this commit.

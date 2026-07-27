@@ -1,0 +1,161 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-27T18:33:34Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa4d9-604a-7493-a600-25958cf3e06a"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "Repository HEAD exactly matches the launcher-supplied target commit.",
+        "reference": "git rev-parse HEAD => faf5ec70bf00d364c848be057e6422905e337619",
+        "source": "command"
+      },
+      {
+        "detail": "The target record exists and identifies itself as roadmap v4, a draft awaiting this review and exact human approval.",
+        "reference": "ROADMAP.md:1",
+        "source": "file"
+      },
+      {
+        "detail": "The working tree was clean (`git status --short` produced no entries).",
+        "reference": "git status --short",
+        "source": "command"
+      },
+      {
+        "detail": "The governance validator could not execute because the read-only environment offered no writable temporary directory; it exited 1 before producing validation results.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The review covered the approved brief v2, roadmap v4, M2 work items ISSUE-0007 through ISSUE-0011 embedded in the roadmap, DECISION-014, current workflow status, existing auth/server architecture, and relevant security boundaries.",
+        "reference": "project/brief/PROJECT_BRIEF.md; ROADMAP.md; project/decisions/DECISION-014-app-only-secret-retention-and-risk002.md; project/status/CURRENT.md; auth.py; server.py; docs/security-boundaries.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "AGENTS.md requires real governance validation evidence and says missing or unverifiable non-security evidence blocks a review.",
+          "The validator exited 1 with `FileNotFoundError: No usable temporary directory found` while creating its smoke-test temporary directory.",
+          "No successful governance-validation result for target commit faf5ec70bf00d364c848be057e6422905e337619 was available in this isolated review."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 217,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Rerun the plan review in a read-only checkout that provides a separate writable temporary directory, or supply independently captured validator evidence bound to this exact target commit under the repository's documented evidence policy.",
+        "severity": "medium",
+        "title": "Required governance validation could not be executed",
+        "verification": "Run `python3 scripts/validate_repo.py` against faf5ec70bf00d364c848be057e6422905e337619 and record exit status 0 and relevant output."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "ISSUE-0009 requires only presence and type validation for `tenant`, `client_id`, and `client_secret`.",
+          "The existing server accepts request bodies up to 64 KiB, so presence/type checks alone permit extremely large credential fields to reach validation, encoding, retained process memory, and the identity transport.",
+          "The roadmap describes tenant syntax but gives no explicit length limits, and it gives neither syntax nor length criteria for client IDs or secrets."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 203,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Add bounded validation criteria for all three app-auth fields before retention or outbound transport. Define tenant length together with GUID/DNS rules, require the client ID format expected by Entra, and set a documented defensible secret-length bound while preserving valid Entra secrets. Require boundary tests proving oversized and malformed values return 400 without transport invocation or secret retention.",
+        "severity": "medium",
+        "title": "App-auth input validation is unbounded and underspecified",
+        "verification": "Review ISSUE-0009 criteria for explicit format/length bounds and run tests covering minimum, maximum, malformed, and oversized inputs; mocks must prove rejected inputs cause no identity request and leave no app-only state."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "The architecture requires provider error text to be truncated and scrubbed only for an occurrence of the submitted secret.",
+          "ISSUE-0008 similarly tests provider error text containing the literal secret, while ISSUE-0009 promises stable machine-label errors.",
+          "Literal replacement does not cover transformed representations such as URL encoding, JSON escaping, partial reflection, or normalization, despite provider response bodies being untrusted input.",
+          "Returning only stable local error labels already satisfies the stated operational requirement and avoids relying on incomplete redaction."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 144,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 202,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 203,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Remove provider-supplied error descriptions from all client-visible and logged output; map failures to stable locally defined labels. If diagnostic provider text must be retained, explicitly justify it and specify/test encoded and transformed secret variants, but omission is the smaller and safer plan.",
+        "severity": "medium",
+        "title": "Literal-only scrubbing is not a sufficient boundary for untrusted provider errors",
+        "verification": "Mock provider errors containing the secret literally, URL-encoded, JSON-escaped, split, and surrounded by diagnostic text; assert responses, exceptions, logs, stderr, and manager representations contain only stable local labels and no provider description or secret representation."
+      },
+      {
+        "blocking": false,
+        "classification": "ADVISORY",
+        "confidence": "high",
+        "evidence": [
+          "The roadmap's project outcome still describes only device-code authentication and says no client secret is required, without distinguishing the new optional app-only outcome.",
+          "The stakeholder table still says tenant consent requires no standing app registration, although M2 explicitly serves an owner with an existing consented app registration.",
+          "The project definition of done still says `M1 = the whole MVP`, which makes final project status after adding M2 ambiguous."
+        ],
+        "id": "F-004",
+        "locations": [
+          {
+            "line": 18,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 30,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 314,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Update the top-level project outcome, stakeholder/success table, and project definition of done to describe both modes and clarify whether M2 is an extension after the completed MVP or part of the current project's completion scope.",
+        "severity": "low",
+        "title": "Top-level roadmap narrative remains stale after adding M2",
+        "verification": "Read the roadmap without relying on later M2 sections and confirm it accurately states the default device-code path, optional app-only prerequisite and secret, and the exact meaning of project completion."
+      }
+    ],
+    "limitations": [
+      "The governance validator could not run because the review sandbox had no writable temporary directory; this is an environment limitation, not evidence that the validator or roadmap is defective.",
+      "No live Microsoft tenant, real client secret, or network authentication was used. The roadmap intentionally treats live behavior for A1, A2, A6, and A7 as protected, residual evidence gaps.",
+      "ISSUE-0007 through ISSUE-0011 do not yet exist as separate issue records; this review evaluated their complete proposed definitions as embedded in ROADMAP.md.",
+      "Implementation tests and compile checks were not treated as plan evidence because M2 code does not exist yet and the review environment is read-only."
+    ],
+    "mode": "plan",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "faf5ec70bf00d364c848be057e6422905e337619",
+    "schema_version": "1.0",
+    "summary": "Target identity is correct and the M2 sequence is broadly feasible, but the review is blocked by unavailable governance-validation evidence. Before approval, the roadmap also needs bounded app-auth input criteria and a safer rule that never exposes untrusted provider error descriptions. The top-level roadmap narrative should be synchronized with the new dual-mode scope.",
+    "target_id": ""
+  },
+  "test_only": false
+}

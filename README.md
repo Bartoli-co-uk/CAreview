@@ -247,7 +247,7 @@ Static routes: `/`, `/index.html`, `/app.js`, `/style.css`, `/sample-data.json`.
 ## Verify it offline
 
 ```sh
-python3 -m unittest discover -s tests            # 83 tests; no sign-in, no network
+python3 -m unittest discover -s tests            # 85 tests; no sign-in, no network
 python3 -m py_compile $(git ls-files '*.py')     # compile check
 python3 scripts/validate_repo.py                 # governance/docs validator
 ```

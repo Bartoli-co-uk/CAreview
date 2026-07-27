@@ -71,3 +71,23 @@ The reviewer or CI must independently confirm required checks; this handoff is n
 
 - Base SHA: `d1df24760a878cf976f69fd153eb3954c3a5e028`
 - Head SHA: (this commit; recorded by the launcher)
+
+## Repair round 1
+
+Round-0 Codex review (`project/reviews/issues/ISSUE-0007-54e207a04b1c-codex.json`,
+candidate `54e207a04b1c5f86cc18c3f4860977e4d8dd6f0d`) returned `BLOCKED`: one
+required finding (`ISSUE-0007-F001`, low severity) plus sandbox
+execution-evidence limitations that are an accepted residual under
+`DECISION-015` and not independently repairable.
+
+- **F001 fix:** `README.md`'s "Verify it offline" block still said "83
+  tests"; the suite is now 85 (two tests added by this issue). Updated the
+  comment to "85 tests" (`README.md:250`). No other user-facing doc referenced
+  the stale count; `project/milestones/M1.md` and prior review records
+  correctly keep "83 tests" as they describe the frozen M1 candidate, not the
+  current tree.
+- Rechecked after the fix: `python3 -m unittest discover -s tests` → 85
+  passed, exit 0; `python3 -m py_compile $(git ls-files '*.py')` → exit 0;
+  `python3 scripts/validate_repo.py` → "Repository validation passed (67
+  required files checked)."
+- This is round 1 of at most two permitted issue repair rounds.

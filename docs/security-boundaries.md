@@ -82,18 +82,62 @@ cannot be read.
 CAreview authenticates to Microsoft Graph and reads tenant Conditional Access
 policies, so these project-specific rules apply on top of the general boundaries:
 
-- **Tokens are ephemeral and in-memory only.** The access token obtained through
-  the device-code flow must live only in the running process. Never write it to
-  disk, logs, tracked files, prompts, or review reports. The MVP deliberately
-  does not request `offline_access`, so no refresh token exists to leak; the user
-  re-authenticates when the access token expires.
-- **No secrets in the repository.** The first-party public `client_id` is public
-  by design; there is no client secret. Never add one, and never commit a tenant
-  ID, policy export, or any account data.
-- **Least privilege.** Request only the delegated Graph scope needed to read
-  policies (`Policy.Read.All`). `graph.py` only ever calls
-  `identity/conditionalAccess/policies`, so no other scope is requested.
-  Adding a write scope or a broader permission is a protected change.
+- **Tokens are ephemeral and in-memory only, in both auth modes.** The access
+  token obtained through either the device-code flow or the app-only
+  (client-credentials) flow must live only in the running process. Never
+  write it to disk, logs, tracked files, prompts, or review reports. Neither
+  mode requests a delegated refresh token; the device-code path re-
+  authenticates when its access token expires, and the app-only path uses
+  its retained client secret to silently renew instead.
+- **No secrets in the repository.** Never add a real client secret, and never
+  commit a tenant ID, policy export, or any account data. The device-code
+  path's `client_id` is a first-party public identifier by design and is not
+  a secret. The only secret-shaped string permitted anywhere in this
+  repository is a synthetic, clearly-fake literal used in tests.
+- **App-only mode's trust-boundary delta (M2, `DECISION-014`).** App-only
+  sign-in introduces the project's first live-secret handling path: a
+  user-supplied client secret, submitted once through the browser page and
+  the loopback `POST /api/auth/app` body, is then **retained in the server
+  process's memory for the entire app-only session** (not discarded after
+  the first request) so `get_token()` can silently mint a fresh token on
+  expiry without asking the user to re-enter it. This materially widens
+  `RISK-002` (below): the local API's existing "no authentication beyond
+  loopback binding" boundary now also protects a live client secret for as
+  long as the session lasts, not just a short-lived delegated token.
+  Mitigations: no persistence to disk/logs/tracked files at any point; the
+  secret never appears in a returned value, raised exception, or the
+  `AuthManager`'s `repr()`; every failure maps to one of a small fixed set
+  of local error labels rather than echoing provider text (which could
+  otherwise leak the secret back); cleared immediately on logout or
+  supersession by a new sign-in (either mode); browser-side, the secret
+  field is `type="password"`/`autocomplete="off"`, never written to
+  `console`/`localStorage`/`sessionStorage`/a cookie/the URL, and cleared
+  from the DOM immediately on submit, mode switch, and logout (`RISK-005`).
+  This widened retention is an accepted, re-checked residual — see
+  `DECISION-014` and `RISK-002`/`RISK-005`/`RISK-006` in `ROADMAP.md`, not
+  something this document claims is eliminated.
+- **App-only mode cannot narrow its own scope (`RISK-006`).** Client-
+  credentials requests always use Microsoft's `.default` scope, which
+  returns every application permission the target app registration already
+  holds — CAreview cannot request a subset. If that app registration holds
+  more than `Policy.Read.All`, CAreview receives a token capable of more
+  than it uses. Not technically suppressible by the client; the only
+  mitigation is documentation and UI caution recommending a dedicated app
+  registration scoped to application `Policy.Read.All` alone. This is an
+  accepted residual, not a mitigated one.
+- **Certificate-based app-only auth is out of scope for this release.**
+  Only a client secret is accepted; certificate/JWT client assertions would
+  require a third-party cryptography dependency, breaking the stdlib-only
+  constraint, and are recorded as a deferred future enhancement needing its
+  own separate dependency-approval decision.
+- **Least privilege.** Device-code mode requests only the delegated Graph
+  scope needed to read policies (`Policy.Read.All`); app-only mode requests
+  whatever application permissions the caller's own app registration
+  already holds (brief A7 — the client cannot narrow it, see above).
+  `graph.py` only ever calls `identity/conditionalAccess/policies` in
+  either mode, so no other Graph call is made. Adding a write scope,
+  requesting a broader delegated permission, or adding any Graph call
+  beyond that one endpoint is a protected change.
 - **Local binding.** The server binds to `127.0.0.1` and its factory refuses any
   non-loopback bind address. Requests must also carry a loopback `Host` header,
   and state-changing `POST`s a loopback `Origin`. Exposing the server on a

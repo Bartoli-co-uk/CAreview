@@ -227,3 +227,32 @@ finding:
   required files checked)." (No product/test/UI source changed in this
   round — metadata-only fix.)
 - This is round 2 of at most two permitted issue repair rounds (final).
+
+## Round-2 review result and stop point
+
+The round-2 Codex re-review
+(`project/reviews/issues/ISSUE-0010-2a2d0b73e94d-codex.json`, candidate
+`2a2d0b73e94d2635a645728e5b78f7f500c0a6b2`) returned `BLOCKED` with
+`findings: []` — zero actionable defects. Its evidence explicitly confirms
+the round-0 and round-1 findings were addressed: the default device-code
+view, the app-only toggle, password/autocomplete-off secret input, caution
+text, tenant-alias rejection, JSON-body submission, and secret clearing on
+validation failure, both mode switches, request settlement via `finally`,
+and logout are all present in the final source; the 16-test focused UI
+safety suite independently passed; and `CURRENT.md` now correctly
+identifies the repair history and candidate. The sole blocker is the same
+sandbox execution-evidence limitation present in every prior round: the
+read-only checkout cannot bind loopback sockets, write `__pycache__`, or
+create a writable temp directory, so the three required repository-wide
+checks cannot complete independently inside the review process itself,
+even though they pass locally and their real output is recorded above.
+Both of 2 permitted repair rounds were used.
+
+Per `AGENTS.md`'s completion standard ("the human has made any required
+advance or merge decision") and the `DECISION-010`/`DECISION-016`/
+`DECISION-017`/`DECISION-019` precedent — the same sandbox-only-blocker
+pattern on `ISSUE-0006`, `ISSUE-0007`, `ISSUE-0008`, and `ISSUE-0009`, all
+of which required an explicit human closeout decision despite zero product
+findings — this Claude task stops here and presents the clean round-2
+result to the human rather than unilaterally marking `ISSUE-0010` complete,
+merging it, or starting `ISSUE-0011`.

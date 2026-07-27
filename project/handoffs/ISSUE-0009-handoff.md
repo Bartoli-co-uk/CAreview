@@ -126,3 +126,62 @@ The reviewer or CI must independently confirm required checks; this handoff is n
 
 - Base SHA: `04e68ee930c44a6c6dc438dfab39c381b6105e6d`
 - Head SHA: (this commit; recorded by the launcher)
+
+## Repair round 1
+
+Round-0 Codex review
+(`project/reviews/issues/ISSUE-0009-c029199c5671-codex.json`, candidate
+`c029199c5671069917c13c268a6c4a32ac73881f`) returned `BLOCKED` with three
+findings:
+
+- **F-001 fix (high):** the candidate had no durable repository record
+  authorizing `ISSUE-0009` to start — `DECISION-017` explicitly withheld
+  that authorization, and the human's go-ahead for this task existed only
+  in chat, not in committed records. Fixed by recording
+  `project/decisions/DECISION-018-issue-0009-start-authorization.md`,
+  which cites the exact question asked and the human's exact answer in
+  this task. The finding also flagged that the round-0 candidate's stated
+  base SHA (`04e68ee`, the `ISSUE-0008` merge commit) was stale: `main`'s
+  actual tip when the branch was created was the later closeout commit
+  `4fdfa9f65b1e32bc0992dc3b7bd7d2357c3a8339`, so the reviewed diff
+  spuriously pulled in that intervening commit's unrelated changes to
+  `ROADMAP.md`/`ISSUE-0008.md`/`CURRENT.md`. Fixed by correcting
+  `ISSUE-0009.md`'s Starting SHA to `4fdfa9f65b1e32bc0992dc3b7bd7d2357c3a8339`
+  and rewriting `CURRENT.md` to be internally consistent with the
+  now-authorized, in-repair state. The base SHA passed to the round-1
+  launcher invocation is the corrected `4fdfa9f`.
+- **F-002 fix (medium):** the silent-renewal tests didn't prove the
+  *renewed* token specifically reached both downstream endpoints (the mock
+  Graph client ignored its token argument), and the renewal-failure test
+  exercised only `/api/policies`. Reworked
+  `test_silent_renewal_success_is_transparent_to_policies_and_analysis` to
+  record every token the mock Graph client receives and assert both calls
+  used the renewed token (`T2`, not the original `T1`); reworked
+  `test_silent_renewal_failure_surfaces_stable_non_secret_non_5xx_error` to
+  use a call-counting transport (every attempt after the first fails) and
+  exercise both `/api/policies` and `/api/analysis` independently, each
+  asserting a stable, non-secret, non-5xx (`401 not_authenticated`)
+  response.
+- **F-003 fix (medium):** the secret-leak response scan covered only 4 of
+  the many distinct response paths and the dedicated provider-error test
+  checked only the literal secret form. Rewrote
+  `test_secret_absent_from_every_response_body` into one comprehensive scan
+  covering: every validation rejection (missing fields, wrong type, all
+  three disallowed tenant aliases, malformed tenant, malformed client ID,
+  one-over-maximum client ID, empty secret, one-over-maximum secret), the
+  malformed-JSON-body path, success, every `AuthError` label the endpoint
+  can surface as 502 (`network_error`, `invalid_response`, and
+  `provider_error` — the last exercised once per secret representation:
+  literal, URL-encoded, JSON-escaped), and a `superseded` race triggered by
+  a synchronous in-flight second sign-in (mirroring `auth.py`'s own
+  race-test pattern). Every case asserts all three secret representations
+  are absent from the response body. Removed the now-redundant standalone
+  `test_provider_error_body_containing_secret_never_leaks` (subsumed by the
+  expanded scan).
+- Rechecked after all three fixes: `python3 -m unittest discover -s tests`
+  → 162 passed, exit 0 (one fewer test than round 0's 163, net of removing
+  the subsumed standalone test and adding the expanded coverage);
+  `python3 -m py_compile $(git ls-files '*.py')` → exit 0;
+  `python3 scripts/validate_repo.py` → "Repository validation passed (67
+  required files checked)."
+- This is round 1 of at most two permitted issue repair rounds.

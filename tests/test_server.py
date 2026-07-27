@@ -372,6 +372,9 @@ class AppOnlyEndpointTests(ServerIntegrationTests):
             server.GRAPH = original_graph
 
     def test_silent_renewal_success_is_transparent_to_policies_and_analysis(self) -> None:
+        # Proves the *renewed* token (T2, not the original T1) is what
+        # actually reaches Graph for both endpoints, not merely that some
+        # non-empty token was accepted (Codex F-002).
         original_auth = server.AUTH
         original_graph = server.GRAPH
         responses = [
@@ -380,8 +383,11 @@ class AppOnlyEndpointTests(ServerIntegrationTests):
         ]
         server.AUTH = auth.AuthManager(transport=lambda url, data: responses.pop(0))
 
+        received_tokens: list[str] = []
+
         class FakeGraph:
             def fetch_policies(self, token: str) -> list[dict]:
+                received_tokens.append(token)
                 return [{"id": "p1", "displayName": "x"}]
 
         server.GRAPH = FakeGraph()
@@ -400,17 +406,28 @@ class AppOnlyEndpointTests(ServerIntegrationTests):
 
             analysis_resp = self._request("/api/analysis", f"127.0.0.1:{self.port}")
             self.assertEqual(analysis_resp.status, 200)
+
+            # Renewal happens once (the token is then cached and unexpired
+            # for the second call); both endpoint calls must have used it.
+            self.assertEqual(received_tokens, ["T2", "T2"])
         finally:
             server.AUTH = original_auth
             server.GRAPH = original_graph
 
     def test_silent_renewal_failure_surfaces_stable_non_secret_non_5xx_error(self) -> None:
+        # Covers both /api/policies and /api/analysis independently (Codex
+        # F-002): every renewal attempt after the first fails, so each
+        # endpoint call retries and fails cleanly on its own.
         original_auth = server.AUTH
-        responses = [
-            (200, {"access_token": "T1", "expires_in": 3600}),  # start_app_only
-            (400, {"error": "invalid_client", "error_description": FAKE_SECRET}),  # renewal fails
-        ]
-        server.AUTH = auth.AuthManager(transport=lambda url, data: responses.pop(0))
+        calls = {"n": 0}
+
+        def transport(url: str, data: bytes) -> tuple[int, dict]:
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return 200, {"access_token": "T1", "expires_in": 3600}
+            return 400, {"error": "invalid_client", "error_description": FAKE_SECRET}
+
+        server.AUTH = auth.AuthManager(transport=transport)
         try:
             resp = self._app_only(
                 {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
@@ -420,11 +437,18 @@ class AppOnlyEndpointTests(ServerIntegrationTests):
             server.AUTH._token_expires_at = server.AUTH._clock() - 1
 
             policies_resp = self._request("/api/policies", f"127.0.0.1:{self.port}")
-            body = policies_resp.read()
+            policies_body = policies_resp.read()
             self.assertEqual(policies_resp.status, 401)
-            self.assertEqual(json.loads(body)["error"], "not_authenticated")
+            self.assertEqual(json.loads(policies_body)["error"], "not_authenticated")
             self.assertLess(policies_resp.status, 500)
-            self.assertNotIn(FAKE_SECRET.encode(), body)
+            self.assertNotIn(FAKE_SECRET.encode(), policies_body)
+
+            server.AUTH._token_expires_at = server.AUTH._clock() - 1
+            analysis_resp = self._request("/api/analysis", f"127.0.0.1:{self.port}")
+            analysis_body = analysis_resp.read()
+            self.assertEqual(analysis_resp.status, 401)
+            self.assertLess(analysis_resp.status, 500)
+            self.assertNotIn(FAKE_SECRET.encode(), analysis_body)
         finally:
             server.AUTH = original_auth
 
@@ -643,39 +667,50 @@ class AppOnlyEndpointTests(ServerIntegrationTests):
 
     # -- secret never leaks -------------------------------------------------
     def test_secret_absent_from_every_response_body(self) -> None:
-        cases: list[tuple[dict, bool]] = [
-            (
-                {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET},
-                True,
-            ),  # success
-            (
-                {"tenant": "organizations", "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET},
-                False,
-            ),  # invalid tenant
-            (
-                {"tenant": FAKE_TENANT, "client_id": "not-a-guid", "client_secret": FAKE_SECRET},
-                False,
-            ),  # invalid client_id
-            (
-                {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": ""},
-                False,
-            ),  # invalid secret
-        ]
+        # Every distinct endpoint response path — validation rejections
+        # (missing/type/boundary/malformed, all three disallowed tenant
+        # aliases), the malformed-JSON-body path, success, every AuthError
+        # label the endpoint can surface, and a superseded race — scanned
+        # for the fake secret in its literal, URL-encoded, and JSON-escaped
+        # forms (Codex F-003).
         encoded = FAKE_SECRET.encode()
         url_encoded = urllib.parse.quote(FAKE_SECRET).encode()
         json_escaped = json.dumps(FAKE_SECRET).encode()
 
+        def assert_secret_absent(raw: bytes) -> None:
+            self.assertNotIn(encoded, raw)
+            self.assertNotIn(url_encoded, raw)
+            self.assertNotIn(json_escaped, raw)
+
         original_auth = server.AUTH
+
+        # -- validation-rejected cases: no AuthManager call is made, so a
+        # harmless success stub transport is installed just in case.
+        validation_cases = [
+            {},  # missing all fields
+            {"tenant": FAKE_TENANT},  # missing client_id/secret
+            {"tenant": 123, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET},  # wrong type
+            {"tenant": "organizations", "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET},
+            {"tenant": "common", "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET},
+            {"tenant": "consumers", "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET},
+            {"tenant": "not a tenant!/", "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET},
+            {"tenant": FAKE_TENANT, "client_id": "not-a-guid", "client_secret": FAKE_SECRET},
+            {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID + "a", "client_secret": FAKE_SECRET},
+            {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": ""},
+            {
+                "tenant": FAKE_TENANT,
+                "client_id": FAKE_CLIENT_ID,
+                "client_secret": "x" * (server.MAX_APP_ONLY_SECRET_LEN + 1),
+            },
+        ]
         server.AUTH = auth.AuthManager(
             transport=lambda url, data: (200, {"access_token": "T", "expires_in": 3600})
         )
         try:
-            for body, _ in cases:
+            for body in validation_cases:
                 resp = self._app_only(body)
-                raw = resp.read()
-                self.assertNotIn(encoded, raw)
-                self.assertNotIn(url_encoded, raw)
-                self.assertNotIn(json_escaped, raw)
+                self.assertEqual(resp.status, 400, body)
+                assert_secret_absent(resp.read())
 
             # Malformed request body (not valid JSON) containing the secret.
             malformed = (FAKE_SECRET + "{not json").encode()
@@ -685,27 +720,74 @@ class AppOnlyEndpointTests(ServerIntegrationTests):
                 f"http://127.0.0.1:{self.port}",
                 malformed,
             )
-            raw = resp.read()
             self.assertEqual(resp.status, 400)
-            self.assertNotIn(encoded, raw)
+            assert_secret_absent(resp.read())
         finally:
             server.AUTH = original_auth
 
-    def test_provider_error_body_containing_secret_never_leaks(self) -> None:
-        original_auth = server.AUTH
+        # -- success
         server.AUTH = auth.AuthManager(
-            transport=lambda url, data: (
-                400,
-                {"error": "unauthorized_client", "error_description": f"bad secret {FAKE_SECRET}"},
-            )
+            transport=lambda url, data: (200, {"access_token": "T", "expires_in": 3600})
         )
+        try:
+            resp = self._app_only(
+                {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+            )
+            self.assertEqual(resp.status, 200)
+            assert_secret_absent(resp.read())
+        finally:
+            server.AUTH = original_auth
+
+        # -- every AuthError label the endpoint can surface as 502, with the
+        # provider payload also carrying the secret literally, URL-encoded,
+        # and JSON-escaped, to prove no representation ever reaches a
+        # response body.
+        def provider_error_transport(description: str):
+            def transport(url: str, data: bytes) -> tuple[int, dict]:
+                return 400, {"error": "unauthorized_client", "error_description": description}
+
+            return transport
+
+        secret_forms = (FAKE_SECRET, urllib.parse.quote(FAKE_SECRET), json.dumps(FAKE_SECRET))
+        error_transports = [
+            lambda url, data: (0, {"error": "network_error"}),  # -> network_error
+            lambda url, data: (200, {"error": "bad_response"}),  # -> invalid_response
+        ] + [provider_error_transport(f"bad secret {form}") for form in secret_forms]  # -> provider_error
+        for transport in error_transports:
+            server.AUTH = auth.AuthManager(transport=transport)
+            try:
+                resp = self._app_only(
+                    {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+                )
+                self.assertEqual(resp.status, 502)
+                assert_secret_absent(resp.read())
+            finally:
+                server.AUTH = original_auth
+
+        # -- superseded: a synchronous in-flight second sign-in races the
+        # first (mirrors auth.py's own race-test pattern: the transport
+        # callback itself issues the superseding call before returning).
+        holder: dict = {}
+
+        def superseding_transport(url: str, data: bytes) -> tuple[int, dict]:
+            if not holder.get("superseded"):
+                holder["superseded"] = True
+                holder["mgr"].start_app_only(
+                    FAKE_TENANT, FAKE_CLIENT_ID, f"test-only-second-fake-secret {FAKE_SECRET}"
+                )
+            return 200, {"access_token": "T", "expires_in": 3600}
+
+        mgr = auth.AuthManager(transport=superseding_transport)
+        holder["mgr"] = mgr
+        server.AUTH = mgr
         try:
             resp = self._app_only(
                 {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
             )
             raw = resp.read()
             self.assertEqual(resp.status, 502)
-            self.assertNotIn(FAKE_SECRET.encode(), raw)
+            self.assertEqual(json.loads(raw)["error"], "superseded")
+            assert_secret_absent(raw)
         finally:
             server.AUTH = original_auth
 

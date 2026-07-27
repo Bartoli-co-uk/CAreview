@@ -1,11 +1,11 @@
 # ISSUE-0009: POST /api/auth/app endpoint wiring app-only mode to the server
 
-**Status:** `REVIEWING`
+**Status:** `REPAIRING`
 **Milestone:** `M2`
 **Approved roadmap:** `ROADMAP.md` version `4` at `9e5ba6d2f6c2b7f7efa81dcfc415e1f787aaa458` (approved by `DECISION-015`)
-**Dependencies:** `ISSUE-0008` (COMPLETE, `DECISION-017`)
+**Dependencies:** `ISSUE-0008` (COMPLETE, `DECISION-017`); `DECISION-018` (start authorization)
 **Branch:** `ai/ISSUE-0009-app-only-endpoint`
-**Starting SHA:** `04e68ee930c44a6c6dc438dfab39c381b6105e6d`
+**Starting SHA:** `4fdfa9f65b1e32bc0992dc3b7bd7d2357c3a8339`
 **Candidate SHA:** this commit (branch HEAD); the launcher records the full SHA
 
 ## Objective
@@ -118,7 +118,8 @@ client secret over the same loopback API used for device-code sign-in.
 
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
-| 0 | `project/handoffs/ISSUE-0009-handoff.md` | this commit | tests pass; compile clean; validator passed | pending | pending |
+| 0 | `project/handoffs/ISSUE-0009-handoff.md` | `c029199c5671069917c13c268a6c4a32ac73881f` | 163 tests pass; compile clean; validator passed | `project/reviews/issues/ISSUE-0009-c029199c5671-codex.json` | `BLOCKED` — F-001 (missing durable start-authorization record; stale base SHA pulled in an unrelated intervening commit) + F-002 (renewal tests didn't prove the renewed token reached both endpoints) + F-003 (secret-scan didn't cover every response path/label) |
+| 1 | `project/handoffs/ISSUE-0009-handoff.md` (Repair round 1 section) | this commit | 162 tests pass; compile clean; validator passed | pending | pending |
 
 Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
 No workflow loop may exceed five total iterations; the tighter two-round issue
@@ -126,5 +127,5 @@ limit applies first, and exhaustion blocks for the human.
 
 ## Completion
 
-- Not yet complete. Awaiting the fresh Codex issue review and, per the
+- Not yet complete. Awaiting the fresh Codex issue re-review and, per the
   workflow, a human advance/merge decision.

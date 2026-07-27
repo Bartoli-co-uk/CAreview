@@ -2,17 +2,26 @@
 
 from __future__ import annotations
 
+import contextlib
 import http.client
+import io
 import json
 import sys
 import threading
 import unittest
+import urllib.parse
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import auth  # noqa: E402
 import server  # noqa: E402
+
+# Synthetic, clearly-fake values for the app-only (ISSUE-0009) endpoint tests —
+# never real Entra identifiers or secrets.
+FAKE_TENANT = "11111111-2222-3333-4444-555555555555"
+FAKE_CLIENT_ID = "66666666-7777-8888-9999-aaaaaaaaaaaa"
+FAKE_SECRET = "test-only-fake-secret-DO-NOT-USE-xyz123"
 
 
 class HelperTests(unittest.TestCase):
@@ -302,6 +311,502 @@ class ServerIntegrationTests(unittest.TestCase):
         finally:
             server.GRAPH = original
             server.AUTH.logout()
+
+
+class AppOnlyEndpointTests(ServerIntegrationTests):
+    """Tests for POST /api/auth/app (ISSUE-0009)."""
+
+    def tearDown(self) -> None:
+        server.AUTH.logout()
+        super().tearDown()
+
+    def _app_only(self, body: dict, *, origin: bool = True) -> http.client.HTTPResponse:
+        origin_header = f"http://127.0.0.1:{self.port}" if origin else None
+        return self._post(
+            "/api/auth/app", f"127.0.0.1:{self.port}", origin_header, json.dumps(body).encode()
+        )
+
+    # -- happy path -----------------------------------------------------
+    def test_success(self) -> None:
+        original_auth = server.AUTH
+        server.AUTH = auth.AuthManager(
+            transport=lambda url, data: (200, {"access_token": "T", "expires_in": 3600})
+        )
+        try:
+            resp = self._app_only(
+                {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+            )
+            self.assertEqual(resp.status, 200)
+            self.assertEqual(json.loads(resp.read()), {"state": "success"})
+            self.assertEqual(resp.getheader("Cache-Control"), "no-store")
+        finally:
+            server.AUTH = original_auth
+
+    def test_policies_and_analysis_work_after_app_only_sign_in(self) -> None:
+        original_auth = server.AUTH
+        original_graph = server.GRAPH
+        server.AUTH = auth.AuthManager(
+            transport=lambda url, data: (200, {"access_token": "T", "expires_in": 3600})
+        )
+
+        class FakeGraph:
+            def fetch_policies(self, token: str) -> list[dict]:
+                return [{"id": "p1", "displayName": "x"}]
+
+        server.GRAPH = FakeGraph()
+        try:
+            resp = self._app_only(
+                {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+            )
+            self.assertEqual(resp.status, 200)
+            resp.read()
+
+            policies_resp = self._request("/api/policies", f"127.0.0.1:{self.port}")
+            self.assertEqual(policies_resp.status, 200)
+            self.assertEqual(json.loads(policies_resp.read())["count"], 1)
+
+            analysis_resp = self._request("/api/analysis", f"127.0.0.1:{self.port}")
+            self.assertEqual(analysis_resp.status, 200)
+        finally:
+            server.AUTH = original_auth
+            server.GRAPH = original_graph
+
+    def test_silent_renewal_success_is_transparent_to_policies_and_analysis(self) -> None:
+        # Proves the *renewed* token (T2, not the original T1) is what
+        # actually reaches Graph for both endpoints, not merely that some
+        # non-empty token was accepted (Codex F-002).
+        original_auth = server.AUTH
+        original_graph = server.GRAPH
+        responses = [
+            (200, {"access_token": "T1", "expires_in": 3600}),  # start_app_only
+            (200, {"access_token": "T2", "expires_in": 3600}),  # renewal
+        ]
+        server.AUTH = auth.AuthManager(transport=lambda url, data: responses.pop(0))
+
+        received_tokens: list[str] = []
+
+        class FakeGraph:
+            def fetch_policies(self, token: str) -> list[dict]:
+                received_tokens.append(token)
+                return [{"id": "p1", "displayName": "x"}]
+
+        server.GRAPH = FakeGraph()
+        try:
+            resp = self._app_only(
+                {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+            )
+            self.assertEqual(resp.status, 200)
+            resp.read()
+            # Simulate the previously-issued token having expired.
+            server.AUTH._token_expires_at = server.AUTH._clock() - 1
+
+            policies_resp = self._request("/api/policies", f"127.0.0.1:{self.port}")
+            self.assertEqual(policies_resp.status, 200)
+            self.assertEqual(json.loads(policies_resp.read())["count"], 1)
+
+            analysis_resp = self._request("/api/analysis", f"127.0.0.1:{self.port}")
+            self.assertEqual(analysis_resp.status, 200)
+
+            # Renewal happens once (the token is then cached and unexpired
+            # for the second call); both endpoint calls must have used it.
+            self.assertEqual(received_tokens, ["T2", "T2"])
+        finally:
+            server.AUTH = original_auth
+            server.GRAPH = original_graph
+
+    def test_silent_renewal_failure_surfaces_stable_non_secret_non_5xx_error(self) -> None:
+        # Covers both /api/policies and /api/analysis independently (Codex
+        # F-002): every renewal attempt after the first fails, so each
+        # endpoint call retries and fails cleanly on its own.
+        original_auth = server.AUTH
+        calls = {"n": 0}
+
+        def transport(url: str, data: bytes) -> tuple[int, dict]:
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return 200, {"access_token": "T1", "expires_in": 3600}
+            return 400, {"error": "invalid_client", "error_description": FAKE_SECRET}
+
+        server.AUTH = auth.AuthManager(transport=transport)
+        try:
+            resp = self._app_only(
+                {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+            )
+            self.assertEqual(resp.status, 200)
+            resp.read()
+            server.AUTH._token_expires_at = server.AUTH._clock() - 1
+
+            policies_resp = self._request("/api/policies", f"127.0.0.1:{self.port}")
+            policies_body = policies_resp.read()
+            self.assertEqual(policies_resp.status, 401)
+            self.assertEqual(json.loads(policies_body)["error"], "not_authenticated")
+            self.assertLess(policies_resp.status, 500)
+            self.assertNotIn(FAKE_SECRET.encode(), policies_body)
+
+            server.AUTH._token_expires_at = server.AUTH._clock() - 1
+            analysis_resp = self._request("/api/analysis", f"127.0.0.1:{self.port}")
+            analysis_body = analysis_resp.read()
+            self.assertEqual(analysis_resp.status, 401)
+            self.assertLess(analysis_resp.status, 500)
+            self.assertNotIn(FAKE_SECRET.encode(), analysis_body)
+        finally:
+            server.AUTH = original_auth
+
+    def test_logout_clears_app_only_state(self) -> None:
+        original_auth = server.AUTH
+        server.AUTH = auth.AuthManager(
+            transport=lambda url, data: (200, {"access_token": "T", "expires_in": 3600})
+        )
+        try:
+            resp = self._app_only(
+                {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+            )
+            self.assertEqual(resp.status, 200)
+            resp.read()
+            self.assertIsNotNone(server.AUTH._app_only_secret)
+
+            logout_resp = self._post(
+                "/api/auth/logout", f"127.0.0.1:{self.port}", f"http://127.0.0.1:{self.port}", b"{}"
+            )
+            self.assertEqual(logout_resp.status, 200)
+            self.assertIsNone(server.AUTH._app_only_secret)
+        finally:
+            server.AUTH = original_auth
+
+    # -- CSRF / host reuse ------------------------------------------------
+    def test_requires_origin(self) -> None:
+        resp = self._app_only(
+            {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET},
+            origin=False,
+        )
+        self.assertEqual(resp.status, 403)
+
+    # -- provider/network failure mapping ---------------------------------
+    def test_provider_rejection_maps_to_502_with_stable_label(self) -> None:
+        original_auth = server.AUTH
+        server.AUTH = auth.AuthManager(
+            transport=lambda url, data: (400, {"error": "unauthorized_client"})
+        )
+        try:
+            resp = self._app_only(
+                {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+            )
+            self.assertEqual(resp.status, 502)
+            self.assertEqual(json.loads(resp.read())["error"], "provider_error")
+        finally:
+            server.AUTH = original_auth
+
+    def test_network_error_maps_to_502(self) -> None:
+        original_auth = server.AUTH
+        server.AUTH = auth.AuthManager(transport=lambda url, data: (0, {"error": "network_error"}))
+        try:
+            resp = self._app_only(
+                {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+            )
+            self.assertEqual(resp.status, 502)
+            self.assertEqual(json.loads(resp.read())["error"], "network_error")
+        finally:
+            server.AUTH = original_auth
+
+    # -- input validation: presence / type ---------------------------------
+    def test_missing_fields_rejected_with_400(self) -> None:
+        for body in (
+            {},
+            {"tenant": FAKE_TENANT},
+            {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID},
+        ):
+            resp = self._app_only(body)
+            self.assertEqual(resp.status, 400, body)
+
+    def test_wrong_type_fields_rejected_with_400(self) -> None:
+        for body in (
+            {"tenant": 123, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET},
+            {"tenant": FAKE_TENANT, "client_id": ["x"], "client_secret": FAKE_SECRET},
+            {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": None},
+        ):
+            resp = self._app_only(body)
+            self.assertEqual(resp.status, 400, body)
+
+    # -- input validation: tenant boundaries --------------------------------
+    def test_tenant_disallowed_aliases_rejected(self) -> None:
+        for tenant in ("organizations", "common", "consumers"):
+            resp = self._app_only(
+                {"tenant": tenant, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+            )
+            self.assertEqual(resp.status, 400, tenant)
+
+    def test_tenant_malformed_rejected(self) -> None:
+        resp = self._app_only(
+            {"tenant": "not a tenant!/", "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+        )
+        self.assertEqual(resp.status, 400)
+
+    def test_tenant_minimum_valid_domain_accepted(self) -> None:
+        original_auth = server.AUTH
+        server.AUTH = auth.AuthManager(
+            transport=lambda url, data: (200, {"access_token": "T", "expires_in": 3600})
+        )
+        try:
+            resp = self._app_only(
+                {"tenant": "a.io", "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+            )
+            self.assertEqual(resp.status, 200)
+        finally:
+            server.AUTH = original_auth
+
+    def test_tenant_maximum_length_domain_accepted(self) -> None:
+        tenant = ".".join(["a" * 63] * 4)  # 4*63 + 3 dots = 255
+        self.assertEqual(len(tenant), server.MAX_APP_ONLY_TENANT_LEN)
+        original_auth = server.AUTH
+        server.AUTH = auth.AuthManager(
+            transport=lambda url, data: (200, {"access_token": "T", "expires_in": 3600})
+        )
+        try:
+            resp = self._app_only(
+                {"tenant": tenant, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+            )
+            self.assertEqual(resp.status, 200)
+        finally:
+            server.AUTH = original_auth
+
+    def test_tenant_one_over_maximum_length_rejected_without_outbound_call(self) -> None:
+        # A validly-shaped domain, one character longer than the maximum:
+        # labels of 63, 63, 63, 62, 1 with 4 dots = 256 chars.
+        tenant = ".".join(["a" * 63, "a" * 63, "a" * 63, "a" * 62, "a"])
+        self.assertEqual(len(tenant), server.MAX_APP_ONLY_TENANT_LEN + 1)
+        called = []
+        original_auth = server.AUTH
+        server.AUTH = auth.AuthManager(transport=lambda url, data: called.append(1) or (200, {}))
+        try:
+            resp = self._app_only(
+                {"tenant": tenant, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+            )
+            self.assertEqual(resp.status, 400)
+            self.assertFalse(called)
+            self.assertIsNone(server.AUTH._app_only_secret)
+        finally:
+            server.AUTH = original_auth
+
+    # -- input validation: client_id boundaries -----------------------------
+    def test_client_id_valid_guid_accepted(self) -> None:
+        self.assertEqual(len(FAKE_CLIENT_ID), server.APP_ONLY_CLIENT_ID_LEN)
+        original_auth = server.AUTH
+        server.AUTH = auth.AuthManager(
+            transport=lambda url, data: (200, {"access_token": "T", "expires_in": 3600})
+        )
+        try:
+            resp = self._app_only(
+                {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+            )
+            self.assertEqual(resp.status, 200)
+        finally:
+            server.AUTH = original_auth
+
+    def test_client_id_one_over_maximum_length_rejected(self) -> None:
+        client_id = FAKE_CLIENT_ID + "a"  # 37 chars
+        resp = self._app_only(
+            {"tenant": FAKE_TENANT, "client_id": client_id, "client_secret": FAKE_SECRET}
+        )
+        self.assertEqual(resp.status, 400)
+
+    def test_client_id_malformed_same_length_rejected(self) -> None:
+        client_id = "z" * server.APP_ONLY_CLIENT_ID_LEN  # right length, not a GUID
+        resp = self._app_only(
+            {"tenant": FAKE_TENANT, "client_id": client_id, "client_secret": FAKE_SECRET}
+        )
+        self.assertEqual(resp.status, 400)
+
+    # -- input validation: client_secret boundaries -------------------------
+    def test_secret_minimum_length_accepted(self) -> None:
+        original_auth = server.AUTH
+        server.AUTH = auth.AuthManager(
+            transport=lambda url, data: (200, {"access_token": "T", "expires_in": 3600})
+        )
+        try:
+            resp = self._app_only(
+                {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": "x"}
+            )
+            self.assertEqual(resp.status, 200)
+        finally:
+            server.AUTH = original_auth
+
+    def test_secret_maximum_length_accepted(self) -> None:
+        secret = "x" * server.MAX_APP_ONLY_SECRET_LEN
+        original_auth = server.AUTH
+        server.AUTH = auth.AuthManager(
+            transport=lambda url, data: (200, {"access_token": "T", "expires_in": 3600})
+        )
+        try:
+            resp = self._app_only(
+                {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": secret}
+            )
+            self.assertEqual(resp.status, 200)
+        finally:
+            server.AUTH = original_auth
+
+    def test_secret_one_over_maximum_length_rejected_without_outbound_call(self) -> None:
+        secret = "x" * (server.MAX_APP_ONLY_SECRET_LEN + 1)
+        called = []
+        original_auth = server.AUTH
+        server.AUTH = auth.AuthManager(transport=lambda url, data: called.append(1) or (200, {}))
+        try:
+            resp = self._app_only(
+                {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": secret}
+            )
+            self.assertEqual(resp.status, 400)
+            self.assertFalse(called)
+            self.assertIsNone(server.AUTH._app_only_secret)
+        finally:
+            server.AUTH = original_auth
+
+    def test_secret_empty_rejected(self) -> None:
+        resp = self._app_only(
+            {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": ""}
+        )
+        self.assertEqual(resp.status, 400)
+
+    # -- secret never leaks -------------------------------------------------
+    def test_secret_absent_from_every_response_body(self) -> None:
+        # Every distinct endpoint response path — validation rejections
+        # (missing/type/boundary/malformed, all three disallowed tenant
+        # aliases), the malformed-JSON-body path, success, every AuthError
+        # label the endpoint can surface, and a superseded race — scanned
+        # for the fake secret in its literal, URL-encoded, and JSON-escaped
+        # forms (Codex F-003).
+        encoded = FAKE_SECRET.encode()
+        url_encoded = urllib.parse.quote(FAKE_SECRET).encode()
+        json_escaped = json.dumps(FAKE_SECRET).encode()
+
+        def assert_secret_absent(raw: bytes) -> None:
+            self.assertNotIn(encoded, raw)
+            self.assertNotIn(url_encoded, raw)
+            self.assertNotIn(json_escaped, raw)
+
+        original_auth = server.AUTH
+
+        # -- validation-rejected cases: no AuthManager call is made, so a
+        # harmless success stub transport is installed just in case.
+        validation_cases = [
+            {},  # missing all fields
+            {"tenant": FAKE_TENANT},  # missing client_id/secret
+            {"tenant": 123, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET},  # wrong type
+            {"tenant": "organizations", "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET},
+            {"tenant": "common", "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET},
+            {"tenant": "consumers", "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET},
+            {"tenant": "not a tenant!/", "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET},
+            {"tenant": FAKE_TENANT, "client_id": "not-a-guid", "client_secret": FAKE_SECRET},
+            {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID + "a", "client_secret": FAKE_SECRET},
+            {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": ""},
+            {
+                "tenant": FAKE_TENANT,
+                "client_id": FAKE_CLIENT_ID,
+                "client_secret": "x" * (server.MAX_APP_ONLY_SECRET_LEN + 1),
+            },
+        ]
+        server.AUTH = auth.AuthManager(
+            transport=lambda url, data: (200, {"access_token": "T", "expires_in": 3600})
+        )
+        try:
+            for body in validation_cases:
+                resp = self._app_only(body)
+                self.assertEqual(resp.status, 400, body)
+                assert_secret_absent(resp.read())
+
+            # Malformed request body (not valid JSON) containing the secret.
+            malformed = (FAKE_SECRET + "{not json").encode()
+            resp = self._post(
+                "/api/auth/app",
+                f"127.0.0.1:{self.port}",
+                f"http://127.0.0.1:{self.port}",
+                malformed,
+            )
+            self.assertEqual(resp.status, 400)
+            assert_secret_absent(resp.read())
+        finally:
+            server.AUTH = original_auth
+
+        # -- success
+        server.AUTH = auth.AuthManager(
+            transport=lambda url, data: (200, {"access_token": "T", "expires_in": 3600})
+        )
+        try:
+            resp = self._app_only(
+                {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+            )
+            self.assertEqual(resp.status, 200)
+            assert_secret_absent(resp.read())
+        finally:
+            server.AUTH = original_auth
+
+        # -- every AuthError label the endpoint can surface as 502, with the
+        # provider payload also carrying the secret literally, URL-encoded,
+        # and JSON-escaped, to prove no representation ever reaches a
+        # response body.
+        def provider_error_transport(description: str):
+            def transport(url: str, data: bytes) -> tuple[int, dict]:
+                return 400, {"error": "unauthorized_client", "error_description": description}
+
+            return transport
+
+        secret_forms = (FAKE_SECRET, urllib.parse.quote(FAKE_SECRET), json.dumps(FAKE_SECRET))
+        error_transports = [
+            lambda url, data: (0, {"error": "network_error"}),  # -> network_error
+            lambda url, data: (200, {"error": "bad_response"}),  # -> invalid_response
+        ] + [provider_error_transport(f"bad secret {form}") for form in secret_forms]  # -> provider_error
+        for transport in error_transports:
+            server.AUTH = auth.AuthManager(transport=transport)
+            try:
+                resp = self._app_only(
+                    {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+                )
+                self.assertEqual(resp.status, 502)
+                assert_secret_absent(resp.read())
+            finally:
+                server.AUTH = original_auth
+
+        # -- superseded: a synchronous in-flight second sign-in races the
+        # first (mirrors auth.py's own race-test pattern: the transport
+        # callback itself issues the superseding call before returning).
+        holder: dict = {}
+
+        def superseding_transport(url: str, data: bytes) -> tuple[int, dict]:
+            if not holder.get("superseded"):
+                holder["superseded"] = True
+                holder["mgr"].start_app_only(
+                    FAKE_TENANT, FAKE_CLIENT_ID, f"test-only-second-fake-secret {FAKE_SECRET}"
+                )
+            return 200, {"access_token": "T", "expires_in": 3600}
+
+        mgr = auth.AuthManager(transport=superseding_transport)
+        holder["mgr"] = mgr
+        server.AUTH = mgr
+        try:
+            resp = self._app_only(
+                {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+            )
+            raw = resp.read()
+            self.assertEqual(resp.status, 502)
+            self.assertEqual(json.loads(raw)["error"], "superseded")
+            assert_secret_absent(raw)
+        finally:
+            server.AUTH = original_auth
+
+    def test_nothing_logged_to_stderr(self) -> None:
+        original_auth = server.AUTH
+        server.AUTH = auth.AuthManager(
+            transport=lambda url, data: (200, {"access_token": "T", "expires_in": 3600})
+        )
+        captured = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(captured):
+                resp = self._app_only(
+                    {"tenant": FAKE_TENANT, "client_id": FAKE_CLIENT_ID, "client_secret": FAKE_SECRET}
+                )
+                resp.read()
+        finally:
+            server.AUTH = original_auth
+        self.assertNotIn(FAKE_SECRET, captured.getvalue())
+        self.assertEqual(captured.getvalue(), "")
 
 
 if __name__ == "__main__":

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import threading
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -109,6 +110,48 @@ def origin_allowed(origin_header: str | None, port: int) -> bool:
 def health_payload() -> dict[str, str]:
     """The body returned by ``/api/health``."""
     return {"status": "ok"}
+
+
+# App-only (client-credentials) input validation, bound to the HTTP layer
+# (ISSUE-0009). Mirrors the tenant rules `auth.py` itself enforces (GUID or
+# DNS-style domain, not one of the multi-tenant aliases) plus bounded-length
+# checks for all three fields, so malformed or oversized input is rejected with
+# 400 here — before `AuthManager.start_app_only()` retains anything or an
+# outbound request is made — rather than relying solely on `auth.py`'s own
+# checks.
+_APP_ONLY_TENANT_DISALLOWED = frozenset({"organizations", "common", "consumers"})
+_APP_ONLY_GUID_RE = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
+_APP_ONLY_DOMAIN_LABEL = r"(?!-)[A-Za-z0-9-]{1,63}(?<!-)"
+_APP_ONLY_DOMAIN_RE = re.compile(rf"^{_APP_ONLY_DOMAIN_LABEL}(\.{_APP_ONLY_DOMAIN_LABEL})+$")
+
+# A DNS name is at most 255 characters; a client-credentials client_id is
+# always a GUID (fixed 36 characters); a generous bound for a real Entra
+# secret.
+MAX_APP_ONLY_TENANT_LEN = 255
+APP_ONLY_CLIENT_ID_LEN = 36
+MAX_APP_ONLY_SECRET_LEN = 512
+
+
+def _valid_app_only_tenant(value: object) -> bool:
+    if not isinstance(value, str) or not value or len(value) > MAX_APP_ONLY_TENANT_LEN:
+        return False
+    if value in _APP_ONLY_TENANT_DISALLOWED:
+        return False
+    return bool(_APP_ONLY_GUID_RE.fullmatch(value) or _APP_ONLY_DOMAIN_RE.fullmatch(value))
+
+
+def _valid_app_only_client_id(value: object) -> bool:
+    if not isinstance(value, str) or not value or len(value) > APP_ONLY_CLIENT_ID_LEN:
+        return False
+    return bool(_APP_ONLY_GUID_RE.fullmatch(value))
+
+
+def _valid_app_only_secret(value: object) -> bool:
+    if not isinstance(value, str) or not value:
+        return False
+    return len(value) <= MAX_APP_ONLY_SECRET_LEN
 
 
 class CAReviewHandler(BaseHTTPRequestHandler):
@@ -264,6 +307,9 @@ class CAReviewHandler(BaseHTTPRequestHandler):
             if path == "/api/auth/poll":
                 self._auth_poll(body)
                 return
+            if path == "/api/auth/app":
+                self._auth_app_only(body)
+                return
             if path == "/api/auth/logout":
                 AUTH.logout()
                 self._send_json(HTTPStatus.OK, {"state": "signed_out"})
@@ -297,6 +343,33 @@ class CAReviewHandler(BaseHTTPRequestHandler):
             self._reject(HTTPStatus.BAD_REQUEST, "missing handle")
             return
         self._send_json(HTTPStatus.OK, AUTH.poll(handle))
+
+    def _auth_app_only(self, body: dict) -> None:
+        tenant = body.get("tenant")
+        client_id = body.get("client_id")
+        client_secret = body.get("client_secret")
+        # Presence, type, and bounded format are all checked before any value
+        # is retained or an outbound request is made (ISSUE-0009).
+        if not _valid_app_only_tenant(tenant):
+            self._reject(HTTPStatus.BAD_REQUEST, "invalid tenant")
+            return
+        if not _valid_app_only_client_id(client_id):
+            self._reject(HTTPStatus.BAD_REQUEST, "invalid client_id")
+            return
+        if not _valid_app_only_secret(client_secret):
+            self._reject(HTTPStatus.BAD_REQUEST, "invalid client_secret")
+            return
+        try:
+            result = AUTH.start_app_only(tenant, client_id, client_secret)
+        except auth.AuthError as exc:
+            error = str(exc)
+            # `invalid_tenant` is the one AuthError label that reflects bad
+            # caller input (defense in depth alongside the checks above);
+            # every other label is a provider-side or race outcome.
+            status = HTTPStatus.BAD_REQUEST if error == "invalid_tenant" else HTTPStatus.BAD_GATEWAY
+            self._send_json(status, {"state": "error", "error": error}, no_store=True)
+            return
+        self._send_json(HTTPStatus.OK, result, no_store=True)
 
     def log_message(self, *args: object) -> None:
         # Silence default stderr access logging; never log request contents,

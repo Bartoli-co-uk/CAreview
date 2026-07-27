@@ -1,0 +1,156 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-27T21:58:06Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa594-624a-7b10-b052-35c47242c01d"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "04e68ee930c44a6c6dc438dfab39c381b6105e6d",
+    "evidence": [
+      {
+        "detail": "HEAD exactly matched the launcher target; the target commit's parent exactly matched the supplied base, and the working tree was clean.",
+        "reference": "git status --short; git rev-parse HEAD; git show -s --format='%H %P %s' c029199c5671069917c13c268a6c4a32ac73881f",
+        "source": "command"
+      },
+      {
+        "detail": "The exact base-to-target diff was inspected. Product changes add POST /api/auth/app, server tests, and README documentation; the commit also changes ROADMAP.md, ISSUE-0008, and CURRENT.md and adds ISSUE-0009 records.",
+        "reference": "git diff --find-renames --find-copies 04e68ee930c44a6c6dc438dfab39c381b6105e6d c029199c5671069917c13c268a6c4a32ac73881f",
+        "source": "diff"
+      },
+      {
+        "detail": "The committed current-state record says ISSUE-0009 has not started, no human go-ahead is recorded, the active issue is None, the next permitted action is Wait, and no ISSUE-0009 product code exists. This contradicts both its ISSUE_REVIEW launcher block and the target's implementation.",
+        "reference": "project/status/CURRENT.md:28",
+        "source": "file"
+      },
+      {
+        "detail": "DECISION-017 explicitly excludes authorization to start ISSUE-0009 and records the human instruction \"merge but don't begin 0009 yet\". No later decision recording a go-ahead was found.",
+        "reference": "project/decisions/DECISION-017-issue-0008-advance-and-merge.md:17",
+        "source": "file"
+      },
+      {
+        "detail": "The independent unit command discovered 163 tests but exited 1 with 69 errors because the sandbox denied loopback socket binding. The failures occurred during HTTP server fixture setup, so endpoint behavior was not independently executed.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Independent compile verification exited 1 because the read-only sandbox denied creation of __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Independent governance validation exited 1 because no writable temporary directory was available for launcher smoke validation.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The handoff records author-observed results of 163 tests passing, clean compilation, and repository validation passing, but AGENTS.md requires reviewer-independent command evidence and says author claims are not evidence by themselves.",
+        "reference": "project/handoffs/ISSUE-0009-handoff.md:95",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Expected: implementation may begin only after the human-authorized next action is durably recorded, and CURRENT.md must accurately describe the current gate and reviewed candidate.",
+          "Observed: DECISION-017 explicitly withheld permission to start ISSUE-0009, no subsequent authorization record exists, and CURRENT.md still says to wait, while c029199 contains the implementation and marks the launcher state ISSUE_REVIEW.",
+          "The candidate also changes ROADMAP.md, project/issues/ISSUE-0008.md, and project/status/CURRENT.md despite ISSUE-0009's allowed paths naming only server.py, tests/test_server.py, and README.md."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 28,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 17,
+            "path": "project/decisions/DECISION-017-issue-0008-advance-and-merge.md"
+          },
+          {
+            "line": 1,
+            "path": "project/issues/ISSUE-0009.md"
+          }
+        ],
+        "remediation": "Stop the issue workflow and obtain an exact human decision about whether ISSUE-0009 was authorized. If authorized, record that decision and repair CURRENT.md so its summary, table, evidence, active issue, reviewed candidate, and next action agree with the committed state. Reconcile or separately account for changes outside the issue's allowed paths before producing a new candidate.",
+        "severity": "high",
+        "title": "The candidate was implemented without repository evidence of the required human go-ahead",
+        "verification": "From the new candidate, confirm a committed human decision explicitly authorizes ISSUE-0009, CURRENT.md is internally consistent, and git diff --name-status from the approved base contains only authorized issue and governance changes."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the renewal-success test verifies both /api/policies and /api/analysis complete against the newly renewed token.",
+          "Observed: FakeGraph.fetch_policies ignores its token argument and always succeeds, so the test would pass if either endpoint received T1, T2, or another non-empty token.",
+          "Expected: a separate renewal-failure test covers the stable, non-secret, non-5xx response from both endpoints.",
+          "Observed: the failure test invokes only /api/policies; /api/analysis is not exercised."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 374,
+            "path": "tests/test_server.py"
+          },
+          {
+            "line": 407,
+            "path": "tests/test_server.py"
+          }
+        ],
+        "remediation": "Record every token received by the mock Graph transport and assert both endpoint calls use T2 after a single renewal. Exercise renewal failure independently through both /api/policies and /api/analysis and assert stable status/body, absence of secret variants, and no stale Graph call.",
+        "severity": "medium",
+        "title": "Silent-renewal tests do not prove the acceptance criteria for both downstream endpoints",
+        "verification": "Run the targeted tests with a mock that fails on any token other than T2 and with separate provider/network renewal-failure cases for both endpoints."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: one test scans every response body across success, each failure path, and malformed JSON for the literal, URL-encoded, and JSON-escaped secret forms.",
+          "Observed: the aggregate scan covers success, one invalid tenant, one malformed client ID, an empty secret, and malformed JSON. It omits missing/type/boundary errors, disallowed aliases beyond one example, network failure, provider response variants, and other AuthError labels.",
+          "The separate provider-error test checks only the literal byte form, not URL-encoded and JSON-escaped forms."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 643,
+            "path": "tests/test_server.py"
+          },
+          {
+            "line": 694,
+            "path": "tests/test_server.py"
+          }
+        ],
+        "remediation": "Build a table covering every distinct endpoint response path, including all validation categories, malformed JSON, success, provider rejection, network/invalid-response/superseded errors, and invalid_tenant defense-in-depth. For every body, assert absence of all three secret representations.",
+        "severity": "medium",
+        "title": "The secret-leak regression test does not scan every failure response as required",
+        "verification": "Run the expanded parameterized response scan and confirm each response branch is exercised and all secret representations are absent."
+      }
+    ],
+    "limitations": [
+      "The sandbox prohibits loopback socket binding, so all 69 HTTP integration executions failed during fixture setup; no endpoint test was independently completed.",
+      "The read-only filesystem prevented py_compile from creating bytecode caches.",
+      "No writable temporary directory was available, preventing validate_repo.py launcher smoke checks.",
+      "The author's recorded 163-test pass, compile pass, validator pass, and manual smoke are repository claims rather than independently reproduced reviewer evidence.",
+      "No live tenant sign-in was run; this is an intentionally excluded protected action and not an issue-completion requirement."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "c029199c5671069917c13c268a6c4a32ac73881f",
+    "schema_version": "1.0",
+    "summary": "BLOCKED. The target/base identities match, but the repository records explicitly show that ISSUE-0009 had not been authorized to start and CURRENT.md remains contradictory. Two required acceptance-test gaps also remain: renewal behavior is not proven for both downstream endpoints against the renewed token, and the secret scan does not cover every response path. Independent required checks could not complete under the read-only, socket-restricted review sandbox.",
+    "target_id": "ISSUE-0009"
+  },
+  "test_only": false
+}

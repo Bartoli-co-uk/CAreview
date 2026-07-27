@@ -103,8 +103,20 @@ class AppOnlyModeToggleTests(unittest.TestCase):
             self.assertIn(alias, block)
 
     def test_secret_field_cleared_on_submit(self) -> None:
-        body = _function_body(APP_JS, "async function submitAppOnly")
+        body = _function_body(APP_JS, "async function submitAppOnly", length=1200)
         self.assertIn("clearAppOnlySecretField()", body)
+
+    def test_secret_field_cleared_even_when_the_request_rejects(self) -> None:
+        # Codex F-001: fetch() itself can reject (network failure), not just
+        # resolve with a non-2xx status. The clearing call must live inside
+        # a `finally` block wrapped around the request, not merely after a
+        # bare `await`, so it runs on both outcomes.
+        body = _function_body(APP_JS, "async function submitAppOnly", length=2000)
+        self.assertIn("try {", body)
+        self.assertIn("} catch", body)
+        finally_start = body.index("finally")
+        finally_block = body[finally_start:finally_start + 300]
+        self.assertIn("clearAppOnlySecretField()", finally_block)
 
     def test_secret_field_cleared_on_mode_switch_both_directions(self) -> None:
         to_app_only = _function_body(APP_JS, "function showAppOnlyMode")

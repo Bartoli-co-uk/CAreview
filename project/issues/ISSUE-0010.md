@@ -1,6 +1,6 @@
 # ISSUE-0010: Sign-in card mode toggle and app-only form in web/
 
-**Status:** `REVIEWING`
+**Status:** `REPAIRING`
 **Milestone:** `M2`
 **Approved roadmap:** `ROADMAP.md` version `4` at `9e5ba6d2f6c2b7f7efa81dcfc415e1f787aaa458` (approved by `DECISION-015`)
 **Dependencies:** `ISSUE-0009` (COMPLETE, `DECISION-019`)
@@ -105,7 +105,8 @@ device-code flow, wired to `ISSUE-0009`'s `POST /api/auth/app` endpoint.
 
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
-| 0 | `project/handoffs/ISSUE-0010-handoff.md` | this commit | tests pass; compile clean; validator passed; manual walkthrough clean | pending | pending |
+| 0 | `project/handoffs/ISSUE-0010-handoff.md` | `1d557b3840f716ad0d25a0f6d4be407cdeeb221b` | 172 tests pass; compile clean; validator passed; manual walkthrough (failure-path submit only) | `project/reviews/issues/ISSUE-0010-1d557b3840f7-codex.json` | `BLOCKED` — F-001 (secret not cleared on a rejected/failed fetch) + F-002 (missing successful-submit browser evidence) |
+| 1 | `project/handoffs/ISSUE-0010-handoff.md` (Repair round 1 section) | this commit | 173 tests pass; compile clean; validator passed; manual walkthrough (all 5 checkpoints, incl. successful submit) | pending | pending |
 
 Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
 No workflow loop may exceed five total iterations; the tighter two-round issue

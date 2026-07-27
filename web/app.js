@@ -178,14 +178,26 @@ async function submitAppOnly() {
   }
 
   setAuthStatus("signing in…", null);
-  const { ok, data } = await postJson("/api/auth/app", {
-    tenant,
-    client_id: clientId,
-    client_secret: clientSecret,
-  });
-  // The secret field is cleared immediately after every submit attempt,
-  // success or failure — it is never retained in the DOM past this point.
-  clearAppOnlySecretField();
+  let ok = false;
+  let data = {};
+  try {
+    ({ ok, data } = await postJson("/api/auth/app", {
+      tenant,
+      client_id: clientId,
+      client_secret: clientSecret,
+    }));
+  } catch (err) {
+    // fetch() itself can reject (network down, connection refused, etc.),
+    // not just resolve with a non-2xx status — that path must still clear
+    // the secret and surface a stable error, never leave an unhandled
+    // rejection with the secret still in the DOM (Codex F-001).
+    data = {};
+  } finally {
+    // The secret field is cleared the instant the request settles —
+    // resolved OR rejected — so it is never retained in the DOM past this
+    // point, regardless of outcome.
+    clearAppOnlySecretField();
+  }
 
   if (!ok || data.state !== "success") {
     setAuthStatus("app-only sign-in failed" + (data.error ? ": " + data.error : ""), "error");

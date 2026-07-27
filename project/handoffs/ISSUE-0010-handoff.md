@@ -145,3 +145,63 @@ The reviewer or CI must independently confirm required checks; this handoff is n
 
 - Base SHA: `f3b5414a4f2d3104d11bbb1ce6d5669a58123e79`
 - Head SHA: (this commit; recorded by the launcher)
+
+## Repair round 1
+
+Round-0 Codex review
+(`project/reviews/issues/ISSUE-0010-1d557b3840f7-codex.json`, candidate
+`1d557b3840f716ad0d25a0f6d4be407cdeeb221b`) returned `BLOCKED` with two
+findings:
+
+- **F-001 fix (high):** `submitAppOnly()` only called
+  `clearAppOnlySecretField()` after `await postJson(...)` resolved. Since
+  `postJson()` doesn't catch a rejected `fetch()` (network down, connection
+  refused, etc.), that rejection would propagate as an unhandled promise
+  rejection and skip the clearing call entirely, leaving the secret in the
+  DOM. Fixed by wrapping the request in `try { ... } catch (err) { ... }
+  finally { clearAppOnlySecretField(); }` — the field is now cleared the
+  instant the request settles, resolved or rejected, and a rejection now
+  surfaces the same stable "app-only sign-in failed" status instead of an
+  unhandled rejection. Added
+  `test_secret_field_cleared_even_when_the_request_rejects`, which asserts
+  the clearing call lives inside the `finally` block specifically (not
+  merely present somewhere after a bare `await`).
+- **F-002 fix (medium):** the round-0 manual walkthrough's submit step used
+  a tenant/client ID with no real backing app registration, so it was
+  *expected* to fail — it never exercised the successful-submit checkpoint
+  acceptance criterion 9 requires (form hides, "signed in" status, and,
+  implicitly, the secret still clears on the success path too). Rather
+  than attempt a live tenant sign-in (a protected action, and out of
+  scope), Claude wrote a small local-only helper script
+  (`/private/tmp/.../scratchpad/mock_app_only_server.py`, not part of the
+  repository) that starts the real `server.py` with `AUTH`'s transport and
+  `GRAPH` replaced by in-process mocks returning a synthetic success —
+  no outbound network call, no live credentials, nothing beyond what the
+  existing test suite's own mock-transport pattern already does, just
+  driven through a real browser instead of `unittest`. The human repeated
+  the walkthrough against this mock-success server: filled in a synthetic
+  tenant/client ID/secret, submitted, and confirmed the sign-in succeeded
+  (status changed to "signed in (app-only)", the app-only form hid) with
+  the secret field empty immediately after and nothing in console/storage.
+  Reported verbatim: "no looks all goood" (in response to "is the secret
+  input's value empty immediately after? Anything with
+  `fake-secret-walkthrough-456` in Console or Storage?" — i.e. confirming
+  no).
+- Rechecked after both fixes: `python3 -m unittest discover -s tests` →
+  173 passed, exit 0; `python3 -m py_compile $(git ls-files '*.py')` →
+  exit 0; `python3 scripts/validate_repo.py` → "Repository validation
+  passed (67 required files checked)."
+- This is round 1 of at most two permitted issue repair rounds.
+
+### Manual walkthrough — full evidence (rounds 0 + 1 combined)
+
+| Checkpoint | Method | Observed |
+|---|---|---|
+| Secret input attributes | Round 0, real server, no mock | `type="password"`, `autocomplete="off"` confirmed in Elements |
+| Mode switch (both directions) | Round 0, real server | Secret field empty after switching away and back |
+| Submit — failure path (invalid/no real tenant) | Round 0, real server | Secret field empty immediately after; nothing in console/storage |
+| Submit — success path | Round 1, local mock-success server (no live network/credentials) | Sign-in succeeded (status "signed in (app-only)", form hidden); secret field empty immediately after; nothing in console/storage |
+| Logout | Round 0, real server | Secret field empty after triggering logout |
+
+All five checkpoints required by acceptance criterion 9 (submit — both
+outcomes, mode switch, logout) are now covered.

@@ -127,14 +127,22 @@ third-party Python packages are required.
   before any secret leaves the process. The UI performs the same check for fast
   feedback; the server check is the authoritative one (brief v2 Q5 — this
   roadmap answers it by default; see Open questions below).
-- **(v4) Secret lifecycle (the named security boundary of M2):** UI form field
-  (`type="password"`, `autocomplete="off"`, never logged to console) → loopback
-  POST body over `127.0.0.1` → server process memory → outbound TLS token
-  request → discarded. The secret is never assigned to a module global, never
-  stored on the `AuthManager` beyond the token request, never included in any
-  response body (success *or* error), never written to a log record, and never
-  rendered back to the page. Provider error text is truncated and scrubbed of
-  any occurrence of the submitted secret before it is returned or logged.
+- **(v4, resolved by `DECISION-014`) Secret lifecycle (the named security
+  boundary of M2):** UI form field (`type="password"`, `autocomplete="off"`,
+  never logged to console) → loopback POST body over `127.0.0.1` → server
+  process memory, **retained for the app-only session's lifetime** (not
+  discarded after the first token request — the owner's explicit choice,
+  "it is hosted locally so the information can stay there," accepting the
+  wider retention window in exchange for no hourly re-entry). The retained
+  secret is used to **silently mint a fresh app-only token on expiry**,
+  with no UI resubmission required — a real usability improvement over the
+  device-code path, which has no refresh token at all (`DECISION-004`). The
+  secret is still never assigned to a module global outside the
+  `AuthManager` instance, never included in any response body (success *or*
+  error), never written to a log record, and never rendered back to the
+  page; it is cleared on logout and on process exit, same as a token.
+  Provider error text is truncated and scrubbed of any occurrence of the
+  submitted secret before it is returned or logged.
 - **(v4) Blast-radius statement (brief v2 Data and security):** an application
   secret is materially more dangerous than the delegated user token M1 handled.
   It is typically longer-lived, is not bound to one person's access, and lets any
@@ -163,7 +171,7 @@ human, who makes the milestone decision after seeing all four reports.
 | ID | Outcome | Dependencies | Exit criteria | Status |
 |---|---|---|---|---|
 | `M1` | Working MVP: device-code sign-in → fetch CA policies → 0–100 score + findings → per-policy visualization, offline-testable | `None` | All six issues COMPLETE; `python3 server.py` runs; `python3 -m unittest discover -s tests` passes; the UI renders score/findings/cards against the offline fixture path; four blind milestone reviews pass. Live-tenant sign-in/fetch is **not** an M1 completion criterion (Codex F-003): it is a separate protected step, recorded as an explicit residual evidence gap that the human may accept at the milestone | `COMPLETE` — accepted `DECISION-012` |
-| `M2` | Least-privilege delegated scope, plus an **opt-in** app-only (client-credentials) sign-in mode beside the unchanged device-code default | `M1` COMPLETE; brief v2 APPROVED (`DECISION-013`); RISK-002-as-widened decided by the human | All five M2 issues COMPLETE; `python3 -m unittest discover -s tests`, `python3 -m py_compile $(git ls-files '*.py')`, and `python3 scripts/validate_repo.py` pass at one frozen candidate; every pre-existing device-code test still passes unmodified in behaviour; mock-transport tests prove the submitted secret appears in **no** API response body, **no** log record, and **no** tracked file; `auth.py` requests only `Policy.Read.All` delegated; README and `docs/security-boundaries.md` describe both modes, the app-only prerequisites, and the secret's lifetime; four blind milestone reviews against that one SHA, with the **security** pair required to treat the end-to-end secret lifecycle (field → POST body → memory → token request → discard) as a **named, separately reported check** (brief v2 requirement), not folded into general review. Live app-only sign-in against a real tenant is **not** an exit criterion — it stays a protected action and a declared evidence gap | `PLANNED` (unapproved) |
+| `M2` | Least-privilege delegated scope, plus an **opt-in** app-only (client-credentials) sign-in mode beside the unchanged device-code default | `M1` COMPLETE; brief v2 APPROVED (`DECISION-013`); RISK-002-as-widened + secret-retention model decided (`DECISION-014`) | All five M2 issues COMPLETE; `python3 -m unittest discover -s tests`, `python3 -m py_compile $(git ls-files '*.py')`, and `python3 scripts/validate_repo.py` pass at one frozen candidate; every pre-existing device-code test still passes unmodified in behaviour; mock-transport tests prove the submitted secret appears in **no** API response body, **no** log record, and **no** tracked file; `auth.py` requests only `Policy.Read.All` delegated; README and `docs/security-boundaries.md` describe both modes, the app-only prerequisites, and the secret's lifetime; four blind milestone reviews against that one SHA, with the **security** pair required to treat the end-to-end secret lifecycle (field → POST body → memory → token request → discard) as a **named, separately reported check** (brief v2 requirement), not folded into general review. Live app-only sign-in against a real tenant is **not** an exit criterion — it stays a protected action and a declared evidence gap | `PLANNED` (unapproved) |
 
 ## Issue sequence
 
@@ -182,16 +190,16 @@ Issues run sequentially. Each is small enough for one fresh Claude issue task
 ### M2 issue sequence (PLANNED — not approved)
 
 Prerequisite gate, before ISSUE-0007 may start: a decision record approving brief
-v2 at its exact commit (satisfied — `DECISION-013` binds `98feea6`), **and** an
-explicit human answer to brief v2 Q3 (RISK-002 as widened), Q5 (tenant
-validation), and Q6 (secret retention / re-entry). Q6 changes the ISSUE-0008
-design; see the open questions at the end of this section — **these remain
-unanswered** and gate ISSUE-0008, not ISSUE-0007.
+v2 at its exact commit (satisfied — `DECISION-013` binds `98feea6`). Before
+ISSUE-0008 specifically: `DECISION-014` resolves Q6 (session-lifetime secret
+retention, silent renewal) and Q3/`RISK-002` (accepted as widened, on that
+basis). **Q5 (tenant-value validation UX) remains open** — see the open
+question at the end of this section.
 
 | Order | Issue | Objective | Depends on | Acceptance and checks | Risk | Status |
 |---:|---|---|---|---|---|---|
 | 7 | `ISSUE-0007` | Trim delegated `SCOPES` to `Policy.Read.All` only | Brief v2 approved | `auth.py` `SCOPES` contains exactly `https://graph.microsoft.com/Policy.Read.All`; a unit test asserts the constant and that the device-code request body carries only that scope; every existing test in `tests/test_auth.py` still passes with no behavioural change to the flow; README and `docs/security-boundaries.md` no longer claim three delegated scopes; `unittest`, `py_compile`, `validate_repo.py` all pass | Low | `PENDING` |
-| 8 | `ISSUE-0008` | App-only token acquisition inside `auth.py` only — no HTTP endpoint, no UI | `ISSUE-0007`; RISK-002-as-widened decided; Q5/Q6 answered | Pure auth-layer change: a `build_client_credentials_request()` and an `AuthManager` method that installs an app-only token in the existing token slot; tenant validation rejects `organizations`/`common`/`consumers` and anything that is not a GUID or DNS-style domain, **before** any outbound request; mock-transport unit tests cover success, invalid tenant, wrong client id, provider error, transient/network error, supersession by a device-code start, and `logout()` clearing; a test asserts the fake secret literal appears in no return value, no exception message, no `repr()` of the manager, and no captured `logging`/stderr output; a test asserts provider error text containing the secret is scrubbed; `graph.py` and `server.py` are untouched (proving brief A6); `unittest`, `py_compile`, `validate_repo.py` pass | **Medium–high** (first live-secret handling) | `PENDING` |
+| 8 | `ISSUE-0008` | App-only token acquisition inside `auth.py` only — no HTTP endpoint, no UI | `ISSUE-0007`; `DECISION-014` (retention model, RISK-002 acceptance); Q5 confirmed | Pure auth-layer change: a `build_client_credentials_request()` and an `AuthManager` method that installs an app-only token in the existing token slot **and retains the secret in the manager instance for the session** (per `DECISION-014` — not discarded after the first request); a renewal path uses the retained secret to silently request a fresh token on expiry with no caller-supplied secret needed; tenant validation rejects `organizations`/`common`/`consumers` and anything that is not a GUID or DNS-style domain, **before** any outbound request; mock-transport unit tests cover success, invalid tenant, wrong client id, provider error, transient/network error, silent renewal after simulated expiry, supersession by a device-code start, and `logout()` clearing the retained secret; a test asserts the fake secret literal appears in no return value, no exception message, no `repr()` of the manager, and no captured `logging`/stderr output; a test asserts provider error text containing the secret is scrubbed; `graph.py` and `server.py` are untouched (proving brief A6); `unittest`, `py_compile`, `validate_repo.py` pass | **Medium–high** (first live-secret handling; retained for the session per `DECISION-014`) | `PENDING` |
 | 9 | `ISSUE-0009` | `POST /api/auth/app` endpoint wiring the app-only mode to the existing server | `ISSUE-0008` | Endpoint reuses the existing Host allowlist, Origin check, and body-size limit; validates `tenant`/`client_id`/`client_secret` presence and type; returns `{"state":"success"}` on success and a stable machine-label error otherwise; maps invalid input → 400, provider rejection → 502, never 5xx with a stack; `/api/policies` and `/api/analysis` work unchanged after an app-only sign-in (mock Graph transport); `/api/auth/logout` clears app-only state; a test scans **every** response body across success, each failure path, and the malformed-body path for the fake secret literal and fails if found; a test asserts nothing is written to the access log; `no-store` on any response reflecting auth state; `unittest`, `py_compile`, `validate_repo.py` pass | **Medium–high** | `PENDING` |
 | 10 | `ISSUE-0010` | Sign-in card mode toggle and app-only form in `web/index.html` + `web/app.js` | `ISSUE-0009` | Default view is unchanged device-code; an explicit toggle reveals tenant ID / client ID / client secret fields; secret input is `type="password"` with `autocomplete="off"`; the value is never written to `console`, `localStorage`, `sessionStorage`, a cookie, a URL, or a query string; the field is cleared after submit, on mode switch, and on logout; a short in-page caution names what the secret grants; client-side rejection of `organizations`/`common`/`consumers` mirrors the server; existing CSP and text-only rendering rules unchanged; extended `tests/test_ui_safety.py` static assertions cover each of the above against the committed `web/` sources; `unittest`, `py_compile`, `validate_repo.py` pass | Medium | `PENDING` |
 | 11 | `ISSUE-0011` | M2 documentation finalization and dual-mode walkthrough | `ISSUE-0007..0010` | README documents both modes, the exact app-only prerequisite (a user-owned app registration with **application** `Policy.Read.All` already consented), that CAreview never creates one, that certificates are unsupported, that the secret is session-only and re-entered when the token expires, and how to rotate/revoke it; `docs/security-boundaries.md` records the trust-boundary delta and the widened RISK-002; a documented end-to-end walkthrough exists for each mode, with the live steps marked as protected actions the reader performs themselves; no live run is required to complete this issue; `unittest`, `py_compile`, `validate_repo.py` pass from a clean checkout | Low | `PENDING` |
@@ -206,21 +214,17 @@ unanswered** and gate ISSUE-0008, not ISSUE-0007.
 | `ISSUE-0010` | `web/index.html`, `web/app.js`, `web/style.css`, `tests/test_ui_safety.py` | Server or auth logic; new external assets; CSP relaxation | In-page caution text; README screenshot-free description of the toggle |
 | `ISSUE-0011` | `README.md`, `docs/security-boundaries.md`, `project/` records | Any product source change (a source change here reopens the issue as an implementation issue) | This issue *is* the documentation change |
 
-#### Open questions that must be answered before ISSUE-0008 starts
+#### Open questions before ISSUE-0008 starts
 
-1. **Brief v2 internal tension on secret retention.** The Data-and-security
-   section says the secret is "held in server process memory only for the
-   session's lifetime, cleared on logout/process exit, same as a token", while
-   Q6 says re-authenticating "means re-submitting tenant/client/secret through
-   the UI each time". Those describe different designs. This roadmap does
-   **not** default one over the other — it needs an explicit human choice,
-   because it changes ISSUE-0008's design, its tests, and RISK-007.
-2. **RISK-002 as widened** (brief v2 Q3): accept as-is, or require a loopback
-   token/PIN gate as a prerequisite issue **before** ISSUE-0008. If a gate is
-   required, it becomes ISSUE-0007a and everything after it shifts.
-3. **Brief v2 Q5**: confirm rejecting `organizations`/`common`/`consumers`
-   client-side as well as server-side (this roadmap assumes yes, pending
-   confirmation).
+1. ~~Brief v2 internal tension on secret retention.~~ **Resolved by
+   `DECISION-014`:** session-lifetime retention, silently renewed, no
+   re-entry — "it is hosted locally so the information can stay there."
+2. ~~RISK-002 as widened.~~ **Resolved by `DECISION-014`:** accepted, on the
+   basis of the retention model above. No loopback PIN/token gate was
+   requested as a prerequisite.
+3. **Brief v2 Q5 — still open.** Confirm rejecting
+   `organizations`/`common`/`consumers` client-side as well as server-side
+   (this roadmap assumes yes, pending confirmation).
 
 ## Verification strategy
 
@@ -272,12 +276,12 @@ exit status, and limitations in each handoff.
 | ID | Risk or decision | Impact | Owner | Treatment or decision record | Review date |
 |---|---|---|---|---|---|
 | `RISK-001` | Tenant blocks first-party device-code or withholds `Policy.Read.All`, so live fetch fails | Medium — MVP can't read live policies until fallback | Jay (@Jay-cli) | Accepted for MVP per `DECISION-001`. **(v4)** Partially mitigated by M2: a user who already has an app registration with application `Policy.Read.All` can use app-only mode instead. Not mitigated for a user without one. Offline fixtures keep the analyzer verifiable regardless | On M2 acceptance |
-| `RISK-002` | **(v4 — materially widened, re-acceptance required)** Local loopback API reachable by another local process, browser extension, or local user while credential material is in memory. M1 exposed a scoped, delegated, read-only user token. M2 additionally exposes a **client secret** in transit through the browser page and the loopback POST body, behind the same "no local authentication" boundary. A secret is longer-lived, not bound to one person, and lets any holder mint tenant-capable tokens independently of CAreview | **Medium–high** in app-only mode (was low–medium) | Jay (@Jay-cli) | The `DECISION-001` acceptance does **not** extend to this. Requires a new, explicit decision before ISSUE-0008: accept as widened, or require a loopback token/PIN gate as a prerequisite issue. Partial mitigations already planned: minimum-retention secret handling, no persistence, no echo, no logging, Host/Origin checks retained | Before `ISSUE-0008` |
+| `RISK-002` | **(v4 — materially widened; re-accepted `DECISION-014`)** Local loopback API reachable by another local process, browser extension, or local user while credential material is in memory. M1 exposed a scoped, delegated, read-only user token. M2 additionally exposes a **client secret** in transit through the browser page and the loopback POST body, behind the same "no local authentication" boundary — and, per `DECISION-014`, retained for the **whole app-only session**, not just one token request | **Medium–high** in app-only mode (was low–medium) | Jay (@Jay-cli) | **Accepted as widened per `DECISION-014`**, on the basis that the tool is single-user and local ("it is hosted locally so the information can stay there"), trading a longer retention window for no hourly re-entry. `DECISION-001`'s original acceptance did not itself cover this; this is the fresh acceptance. Mitigations unchanged: no persistence, no echo, no logging, Host/Origin checks retained | Re-checked at M2 security review |
 | `RISK-003` | Accidental logging of tokens or policy JSON | Medium (sensitive data exposure) | Claude (impl), reviewed by Codex | Redact by construction; unit/security review checks that tokens and policy data are never logged or persisted. **(v4)** Extended to the client secret with explicit per-path assertions | Per issue |
 | `RISK-004` | Score is a heuristic, mistaken for compliance certification | Low (reputational/interpretation) | Jay (@Jay-cli) | Document each rule's weight and label the score non-authoritative in the UI and README | ISSUE-0004 (closed); revisit at M2 acceptance |
-| `RISK-005` | **(v4, new)** Client secret exposed browser-side: extension, devtools, screen capture, shoulder-surfing, browser autofill or form history caching a submitted secret, or the value lingering in page memory. The device-code path has no equivalent failure mode | Medium–high (credential disclosure) | Jay (@Jay-cli) | The owner has explicitly chosen UI form-field entry over an environment variable, accepting browser transit (brief v2, Confirmed facts). Mitigations: `type="password"`, `autocomplete="off"`, no console/storage/URL writes, field cleared on submit/mode-switch/logout, in-page caution. Residual exposure remains and must be accepted explicitly, not inferred from the input-method choice | Before `ISSUE-0010`; re-checked at M2 security review |
+| `RISK-005` | **(v4, new)** Client secret exposed browser-side: extension, devtools, screen capture, shoulder-surfing, browser autofill or form history caching a submitted secret, or the value lingering in page memory. The device-code path has no equivalent failure mode | Medium–high (credential disclosure) | Jay (@Jay-cli) | The owner has explicitly chosen UI form-field entry over an environment variable, accepting browser transit (brief v2, Confirmed facts). Mitigations: `type="password"`, `autocomplete="off"`, no console/storage/URL writes, field cleared on submit/mode-switch/logout, in-page caution. This covers the one-time entry only; the entered value's server-side retention for the session is governed separately by `RISK-002`/`DECISION-014` | Before `ISSUE-0010`; re-checked at M2 security review |
 | `RISK-006` | **(v4, new)** Over-broad app-only token. `.default` returns every application permission the user's app already holds; CAreview cannot request a narrower app-only scope (brief A7). If the app also holds, say, write permissions, CAreview receives a token capable of far more than it uses | Medium (excess privilege in memory) | Jay (@Jay-cli) | Not technically suppressible by the client. Treatment is documentation plus UI caution: recommend a dedicated app registration holding only application `Policy.Read.All`. Must be recorded as an accepted residual, not presented as mitigated | `ISSUE-0011`; M2 security review |
-| `RISK-007` | **(v4, new)** Hourly re-authentication burden with no refresh token (no `offline_access`, per `DECISION-004` / ISSUE-0002). App-only tokens expire in ~1 hour and renewal means re-entering tenant/client/secret. This creates pressure toward an insecure workaround — a saved note, a shell history entry, or a future request to persist the secret | Low–medium (usability driving insecure behaviour) | Jay (@Jay-cli) | Depends on the retention decision (brief v2 Q6, currently open). Document the re-entry step plainly and keep persistence a hard non-goal regardless of which retention model is chosen | Before `ISSUE-0008` |
+| `RISK-007` | **(v4, resolved `DECISION-014`)** Originally: hourly re-authentication burden with no refresh token. **Superseded:** per `DECISION-014`, the secret is retained for the session and used to silently renew the app-only token on expiry, so no re-entry is required. The traded-off cost is `RISK-002`'s widened retention window, not user friction | Low (was low–medium; friction removed, retention cost moved to RISK-002) | Jay (@Jay-cli) | `ISSUE-0008` must implement silent renewal from the retained secret, per `DECISION-014`; document that persistence to disk remains a hard non-goal regardless | `ISSUE-0008` |
 | `RISK-008` | **(v4, new)** A real client secret is pasted into a test, fixture, issue record, handoff, log, or review report during development or triage | High if it occurs (credential in Git history) | Claude (impl), reviewed by Codex | Prohibited by `AGENTS.md`. Enforced here by requiring a synthetic literal in all tests, by never performing a live app-only run in an agent task, and by an explicit reviewer check on every M2 diff | Every M2 issue |
 
 Critical or high security findings cannot use the default risk-acceptance path.

@@ -1,12 +1,13 @@
 # ISSUE-0009: POST /api/auth/app endpoint wiring app-only mode to the server
 
-**Status:** `AWAITING_HUMAN_DECISION`
+**Status:** `COMPLETE`
 **Milestone:** `M2`
 **Approved roadmap:** `ROADMAP.md` version `4` at `9e5ba6d2f6c2b7f7efa81dcfc415e1f787aaa458` (approved by `DECISION-015`)
 **Dependencies:** `ISSUE-0008` (COMPLETE, `DECISION-017`); `DECISION-018` (start authorization)
-**Branch:** `ai/ISSUE-0009-app-only-endpoint`
+**Branch:** `ai/ISSUE-0009-app-only-endpoint` (merged into `main`)
 **Starting SHA:** `4fdfa9f65b1e32bc0992dc3b7bd7d2357c3a8339`
-**Candidate SHA:** this commit (branch HEAD); the launcher records the full SHA
+**Candidate SHA:** `7b0600f0831f68f8933b68ca0bba34f58a00b0cc` (round 1, final reviewed candidate)
+**Merge SHA:** `8253c1d7a754a3a967c2687c5ccc45e71794391a` (merge commit on `main`)
 
 ## Objective
 
@@ -134,12 +135,8 @@ limit applies first, and exhaustion blocks for the human.
   execution-evidence residual (loopback sockets, `__pycache__` writes, and
   a writable temp directory are all unavailable inside the read-only
   review sandbox).
-- Human advance/merge decision: **pending** — not yet requested/recorded.
+- Human advance/merge decision: `APPROVE` — `project/decisions/DECISION-019-issue-0009-advance-and-merge.md`.
+- Merge/result SHA: `8253c1d7a754a3a967c2687c5ccc45e71794391a` (merge commit on `main`). Required checks re-run on the merged tree: 162 tests passed, `py_compile` clean, `validate_repo.py` clean.
 - Residual risks or follow-up: none identified beyond the pre-accepted
   `RISK-002`/`RISK-006` (`DECISION-014`), unaffected by this issue.
-- Status record: this commit updates `project/status/CURRENT.md` and stops
-  this Claude task here, per the completion standard and the
-  `DECISION-010`/`DECISION-016`/`DECISION-017` precedent for the same
-  sandbox-only-blocker pattern — presenting the clean round-1 result to the
-  human rather than unilaterally marking `ISSUE-0009` complete or merging
-  it.
+- Status record updated: this commit.

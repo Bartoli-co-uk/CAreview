@@ -1,6 +1,6 @@
 # Project brief: CAreview — Conditional Access policy analyzer
 
-**Status:** `DRAFT` (v2 amendment; not yet approved)
+**Status:** `APPROVED` (v2 amendment approved by `DECISION-013`, binding commit `9ccf835`; Questions 3/5/6 resolved by `DECISION-014`)
 **Version:** `2`
 **Amends:** v1, approved by `DECISION-001` at `179a02354aecbafa2c9d5aa34f9c9a5a04bbc79a`
 **Source description:** `project/intake/PROJECT_DESCRIPTION.md` at `19e5863d19f856b635df878234a37333f391b4e9`
@@ -289,29 +289,15 @@ has one with app-only `Policy.Read.All`, not a requirement.)
    now, per this amendment.)*
 2. ~~Fallback scope~~ *(v2: resolved by this amendment — pulled in as an
    opt-in mode, not folded into the default path.)*
-3. **Local-server exposure (A4) — needs your decision under `DECISION-014`:**
-   Is "trusted single-user machine, localhost binding, no local auth"
-   acceptable given app-only mode puts a live client secret behind that same
-   boundary, or do you want a loopback token/PIN gate added as a prerequisite
-   instead? `RISK-002` cannot be accepted as widened without an explicit
-   answer here.
+3. ~~Local-server exposure (A4)~~ *(v2: resolved by `DECISION-014` — accepted
+   as widened; no loopback PIN/token gate required.)*
 4. **Score transparency:** Is a documented heuristic score (with each rule's
    weight shown) acceptable, given it is explicitly not a compliance
    certification?
-5. **(v2) Tenant validation for app-only mode — needs your decision:**
-   Client-credentials requires a real tenant ID or verified domain
-   (`organizations`/`common` are invalid). Should CAreview reject those
-   default-style values client-side (in addition to the authoritative
-   server-side check), so the failure is immediate and local rather than a
-   confusing round-trip to Microsoft? This roadmap assumes yes pending your
-   confirmation.
-6. **(v2) Secret retention model — needs your decision under `DECISION-014`:**
-   App-only access tokens expire hourly like delegated ones, and there is no
-   refresh token in this design (matching `DECISION-004`'s no-`offline_access`
-   stance). Do you want the secret discarded immediately after each token
-   request (re-entry required hourly), or retained in memory for the session
-   so it can silently renew the token on expiry (no re-entry, but a longer
-   in-memory exposure window)?
+5. ~~Tenant validation for app-only mode~~ *(v2: resolved by `DECISION-014` —
+   validated client-side in addition to the authoritative server-side check.)*
+6. ~~Secret retention model~~ *(v2: resolved by `DECISION-014` — retained for
+   the session, silent renewal on expiry, no re-entry.)*
 
 ## Approval gate
 
@@ -320,4 +306,4 @@ version, and commit SHA. Approval permits roadmap drafting only; it does not
 permit implementation or protected actions.
 
 **v1 decision record:** `project/decisions/DECISION-001-brief-approval.md` (APPROVE, binds v1 at `179a02354aecbafa2c9d5aa34f9c9a5a04bbc79a`)
-**v2 decision record:** not yet recorded. Pending your answers to Questions 3, 5, and 6 above (tracked as `DECISION-014` once answered) and your approval of this exact v2 commit (to be recorded as `DECISION-013`).
+**v2 decision record:** `project/decisions/DECISION-013-brief-v2-approval.md` (APPROVE, binds v2 at `9ccf835`). Questions 3, 5, and 6 resolved by `project/decisions/DECISION-014-app-only-secret-retention-and-risk002.md`.

@@ -1,6 +1,6 @@
 # ISSUE-0009: POST /api/auth/app endpoint wiring app-only mode to the server
 
-**Status:** `REPAIRING`
+**Status:** `AWAITING_HUMAN_DECISION`
 **Milestone:** `M2`
 **Approved roadmap:** `ROADMAP.md` version `4` at `9e5ba6d2f6c2b7f7efa81dcfc415e1f787aaa458` (approved by `DECISION-015`)
 **Dependencies:** `ISSUE-0008` (COMPLETE, `DECISION-017`); `DECISION-018` (start authorization)
@@ -119,7 +119,9 @@ client secret over the same loopback API used for device-code sign-in.
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
 | 0 | `project/handoffs/ISSUE-0009-handoff.md` | `c029199c5671069917c13c268a6c4a32ac73881f` | 163 tests pass; compile clean; validator passed | `project/reviews/issues/ISSUE-0009-c029199c5671-codex.json` | `BLOCKED` — F-001 (missing durable start-authorization record; stale base SHA pulled in an unrelated intervening commit) + F-002 (renewal tests didn't prove the renewed token reached both endpoints) + F-003 (secret-scan didn't cover every response path/label) |
-| 1 | `project/handoffs/ISSUE-0009-handoff.md` (Repair round 1 section) | this commit | 162 tests pass; compile clean; validator passed | pending | pending |
+| 1 | `project/handoffs/ISSUE-0009-handoff.md` (Repair round 1 section) | `7b0600f0831f68f8933b68ca0bba34f58a00b0cc` | 162 tests pass; compile clean; validator passed | `project/reviews/issues/ISSUE-0009-7b0600f0831f-codex.json` | `BLOCKED` — zero findings; sole blocker is the sandbox execution-evidence residual (same pattern accepted by `DECISION-010`/`DECISION-015`/`DECISION-016`/`DECISION-017`) |
+
+Only 1 of 2 permitted issue repair rounds was needed.
 
 Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
 No workflow loop may exceed five total iterations; the tighter two-round issue
@@ -127,5 +129,17 @@ limit applies first, and exhaustion blocks for the human.
 
 ## Completion
 
-- Not yet complete. Awaiting the fresh Codex issue re-review and, per the
-  workflow, a human advance/merge decision.
+- Final reviewed product SHA: `7b0600f0831f68f8933b68ca0bba34f58a00b0cc` —
+  `findings: []`; `BLOCKED` solely on the accepted sandbox
+  execution-evidence residual (loopback sockets, `__pycache__` writes, and
+  a writable temp directory are all unavailable inside the read-only
+  review sandbox).
+- Human advance/merge decision: **pending** — not yet requested/recorded.
+- Residual risks or follow-up: none identified beyond the pre-accepted
+  `RISK-002`/`RISK-006` (`DECISION-014`), unaffected by this issue.
+- Status record: this commit updates `project/status/CURRENT.md` and stops
+  this Claude task here, per the completion standard and the
+  `DECISION-010`/`DECISION-016`/`DECISION-017` precedent for the same
+  sandbox-only-blocker pattern — presenting the clean round-1 result to the
+  human rather than unilaterally marking `ISSUE-0009` complete or merging
+  it.

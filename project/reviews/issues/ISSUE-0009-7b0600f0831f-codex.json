@@ -1,0 +1,85 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-27T22:05:24Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa59b-7584-70c0-9059-00a86962714b"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "4fdfa9f65b1e32bc0992dc3b7bd7d2357c3a8339",
+    "evidence": [
+      {
+        "detail": "Checkout HEAD exactly matched the launcher target, the base commit resolved exactly, and `git status --short` was empty.",
+        "reference": "git rev-parse HEAD; git rev-parse 4fdfa9f65b1e32bc0992dc3b7bd7d2357c3a8339; git status --short",
+        "source": "command"
+      },
+      {
+        "detail": "The diff is limited to `server.py`, `tests/test_server.py`, `README.md`, and ISSUE-0009 governance records. No out-of-scope `auth.py`, `graph.py`, or `web/` changes were present.",
+        "reference": "4fdfa9f65b1e32bc0992dc3b7bd7d2357c3a8339..7b0600f0831f68f8933b68ca0bba34f58a00b0cc",
+        "source": "diff"
+      },
+      {
+        "detail": "The issue record binds the candidate to the corrected base, approved roadmap, ISSUE-0008 dependency, and DECISION-018 authorization. Its acceptance criteria cover validation, stable errors, renewal, secret non-disclosure, guards, logout, documentation, and required checks.",
+        "reference": "project/issues/ISSUE-0009.md",
+        "source": "file"
+      },
+      {
+        "detail": "DECISION-018 durably records the human's explicit authorization to start ISSUE-0009 on the named branch from the supplied base.",
+        "reference": "project/decisions/DECISION-018-issue-0009-start-authorization.md",
+        "source": "file"
+      },
+      {
+        "detail": "The endpoint validates tenant, client ID, and secret before calling `AuthManager.start_app_only`, uses the common POST Host/Origin/body-size guards, maps local validation and AuthError labels to stable responses, and applies `Cache-Control: no-store` to endpoint responses.",
+        "reference": "server.py",
+        "source": "file"
+      },
+      {
+        "detail": "The repair tests record and assert the renewed token used by both policies and analysis, exercise renewal failure through both endpoints, and scan validation, malformed JSON, success, provider/network/invalid-response, and superseded responses for literal, URL-encoded, and JSON-escaped secret forms.",
+        "reference": "tests/test_server.py",
+        "source": "file"
+      },
+      {
+        "detail": "The candidate handoff records author-side evidence of 162 passing tests, successful compilation, and successful governance validation at the candidate, but repository rules require independent real execution and treat author claims only as claims.",
+        "reference": "project/handoffs/ISSUE-0009-handoff.md",
+        "source": "file"
+      },
+      {
+        "detail": "Independent `python3 -m unittest discover -s tests` discovered and ran 162 tests but exited 1 with 68 errors because the review sandbox denied loopback socket binding (`PermissionError: [Errno 1] Operation not permitted`).",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "command"
+      },
+      {
+        "detail": "Independent `python3 -m py_compile $(git ls-files '*.py')` exited 1 because the read-only sandbox denied creation of `__pycache__`.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "command"
+      },
+      {
+        "detail": "Independent `python3 scripts/validate_repo.py` exited 1 because no writable temporary directory was available to its launcher smoke validation.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "command"
+      }
+    ],
+    "findings": [],
+    "limitations": [
+      "The required unit suite could not be independently completed in this review sandbox because loopback socket creation is prohibited; all 68 errors were setup-time socket-binding failures.",
+      "The required compile check could not complete because bytecode-cache writes are prohibited.",
+      "The governance validator could not complete because the sandbox provides no writable temporary directory.",
+      "No live tenant sign-in was performed, consistent with the issue's protected-action exclusion. Identity and Graph behavior were assessable only from code and mocked-test coverage.",
+      "Because mandatory independent execution evidence is unavailable, repository rules require BLOCKED even though static inspection identified no actionable defect."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "7b0600f0831f68f8933b68ca0bba34f58a00b0cc",
+    "schema_version": "1.0",
+    "summary": "The reviewed SHA and corrected base identity match, the diff stays within ISSUE-0009 scope, the prior authorization/base and test-coverage findings appear addressed, and static review found no actionable defect. The review is nevertheless BLOCKED because sandbox restrictions prevented all three mandatory checks from completing successfully; author-recorded passing results cannot substitute for independent command evidence.",
+    "target_id": "ISSUE-0009"
+  },
+  "test_only": false
+}

@@ -185,3 +185,30 @@ findings:
   `python3 scripts/validate_repo.py` → "Repository validation passed (67
   required files checked)."
 - This is round 1 of at most two permitted issue repair rounds.
+
+## Round-1 review result and stop point
+
+The round-1 Codex re-review
+(`project/reviews/issues/ISSUE-0009-7b0600f0831f-codex.json`, candidate
+`7b0600f0831f68f8933b68ca0bba34f58a00b0cc`) returned `BLOCKED` with
+`findings: []` — zero actionable defects. Its evidence explicitly confirms
+the round-0 findings were addressed: the base/head identity is correct,
+the diff stays within `server.py`/`tests/test_server.py`/`README.md`/
+governance records, `DECISION-018` durably records the start authorization,
+and the repair tests were inspected and found to cover the renewed-token
+and expanded secret-scan requirements. The sole blocker is the same sandbox
+execution-evidence limitation present in round 0: the read-only checkout
+cannot bind loopback sockets, write `__pycache__`, or create a writable
+temp directory, so the three required repository-wide checks cannot
+complete independently inside the review process itself, even though they
+pass locally and their real output is recorded above. Only 1 of 2
+permitted repair rounds was needed.
+
+Per `AGENTS.md`'s completion standard ("the human has made any required
+advance or merge decision") and the `DECISION-010`/`DECISION-016`/
+`DECISION-017` precedent — the same sandbox-only-blocker pattern on
+`ISSUE-0006`, `ISSUE-0007`, and `ISSUE-0008`, all of which required an
+explicit human closeout decision despite zero product findings — this
+Claude task stops here and presents the clean round-1 result to the human
+rather than unilaterally marking `ISSUE-0009` complete, merging it, or
+starting `ISSUE-0010`.

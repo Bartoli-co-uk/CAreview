@@ -220,7 +220,7 @@ documented at the bottom of [`rules.py`](rules.py).
 | [`rules.py`](rules.py) | The declarative rule set: ten rules with severity, weight, rationale, remediation and required fields, plus the evaluability model. |
 | [`analyzer.py`](analyzer.py) | Runs the rules over normalized policies, computes the weighted score, and returns severity-sorted findings. |
 | [`web/`](web/) | The UI — `index.html`, `app.js`, `style.css`, and the sanitized `sample-data.json`. No frameworks, no external assets. Untrusted tenant strings are inserted as text, never HTML. |
-| [`tests/`](tests/) | 83 unit tests plus sanitized fixtures (`strong`, `weak`, `incomplete` tenants). Fully offline — no sign-in, no network. |
+| [`tests/`](tests/) | 85 unit tests plus sanitized fixtures (`strong`, `weak`, `incomplete` tenants). Fully offline — no sign-in, no network. |
 
 The remaining top-level directories (`docs/`, `project/`, `prompts/`,
 `scripts/`, `.claude/`, `.codex/`) belong to the build process rather than the
@@ -247,7 +247,7 @@ Static routes: `/`, `/index.html`, `/app.js`, `/style.css`, `/sample-data.json`.
 ## Verify it offline
 
 ```sh
-python3 -m unittest discover -s tests            # 83 tests; no sign-in, no network
+python3 -m unittest discover -s tests            # 85 tests; no sign-in, no network
 python3 -m py_compile $(git ls-files '*.py')     # compile check
 python3 scripts/validate_repo.py                 # governance/docs validator
 ```
@@ -269,8 +269,9 @@ locally are the checks that gate the repository — see
 - **Zero registration, zero build.** No Azure app registration, no client
   secret, no Node.js toolchain.
 - **Standard library only.** No third-party Python dependencies.
-- **Read-only, least privilege.** Delegated Graph scopes limited to
-  `Policy.Read.All`, `Application.Read.All` and `Directory.Read.All`.
+- **Read-only, least privilege.** Delegated Graph scope limited to
+  `Policy.Read.All` — the only Graph call CAreview makes is to
+  `identity/conditionalAccess/policies`.
 
 The MVP is deliberately focused: sign in → fetch → score → findings → per-policy
 visualization. CIS-17 alignment, the FOCI database, persona scoring, baseline

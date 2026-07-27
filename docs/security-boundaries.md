@@ -90,8 +90,9 @@ policies, so these project-specific rules apply on top of the general boundaries
 - **No secrets in the repository.** The first-party public `client_id` is public
   by design; there is no client secret. Never add one, and never commit a tenant
   ID, policy export, or any account data.
-- **Least privilege.** Request only the delegated Graph scopes needed to read
-  policies (`Policy.Read.All`, `Application.Read.All`, `Directory.Read.All`).
+- **Least privilege.** Request only the delegated Graph scope needed to read
+  policies (`Policy.Read.All`). `graph.py` only ever calls
+  `identity/conditionalAccess/policies`, so no other scope is requested.
   Adding a write scope or a broader permission is a protected change.
 - **Local binding.** The server binds to `127.0.0.1` and its factory refuses any
   non-loopback bind address. Requests must also carry a loopback `Host` header,

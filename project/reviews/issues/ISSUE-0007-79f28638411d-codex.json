@@ -1,0 +1,126 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-27T20:52:37Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa558-7568-73b0-bdb7-90abd3771b21"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "d1df24760a878cf976f69fd153eb3954c3a5e028",
+    "evidence": [
+      {
+        "detail": "HEAD resolves to the supplied target commit, both supplied commit objects exist, and the detached checkout is clean.",
+        "reference": "git rev-parse; git cat-file -t; git status --porcelain=v1",
+        "source": "command"
+      },
+      {
+        "detail": "The base-to-target product changes are confined to the approved ISSUE-0007 paths: auth.py, tests/test_auth.py, README.md, and docs/security-boundaries.md. Additional changes are governance records.",
+        "reference": "git diff --name-status d1df24760a878cf976f69fd153eb3954c3a5e028 79f28638411dd82e04cf3d836baef86ad664cb44",
+        "source": "diff"
+      },
+      {
+        "detail": "SCOPES is exactly https://graph.microsoft.com/Policy.Read.All, and build_devicecode_request form-encodes that supplied value without altering the surrounding device-code flow.",
+        "reference": "auth.py:41",
+        "source": "file"
+      },
+      {
+        "detail": "Two focused tests assert the exact constant and decoded request-body scope. The complete auth test module passed independently: 22 tests, exit 0.",
+        "reference": "python3 -m unittest tests.test_auth",
+        "source": "check"
+      },
+      {
+        "detail": "The required full-suite command discovered 85 tests but exited 1 because all 22 server integration tests were denied permission to bind a loopback socket. The remaining 63 tests completed without reported failures.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "The required compile command exited 1 because the read-only checkout prevented creation of __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "The governance validator exited 1 because no writable temporary directory was available for launcher smoke tests.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The exact base-to-target diff passes whitespace validation.",
+        "reference": "git diff --check d1df24760a878cf976f69fd153eb3954c3a5e028 79f28638411dd82e04cf3d836baef86ad664cb44",
+        "source": "check"
+      },
+      {
+        "detail": "The committed handoff records out-of-band successful checks at the candidate: 85 tests passed, compile exited 0, and repository validation passed. This author-provided record cannot replace independent execution under the review rules.",
+        "reference": "project/handoffs/ISSUE-0007-handoff.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: all user-facing test-count statements changed by ISSUE-0007 accurately report the 85-test suite.",
+          "Observed: the repaired verification command reports 85 tests, but the code-layout table still says tests/ contains 83 unit tests.",
+          "The independent full-suite invocation discovered 85 tests before sandbox-denied socket binding caused 22 errors."
+        ],
+        "id": "ISSUE-0007-F001",
+        "locations": [
+          {
+            "line": 223,
+            "path": "README.md"
+          }
+        ],
+        "remediation": "Change the tests/ table entry from 83 to 85 and search all current user-facing documentation for other stale suite totals. Rerun required checks and obtain a fresh review because the candidate SHA will change.",
+        "severity": "low",
+        "title": "README still contains a second obsolete 83-test count",
+        "verification": "Run `rg -n \"83 unit tests|83 tests|85 unit tests|85 tests\" README.md` and `python3 -m unittest discover -s tests`; confirm every current README statement matches the discovered total."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: durable workflow records identify the completed initial review, its candidate, the current repair round, and the fresh re-review as the next action.",
+          "Observed: the repository contains the round-0 ISSUE-0007 Codex report and the handoff documents repair round 1, but CURRENT.md says no repair has occurred, ISSUE-0007 has not yet been reviewed, and ISSUE-0006 is the latest Codex issue review.",
+          "Observed: ISSUE-0007.md still lists only round 0 as pending and does not bind the recorded round-0 report or repair candidate."
+        ],
+        "id": "ISSUE-0007-F002",
+        "locations": [
+          {
+            "line": 46,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 80,
+            "path": "project/issues/ISSUE-0007.md"
+          }
+        ],
+        "remediation": "Synchronize CURRENT.md and ISSUE-0007.md with the committed round-0 report and repair-round-1 state, including the exact prior candidate/report identity and the current next action. Do not mark the issue complete or claim this re-review passed.",
+        "severity": "low",
+        "title": "Durable workflow records still describe the initial review as pending",
+        "verification": "Run `python3 scripts/validate_repo.py` in a writable environment and manually confirm CURRENT.md, ISSUE-0007.md, the handoff, and the committed round-0 report consistently describe the same review and repair history."
+      }
+    ],
+    "limitations": [
+      "Independent execution evidence is incomplete: the full suite could not bind loopback sockets, py_compile could not create bytecode cache files, and validate_repo.py could not create a temporary directory under the read-only sandbox.",
+      "No live Microsoft tenant sign-in or Graph request was performed. The approved issue does not require that protected action, so consent behavior remains covered by request construction and mocked tests.",
+      "The author-recorded successful out-of-band checks are supporting evidence only and cannot independently establish the required check results.",
+      "The prior candidate object 54e207a04b1c5f86cc18c3f4860977e4d8dd6f0d is not present in this isolated checkout, so the prior-to-repair diff could not be independently reconstructed; the base-to-current diff and committed prior report were inspected instead."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "79f28638411dd82e04cf3d836baef86ad664cb44",
+    "schema_version": "1.0",
+    "summary": "The delegated-scope narrowing and focused auth tests are correct, but the review is blocked. Required repository-wide checks cannot complete independently in the read-only sandbox, README still contains a second stale 83-test statement, and durable workflow records have not been synchronized with the committed initial review and repair round.",
+    "target_id": "ISSUE-0007"
+  },
+  "test_only": false
+}

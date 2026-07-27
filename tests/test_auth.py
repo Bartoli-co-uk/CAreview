@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import sys
 import unittest
+import urllib.parse
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -58,10 +59,18 @@ def manager(script: list[tuple[int, dict]], clock: FakeClock) -> tuple[auth.Auth
 
 
 class RequestBuildingTests(unittest.TestCase):
+    def test_scopes_is_policy_read_all_only(self) -> None:
+        self.assertEqual(auth.SCOPES, "https://graph.microsoft.com/Policy.Read.All")
+
     def test_devicecode_request_targets_microsoft(self) -> None:
         url, data = auth.build_devicecode_request("organizations", auth.CLIENT_ID, auth.SCOPES)
         self.assertEqual(url, "https://login.microsoftonline.com/organizations/oauth2/v2.0/devicecode")
         self.assertIn(b"client_id=", data)
+
+    def test_devicecode_request_body_carries_only_policy_read_all(self) -> None:
+        _, data = auth.build_devicecode_request("organizations", auth.CLIENT_ID, auth.SCOPES)
+        parsed = urllib.parse.parse_qs(data.decode("utf-8"))
+        self.assertEqual(parsed["scope"], ["https://graph.microsoft.com/Policy.Read.All"])
 
     def test_token_request_uses_device_code_grant(self) -> None:
         url, data = auth.build_token_request("organizations", auth.CLIENT_ID, "DEV")

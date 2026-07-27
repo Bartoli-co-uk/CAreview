@@ -32,14 +32,13 @@ _TRANSIENT_ERRORS = frozenset({"network_error", "bad_response"})
 # secret). Chosen for broad delegated-scope device-code support.
 CLIENT_ID = "14d82eec-204b-4c2f-b7e8-296a70dab67e"
 
-# Delegated, read-only Graph scopes (resource-qualified for the v2 endpoint).
+# Delegated, read-only Graph scope (resource-qualified for the v2 endpoint).
 # No ``offline_access``: the MVP does not retain refresh tokens; the user
 # re-authenticates when the access token expires (see DECISION-004 / ISSUE-0002).
-SCOPES = (
-    "https://graph.microsoft.com/Policy.Read.All "
-    "https://graph.microsoft.com/Application.Read.All "
-    "https://graph.microsoft.com/Directory.Read.All"
-)
+# Trimmed to Policy.Read.All alone (ISSUE-0007): graph.py only ever calls
+# identity/conditionalAccess/policies, so Application.Read.All and
+# Directory.Read.All were requested but never used.
+SCOPES = "https://graph.microsoft.com/Policy.Read.All"
 
 DEFAULT_TENANT = "organizations"
 _TENANT_RE = re.compile(r"^[A-Za-z0-9._-]+$")

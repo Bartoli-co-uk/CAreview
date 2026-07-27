@@ -1,0 +1,105 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-27T20:49:09Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa555-6caa-7c53-b717-840faf06f538"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "d1df24760a878cf976f69fd153eb3954c3a5e028",
+    "evidence": [
+      {
+        "detail": "HEAD and the supplied target both resolve to 54e207a04b1c5f86cc18c3f4860977e4d8dd6f0d; the supplied base resolves to d1df24760a878cf976f69fd153eb3954c3a5e028. The detached checkout was initially clean.",
+        "reference": "git rev-parse; git status --short --branch",
+        "source": "command"
+      },
+      {
+        "detail": "The base-to-target diff changes auth.py, tests/test_auth.py, README.md, docs/security-boundaries.md, and required project records. Product changes remain within ROADMAP.md's ISSUE-0007 path boundary.",
+        "reference": "git diff --name-status d1df24760a878cf976f69fd153eb3954c3a5e028..54e207a04b1c5f86cc18c3f4860977e4d8dd6f0d",
+        "source": "diff"
+      },
+      {
+        "detail": "SCOPES is exactly https://graph.microsoft.com/Policy.Read.All. The device-code request continues to form-encode the supplied scope without changing the surrounding flow.",
+        "reference": "auth.py:41",
+        "source": "file"
+      },
+      {
+        "detail": "Two focused tests assert the exact constant and decoded device-code request scope. The complete auth test module passed: 22 tests, exit 0.",
+        "reference": "tests/test_auth.py:62",
+        "source": "check"
+      },
+      {
+        "detail": "README.md and docs/security-boundaries.md now describe Policy.Read.All as the sole delegated Graph scope and explain that the application calls only identity/conditionalAccess/policies.",
+        "reference": "README.md:272",
+        "source": "file"
+      },
+      {
+        "detail": "The required full-suite command discovered 85 tests but exited 1 because all 22 server integration tests were prevented from binding a loopback socket by the review sandbox (PermissionError: operation not permitted). The other 63 tests completed without reported failures.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "The required compile command exited 1 because the read-only checkout prevented creation of __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "The governance validator exited 1 because the sandbox provided no writable temporary directory for its launcher smoke tests.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The committed handoff records an out-of-band run of all required checks at this candidate: 85 tests OK, compile exit 0, and repository validation passed. Under the review rules, this author-provided record is supporting evidence but cannot replace independent execution.",
+        "reference": "project/handoffs/ISSUE-0007-handoff.md:48",
+        "source": "file"
+      },
+      {
+        "detail": "The exact diff passes git diff --check.",
+        "reference": "git diff --check d1df24760a878cf976f69fd153eb3954c3a5e028..54e207a04b1c5f86cc18c3f4860977e4d8dd6f0d",
+        "source": "check"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: documentation changed with behavior remains accurate, including commands and their stated results.",
+          "Observed: ISSUE-0007 adds two tests and its approved record expects 85 tests, but README.md still tells users the suite contains 83 tests.",
+          "The focused auth suite independently confirms the two new tests run and pass; the full-suite command independently discovers 85 tests before sandbox-denied socket binding causes 22 errors."
+        ],
+        "id": "ISSUE-0007-F001",
+        "locations": [
+          {
+            "line": 250,
+            "path": "README.md"
+          }
+        ],
+        "remediation": "Update the README verification comment from 83 tests to 85 tests, and check other user-facing test-count statements affected by this issue. Because this changes the reviewed commit, rerun all required checks and obtain a fresh review against the new SHA.",
+        "severity": "low",
+        "title": "README retains the obsolete 83-test count",
+        "verification": "Run `rg -n \"83 tests|85 tests\" README.md` and `python3 -m unittest discover -s tests`; confirm the README matches the discovered passing total."
+      }
+    ],
+    "limitations": [
+      "Independent execution evidence is incomplete: the full suite could not bind loopback sockets, py_compile could not create bytecode cache files, and validate_repo.py could not create a temporary directory under the read-only sandbox.",
+      "No live Microsoft tenant sign-in or Graph request was performed. The approved issue does not require that protected action, so delegated consent behavior remains covered only by request construction and mocked tests.",
+      "The author-recorded successful out-of-band checks cannot independently establish success under the binding review rules."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "54e207a04b1c5f86cc18c3f4860977e4d8dd6f0d",
+    "schema_version": "1.0",
+    "summary": "The scope narrowing and its focused tests are correct, but this review is blocked because all three required repository-wide checks could not complete independently in the read-only sandbox. One required documentation defect was also found: README.md still reports 83 tests after the suite increased to 85.",
+    "target_id": "ISSUE-0007"
+  },
+  "test_only": false
+}

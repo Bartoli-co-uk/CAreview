@@ -1,0 +1,133 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-27T18:19:18Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa4cb-ddcf-7cb1-8612-23e589a516ad"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "Target commit matches repository HEAD exactly; git status showed no changes.",
+        "reference": "605c282c5c819d568a6dc701fff7e55653081058",
+        "source": "command"
+      },
+      {
+        "detail": "ROADMAP.md exists and identifies v4 as the unapproved roadmap-review candidate.",
+        "reference": "ROADMAP.md:6",
+        "source": "file"
+      },
+      {
+        "detail": "The governance validator could not execute because the read-only environment offered no writable temporary directory.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The full unit suite could not complete because socket creation/binding is prohibited; 22 server integration tests errored for that environmental reason.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "A separate compile attempt could not create __pycache__ in the read-only checkout.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "The roadmap sequences five M2 issues after M1 and binds implementation to prior brief/risk decisions, fresh issue reviews, milestone reviews, and exact human approval.",
+        "reference": "ROADMAP.md:163",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "AGENTS.md requires independently run checks and requires BLOCKED when non-security evidence cannot be verified.",
+          "The governance validator failed before validation because tempfile could not find a writable directory.",
+          "The full unit suite reached its server tests but 22 tests errored because the sandbox prohibited loopback socket binding.",
+          "The compile check could not write bytecode cache files in the read-only checkout."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 217,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Re-run the roadmap review in a read-only candidate checkout that nevertheless provides a writable temporary/cache directory and permits loopback test sockets; run the validator, full unit suite, and compile check without modifying the candidate tree.",
+        "severity": "medium",
+        "title": "Required baseline verification cannot be completed in this review environment",
+        "verification": "Record exit status 0 and relevant output for `python3 scripts/validate_repo.py`, `python3 -m unittest discover -s tests`, and a compile check configured to write caches outside the candidate checkout."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "ISSUE-0008 tests silent renewal only at the AuthManager layer.",
+          "ISSUE-0009 requires `/api/policies` and `/api/analysis` to work after app-only sign-in, but does not require either endpoint to be tested after token expiry.",
+          "Current server endpoints obtain credentials exclusively through `AUTH.get_token()`, so the integration between expiry-triggered renewal and Graph requests is a distinct failure boundary.",
+          "The milestone outcome promises silent renewal for the app-only session."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 202,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 203,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Add to ISSUE-0009 the smallest end-to-end mocked server tests showing that an expired app-only token causes silent renewal and then allows both `/api/policies` and `/api/analysis` to complete, plus a stable non-secret response when renewal fails.",
+        "severity": "medium",
+        "title": "Endpoint acceptance does not verify the promised expiry-renewal path",
+        "verification": "With mocked identity and Graph transports and a simulated expired token, verify one successful renewal feeds the new token to each Graph endpoint; also verify provider/network renewal failures produce documented status/error labels with no secret or stack disclosure."
+      },
+      {
+        "blocking": false,
+        "classification": "ADVISORY",
+        "confidence": "high",
+        "evidence": [
+          "The tracked-file verification text says `validate_repo.py` helps cover secret-shaped content.",
+          "Inspection found no secret, credential, entropy, or known-secret scanning logic in `scripts/validate_repo.py`; its tracked-file logic checks repository cleanliness instead.",
+          "The roadmap separately and correctly requires reviewer inspection and prohibits real credentials in agent tasks."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 227,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Clarify that `validate_repo.py` checks governance/cleanliness rather than detecting secrets, and describe tracked-file credential hygiene as a process prohibition plus explicit per-diff reviewer inspection. Do not claim that arbitrary real secrets can be conclusively detected offline.",
+        "severity": "low",
+        "title": "Tracked-file secret-check description overstates validator coverage",
+        "verification": "Inspect `ROADMAP.md` and `scripts/validate_repo.py` together and confirm each claimed control corresponds to an implemented check or is explicitly labeled manual/process evidence."
+      }
+    ],
+    "limitations": [
+      "The checkout is a grafted single-commit view, so the target's parent diff is unavailable; review used the complete target records and current source tree.",
+      "No live Microsoft authentication or Graph request was attempted because it is a protected action and explicitly outside plan-review evidence.",
+      "Execution failures arose from sandbox restrictions rather than observed product failures, but repository rules still require a BLOCKED outcome when required evidence cannot be verified."
+    ],
+    "mode": "plan",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "605c282c5c819d568a6dc701fff7e55653081058",
+    "schema_version": "1.0",
+    "summary": "Target identity and roadmap binding are valid, and the M2 sequence is generally coherent. The review is blocked because required baseline checks cannot run in this read-only, socket-restricted environment. One roadmap change is also required: verify silent renewal through the actual policy and analysis endpoints, not only inside AuthManager.",
+    "target_id": ""
+  },
+  "test_only": false
+}

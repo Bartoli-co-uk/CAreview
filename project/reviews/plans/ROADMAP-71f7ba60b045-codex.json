@@ -1,0 +1,188 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-27T18:14:29Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa4c7-933d-70a0-94fb-dc727a36e718"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "Repository HEAD exactly matches the launcher-supplied target commit.",
+        "reference": "71f7ba60b045abda0f7875e114608b75b076f625",
+        "source": "check"
+      },
+      {
+        "detail": "The required target record exists and identifies itself as roadmap v4, DRAFT, pending review and exact human approval.",
+        "reference": "ROADMAP.md:6",
+        "source": "file"
+      },
+      {
+        "detail": "CURRENT.md consistently records ROADMAP_REVIEW as the current gate and prohibits M2 implementation before review and approval.",
+        "reference": "project/status/CURRENT.md:1",
+        "source": "file"
+      },
+      {
+        "detail": "The governance validator was attempted but exited with status 1 because the read-only environment provided no writable temporary directory.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "command"
+      },
+      {
+        "detail": "git diff --check completed successfully, and the inspected working tree had no reported changes.",
+        "reference": "git diff --check",
+        "source": "command"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "`python3 scripts/validate_repo.py` raised `FileNotFoundError: No usable temporary directory found` while creating its plan-validator temporary directory.",
+          "AGENTS.md requires real governance-validation evidence, and its review rules require BLOCKED when non-security evidence cannot be verified."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 216,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Rerun the unchanged governance validator against this exact candidate in a read-only review environment that supplies a writable temporary directory, and record its exit status and relevant output.",
+        "severity": "medium",
+        "title": "Required governance validation could not be executed",
+        "verification": "Run `python3 scripts/validate_repo.py` at commit 71f7ba60b045abda0f7875e114608b75b076f625 and confirm exit status 0."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "The M2 exit criterion describes the lifecycle as `field → POST body → memory → token request → discard`.",
+          "The approved retention decision and roadmap architecture require retaining the secret for the entire app-only session and silently reusing it for renewal.",
+          "This contradictory milestone criterion could cause security reviewers to assess or require the wrong lifecycle."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 173,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 131,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 17,
+            "path": "project/decisions/DECISION-014-app-only-secret-retention-and-risk002.md"
+          }
+        ],
+        "remediation": "Replace the terminal `discard` lifecycle with the approved lifecycle, including session retention, renewal reuse, and clearing on logout, mode supersession, or process exit.",
+        "severity": "high",
+        "title": "M2 exit criteria contradict the approved secret-retention model",
+        "verification": "Confirm every lifecycle description in ROADMAP.md matches DECISION-014 and that the M2 security-review criterion explicitly checks retention, renewal, and all clearing events."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "The M2 exit criterion requires the submitted secret to appear in no tracked file.",
+          "The verification strategy requires tests to submit a synthetic secret literal and explicitly permits that literal in the repository.",
+          "Taken literally, the exit criterion is impossible because the submitted test secret is itself tracked test content."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 173,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 221,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 226,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Distinguish real credentials from the committed synthetic test sentinel. Require that no real secret enters tracked files and that the synthetic submitted sentinel is absent from responses, exceptions, reprs, and logs outside its deliberate test definitions.",
+        "severity": "medium",
+        "title": "Tracked-file secret criterion is internally impossible",
+        "verification": "Review the revised milestone and verification language together and confirm a test can use a committed synthetic sentinel without violating the milestone exit criterion, while real-secret hygiene remains mandatory."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "ISSUE-0009 requires a README API-section update in the same change, but README.md is absent from its allowed paths.",
+          "ISSUE-0010 likewise requires a README toggle description while README.md is absent from its allowed paths.",
+          "The boundaries therefore prevent two issues from satisfying their own documentation acceptance criteria."
+        ],
+        "id": "F-004",
+        "locations": [
+          {
+            "line": 212,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 213,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Add README.md to the allowed paths for ISSUE-0009 and ISSUE-0010, or move those documentation requirements to an issue whose allowed scope includes README.md without weakening the same-change documentation rule.",
+        "severity": "medium",
+        "title": "Issue path boundaries exclude required documentation changes",
+        "verification": "For each M2 issue, cross-check every required artifact in its acceptance criteria and documentation column against its allowed-path list."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "medium",
+        "evidence": [
+          "The architecture says both modes share a generation counter and that starting either mode supersedes pending state.",
+          "ISSUE-0008 tests ordinary supersession and logout clearing but does not require tests where logout or another start occurs during an in-flight initial client-credentials request or silent renewal.",
+          "The existing device-code implementation explicitly guards these races; an app-only stale response could otherwise restore a token or retained secret after logout/supersession."
+        ],
+        "id": "F-005",
+        "locations": [
+          {
+            "line": 122,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 201,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Add acceptance tests for logout and cross-mode/new-app-start races during both initial app-only acquisition and silent renewal, requiring stale completions not to restore token, session, or secret state.",
+        "severity": "high",
+        "title": "App-only lifecycle criteria omit in-flight stale-response safety",
+        "verification": "Use blocking mock transports to trigger logout and newer starts while acquisition and renewal are in flight; assert the stale calls cannot install a token or retain/recreate secret state."
+      }
+    ],
+    "limitations": [
+      "The governance validator could not complete because the review sandbox exposed no writable temporary directory; this is an environment evidence gap, not evidence that the candidate fails validation.",
+      "The checkout is grafted and does not contain the approved brief commit object `9ccf835`, so its historical object identity could not be independently resolved. The current brief text and committed DECISION-013/014 records were reviewable.",
+      "No live tenant or client-credentials authentication was attempted; the roadmap correctly classifies that as a separately approved protected action and an evidence gap rather than a planning completion condition.",
+      "No implementation agents or subagents were invoked, and no files were edited."
+    ],
+    "mode": "plan",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "71f7ba60b045abda0f7875e114608b75b076f625",
+    "schema_version": "1.0",
+    "summary": "The target identity is correct and the M2 sequence is broadly coherent, but the review is blocked by unavailable governance-validation evidence. The roadmap also requires correction before approval: its milestone lifecycle contradicts the approved session-retention decision, its tracked-file secret criterion is impossible as written, two issue boundaries exclude mandatory README changes, and app-only race-safety verification is incomplete.",
+    "target_id": ""
+  },
+  "test_only": false
+}

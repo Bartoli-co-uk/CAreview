@@ -269,8 +269,9 @@ locally are the checks that gate the repository — see
 - **Zero registration, zero build.** No Azure app registration, no client
   secret, no Node.js toolchain.
 - **Standard library only.** No third-party Python dependencies.
-- **Read-only, least privilege.** Delegated Graph scopes limited to
-  `Policy.Read.All`, `Application.Read.All` and `Directory.Read.All`.
+- **Read-only, least privilege.** Delegated Graph scope limited to
+  `Policy.Read.All` — the only Graph call CAreview makes is to
+  `identity/conditionalAccess/policies`.
 
 The MVP is deliberately focused: sign in → fetch → score → findings → per-policy
 visualization. CIS-17 alignment, the FOCI database, persona scoring, baseline

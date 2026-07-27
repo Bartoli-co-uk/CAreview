@@ -1,0 +1,129 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-27T22:32:44Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa5b4-6914-7963-9536-35f89bc34268"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "f3b5414a4f2d3104d11bbb1ce6d5669a58123e79",
+    "evidence": [
+      {
+        "detail": "The checkout is detached at the exact target commit and the worktree was clean before review.",
+        "reference": "git status --short --branch; git rev-parse HEAD",
+        "source": "command"
+      },
+      {
+        "detail": "Both launcher-supplied commit identities resolve exactly.",
+        "reference": "git rev-parse 1d557b3840f716ad0d25a0f6d4be407cdeeb221b^{commit}; git rev-parse f3b5414a4f2d3104d11bbb1ce6d5669a58123e79^{commit}",
+        "source": "command"
+      },
+      {
+        "detail": "The diff changes the five allowed implementation paths plus issue governance, handoff, and status records; no out-of-scope product source was changed.",
+        "reference": "git diff --name-status f3b5414a4f2d3104d11bbb1ce6d5669a58123e79..1d557b3840f716ad0d25a0f6d4be407cdeeb221b",
+        "source": "diff"
+      },
+      {
+        "detail": "The required manual evidence says the submit used a synthetic tenant/client ID and was expected to fail; it does not document the acceptance criterion's successful-submit checkpoint.",
+        "reference": "project/handoffs/ISSUE-0010-handoff.md",
+        "source": "file"
+      },
+      {
+        "detail": "Independent unittest execution ran 172 tests but ended with 68 errors because the read-only sandbox prohibits loopback socket binding; the errors were PermissionError from ThreadingHTTPServer.bind, not assertion failures.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Independent compile execution failed because the read-only sandbox prohibited creation of __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Independent governance validation could not complete because no writable temporary directory was available.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The committed handoff records author-side results of 172 tests passing, compile exit 0, governance validation passing, and a human-performed browser walkthrough, but repository rules treat these as claims until independently verified.",
+        "reference": "project/handoffs/ISSUE-0010-handoff.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: acceptance criterion 4 and the README/handoff guarantee require the secret field to be cleared immediately after every submit attempt, including failure/error paths.",
+          "Observed: submitAppOnly reads the secret at line 167, awaits postJson at lines 181-185, and clears the field only at line 188 after the promise resolves.",
+          "postJson at lines 41-48 does not catch fetch rejection. If the server is unavailable, the connection drops, or fetch otherwise rejects, control never reaches line 188; the secret remains in the DOM and the user receives an unhandled rejection rather than a stable status.",
+          "The static test only searches a fixed source slice for the presence of clearAppOnlySecretField(); it does not verify ordering relative to await or rejection behavior."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 163,
+            "path": "web/app.js"
+          },
+          {
+            "line": 105,
+            "path": "tests/test_ui_safety.py"
+          },
+          {
+            "line": 84,
+            "path": "README.md"
+          }
+        ],
+        "remediation": "Clear the input before awaiting network completion, or use try/finally so clearing is guaranteed on both resolved and rejected requests. Handle fetch rejection with a stable, non-secret error status. Strengthen verification to cover the rejection path and assert that clearing cannot occur only after the await.",
+        "severity": "high",
+        "title": "A rejected app-only request leaves the client secret in the DOM",
+        "verification": "Exercise submit with fetch rejecting or the local server unavailable and verify immediately that the password field is empty, no unhandled rejection occurs, and a stable error is displayed; rerun all required checks."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: ISSUE-0010 acceptance criterion 9 requires a documented browser checkpoint after a successful submit, as well as mode switch and logout.",
+          "Observed: the handoff explicitly says the submit was expected to fail because no real tenant was used. Its reported empty-field result therefore does not verify the successful-submit transition that hides the app-only form and starts live analysis.",
+          "The issue record labels this criterion met despite the mismatch between the required and performed walkthrough."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 9,
+            "path": "project/issues/ISSUE-0010.md"
+          },
+          {
+            "line": 60,
+            "path": "project/handoffs/ISSUE-0010-handoff.md"
+          }
+        ],
+        "remediation": "Perform and record the approved successful-submit walkthrough using a controlled local/mock success path that does not require live credentials or a protected live-tenant action. Record the field/DOM/console observations at the successful-submit checkpoint. If such verification cannot be performed within approved constraints, mark the evidence missing and seek a human decision rather than claiming the criterion is met.",
+        "severity": "medium",
+        "title": "Required successful-submit browser evidence is missing",
+        "verification": "Confirm the committed handoff identifies the exact candidate, method, synthetic inputs, successful response, and observed empty secret field plus clean DOM/console/storage after success, mode switch, and logout."
+      }
+    ],
+    "limitations": [
+      "The sandbox is read-only and denies loopback socket binding, bytecode-cache writes, and temporary-directory creation. Consequently unittest, py_compile, and governance validation could not be independently completed; repository rules require BLOCKED when required evidence cannot be verified.",
+      "No browser automation or interactive browser was available, so the human-reported walkthrough could only be assessed from its committed record, not independently reproduced.",
+      "No live tenant or real credential was used, consistent with the protected-action restrictions."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "1d557b3840f716ad0d25a0f6d4be407cdeeb221b",
+    "schema_version": "1.0",
+    "summary": "Review is blocked by independently unverified required checks and missing successful-submit browser evidence. The candidate also has a high-severity error-path defect: when fetch rejects, app-only submission never clears the secret field because clearing occurs only after the awaited request resolves.",
+    "target_id": "ISSUE-0010"
+  },
+  "test_only": false
+}

@@ -1,0 +1,79 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-27T22:47:33Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa5c1-e26b-7962-a8ba-5835c428c74f"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "f3b5414a4f2d3104d11bbb1ce6d5669a58123e79",
+    "evidence": [
+      {
+        "detail": "Launcher-bound identities were confirmed: HEAD and target resolve to 2a2d0b73e94d2635a645728e5b78f7f500c0a6b2; base resolves to f3b5414a4f2d3104d11bbb1ce6d5669a58123e79. The working tree was clean.",
+        "reference": "git status --short; git rev-parse HEAD; git rev-parse f3b5414a4f2d3104d11bbb1ce6d5669a58123e79",
+        "source": "command"
+      },
+      {
+        "detail": "The base-to-target diff changes 10 paths: README.md, the issue/handoff/status records, two prior review records, tests/test_ui_safety.py, and the three web assets. No server.py, auth.py, graph.py, dependency, build-toolchain, or CSP relaxation change is present.",
+        "reference": "git diff --name-status f3b5414a4f2d3104d11bbb1ce6d5669a58123e79 2a2d0b73e94d2635a645728e5b78f7f500c0a6b2",
+        "source": "diff"
+      },
+      {
+        "detail": "The final source implements the default device-code view, explicit app-only toggle, password/autocomplete-off secret input, caution text, tenant-alias rejection, JSON-body submission, and secret clearing on validation failure, both mode switches, request settlement via finally, and logout.",
+        "reference": "web/index.html:21; web/index.html:38; web/app.js:113; web/app.js:139; web/app.js:145; web/app.js:149; web/app.js:155; web/app.js:163",
+        "source": "file"
+      },
+      {
+        "detail": "The issue-specific static UI safety suite independently passed all 16 tests, including the rejected-fetch finally-path assertion and checks against console, storage, cookies, URLs, query strings, dangerous DOM sinks, and CSP changes.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_ui_safety -v (exit 0)",
+        "source": "check"
+      },
+      {
+        "detail": "The handoff records all required browser checkpoints: password/autocomplete attributes, both mode-switch directions, failed submit, successful submit through a local mock-success server, logout, and absence of the synthetic secret from console/storage. This evidence was human-performed and is explicitly identified as such.",
+        "reference": "project/handoffs/ISSUE-0010-handoff.md:196",
+        "source": "file"
+      },
+      {
+        "detail": "CURRENT.md now records ISSUE-0010 as active in final repair round 2, identifies both earlier candidate SHAs and findings, reports 173 tests, points to the round-2 review action, and prohibits merge before review resolution.",
+        "reference": "project/status/CURRENT.md:24",
+        "source": "file"
+      },
+      {
+        "detail": "The full prescribed test suite executed 173 tests but exited 1 with 68 errors because the review sandbox denied every attempted loopback socket bind with PermissionError: Operation not permitted.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests (exit 1)",
+        "source": "check"
+      },
+      {
+        "detail": "The prescribed compile check exited 1 because the read-only sandbox denied creation of __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py') (exit 1)",
+        "source": "check"
+      },
+      {
+        "detail": "The governance validator exited 1 because the read-only sandbox provided no usable temporary directory for its launcher smoke checks.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate_repo.py (exit 1)",
+        "source": "check"
+      }
+    ],
+    "findings": [],
+    "limitations": [
+      "Independent execution evidence is incomplete: the full test, compile, and governance commands failed because the isolated review sandbox prohibits loopback socket binding and filesystem writes. Repository-recorded claims that these checks passed outside the sandbox cannot replace successful reviewer execution under the binding and AGENTS.md evidence rules.",
+      "The isolated checkout is grafted and omits intermediate commit objects, including round-1 SHA 451dbe236769760c2384ab3f198c1f5b11f7c1ae. Consequently, the round-1-to-round-2 metadata-only diff could not be independently generated; the complete base-to-target diff and final tree were reviewed.",
+      "The successful-submit and other runtime browser checkpoints are supported by a human-reported walkthrough recorded in the handoff, not independently repeated during this read-only review because the sandbox cannot bind a local server and no browser-automation facility is available.",
+      "No live Entra tenant authentication was performed. The approved issue explicitly excludes it as a protected action and does not make it an acceptance criterion."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "2a2d0b73e94d2635a645728e5b78f7f500c0a6b2",
+    "schema_version": "1.0",
+    "summary": "No actionable source, scope, documentation, security, or maintainability defect was identified in the reviewed base-to-target diff, and the issue-specific static UI suite passed. The review is nevertheless BLOCKED because all three prescribed repository-wide checks failed under sandbox restrictions, so required independent execution evidence is unavailable. Per the binding, a PASS outcome is prohibited when execution failed or evidence is missing.",
+    "target_id": "ISSUE-0010"
+  },
+  "test_only": false
+}

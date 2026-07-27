@@ -17,18 +17,45 @@
   <main>
     <section id="signin" class="card">
       <h2>Sign in</h2>
-      <p>Sign in to your Microsoft Entra tenant to read Conditional Access policies.</p>
-      <label class="tenant">Tenant
-        <input id="tenant" type="text" value="organizations"
-               autocomplete="off" spellcheck="false">
-      </label>
-      <button id="signin-btn" type="button">Sign in</button>
-      <button id="signout-btn" type="button" hidden>Sign out</button>
-      <div id="devicecode" class="devicecode" hidden>
-        <p>To sign in, open <a id="dc-link" href="#" target="_blank" rel="noopener noreferrer">the Microsoft sign-in page</a>
-           and enter the code:</p>
-        <p class="code" id="dc-code"></p>
+
+      <div id="devicecode-mode">
+        <p>Sign in to your Microsoft Entra tenant to read Conditional Access policies.</p>
+        <label class="tenant">Tenant
+          <input id="tenant" type="text" value="organizations"
+                 autocomplete="off" spellcheck="false">
+        </label>
+        <button id="signin-btn" type="button">Sign in</button>
+        <div id="devicecode" class="devicecode" hidden>
+          <p>To sign in, open <a id="dc-link" href="#" target="_blank" rel="noopener noreferrer">the Microsoft sign-in page</a>
+             and enter the code:</p>
+          <p class="code" id="dc-code"></p>
+        </div>
+        <p class="mode-toggle">
+          <button id="app-only-toggle-btn" type="button" class="link-btn">Use app-only sign-in (advanced)</button>
+        </p>
       </div>
+
+      <div id="app-only-mode" hidden>
+        <p class="caution">Advanced: sign in using an Entra app registration's
+          client credentials instead of your own account. The client secret
+          you enter below grants whatever Microsoft Graph application
+          permissions that app registration already holds in this tenant —
+          treat it like a password.</p>
+        <label>Tenant ID or domain
+          <input id="app-only-tenant" type="text" autocomplete="off" spellcheck="false"
+                 placeholder="contoso.onmicrosoft.com or a GUID">
+        </label>
+        <label>Client (application) ID
+          <input id="app-only-client-id" type="text" autocomplete="off" spellcheck="false">
+        </label>
+        <label>Client secret
+          <input id="app-only-secret" type="password" autocomplete="off" spellcheck="false">
+        </label>
+        <button id="app-only-submit-btn" type="button">Sign in with app-only credentials</button>
+        <button id="app-only-cancel-btn" type="button" class="link-btn">Back to standard sign-in</button>
+      </div>
+
+      <button id="signout-btn" type="button" hidden>Sign out</button>
       <p id="auth-status" class="badge" hidden></p>
     </section>
 

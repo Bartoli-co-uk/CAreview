@@ -77,7 +77,9 @@ behaviour, ahead of the M2 app-only work that touches the same constant.
 
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
-| 0 | `project/handoffs/ISSUE-0007-handoff.md` | (this branch HEAD) | 85 tests pass; compile clean; validator passed | pending | pending |
+| 0 | `project/handoffs/ISSUE-0007-handoff.md` | `54e207a04b1c5f86cc18c3f4860977e4d8dd6f0d` | 85 tests pass; compile clean; validator passed | `project/reviews/issues/ISSUE-0007-54e207a04b1c-codex.json` | `BLOCKED` — F001 (README stale 83-test count) + sandbox execution-evidence limitations (accepted residual, `DECISION-015`) |
+| 1 | `project/handoffs/ISSUE-0007-handoff.md` (Repair round 1 section) | `79f28638411dd82e04cf3d836baef86ad664cb44` | 85 tests pass; compile clean; validator passed | `project/reviews/issues/ISSUE-0007-79f28638411d-codex.json` | `BLOCKED` — F001 (second stale 83-test count in README) + F002 (CURRENT.md/ISSUE-0007.md not synced with round-0 review) + sandbox execution-evidence limitations (accepted residual) |
+| 2 | `project/handoffs/ISSUE-0007-handoff.md` (Repair round 2 section) | (this branch HEAD) | 85 tests pass; compile clean; validator passed | pending | pending |
 
 Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
 No workflow loop may exceed five total iterations; the tighter two-round issue

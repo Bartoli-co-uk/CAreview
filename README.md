@@ -220,7 +220,7 @@ documented at the bottom of [`rules.py`](rules.py).
 | [`rules.py`](rules.py) | The declarative rule set: ten rules with severity, weight, rationale, remediation and required fields, plus the evaluability model. |
 | [`analyzer.py`](analyzer.py) | Runs the rules over normalized policies, computes the weighted score, and returns severity-sorted findings. |
 | [`web/`](web/) | The UI — `index.html`, `app.js`, `style.css`, and the sanitized `sample-data.json`. No frameworks, no external assets. Untrusted tenant strings are inserted as text, never HTML. |
-| [`tests/`](tests/) | 83 unit tests plus sanitized fixtures (`strong`, `weak`, `incomplete` tenants). Fully offline — no sign-in, no network. |
+| [`tests/`](tests/) | 85 unit tests plus sanitized fixtures (`strong`, `weak`, `incomplete` tenants). Fully offline — no sign-in, no network. |
 
 The remaining top-level directories (`docs/`, `project/`, `prompts/`,
 `scripts/`, `.claude/`, `.codex/`) belong to the build process rather than the

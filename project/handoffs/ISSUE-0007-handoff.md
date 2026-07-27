@@ -91,3 +91,29 @@ execution-evidence limitations that are an accepted residual under
   `python3 scripts/validate_repo.py` → "Repository validation passed (67
   required files checked)."
 - This is round 1 of at most two permitted issue repair rounds.
+
+## Repair round 2
+
+Round-1 Codex re-review (`project/reviews/issues/ISSUE-0007-79f28638411d-codex.json`,
+candidate `79f28638411dd82e04cf3d836baef86ad664cb44`) returned `BLOCKED` with
+two required findings plus the same accepted sandbox-limitation residual:
+
+- **F001 fix:** `README.md`'s code-layout table still said "83 unit tests"
+  (`README.md:223`, a second location the round-0 repair missed). Updated to
+  "85 unit tests". Confirmed no other stale "83" count remains anywhere in
+  `README.md` or `docs/`.
+- **F002 fix:** `project/status/CURRENT.md` and `project/issues/ISSUE-0007.md`
+  did not yet reflect the round-0 and round-1 reviews. Updated both: the
+  issue's round table now binds rounds 0 and 1 to their exact candidate SHAs,
+  committed report paths, and `BLOCKED` outcomes; `CURRENT.md`'s resume
+  point, repair-round count, reviewed-commit, latest-Codex-issue-review, and
+  next-permitted-action fields now describe this as round 2 of 2 permitted
+  repair rounds.
+- Rechecked after both fixes: `python3 -m unittest discover -s tests` → 85
+  passed, exit 0; `python3 -m py_compile $(git ls-files '*.py')` → exit 0;
+  `python3 scripts/validate_repo.py` → "Repository validation passed (67
+  required files checked)."
+- This is round 2 of at most two permitted issue repair rounds — the last
+  one available. If the next Codex review reports any finding beyond the
+  accepted sandbox-limitation residual, this issue task must stop and
+  present the unresolved findings to the human rather than repair again.

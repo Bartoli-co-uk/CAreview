@@ -5,7 +5,7 @@
 **Approved roadmap:** `ROADMAP.md` version `4` at `9e5ba6d2f6c2b7f7efa81dcfc415e1f787aaa458` (approved by `DECISION-015`)
 **Dependencies:** `ISSUE-0007` (COMPLETE, `DECISION-016`); `DECISION-014` (retention model, `RISK-002` acceptance)
 **Branch:** `ai/ISSUE-0008-app-only-token`
-**Starting SHA:** `e088b33fb78953e9b351618ae3d23bb751bf690f` (main tip after ISSUE-0007's merge, `0c35851`)
+**Starting SHA:** `e088b33fb78953e9b351618ae3d23bb751bf690f`
 **Candidate SHA:** `this commit (branch HEAD); the launcher records the full SHA`
 
 ## Objective

@@ -79,16 +79,25 @@ behaviour, ahead of the M2 app-only work that touches the same constant.
 |---:|---|---|---|---|---|
 | 0 | `project/handoffs/ISSUE-0007-handoff.md` | `54e207a04b1c5f86cc18c3f4860977e4d8dd6f0d` | 85 tests pass; compile clean; validator passed | `project/reviews/issues/ISSUE-0007-54e207a04b1c-codex.json` | `BLOCKED` — F001 (README stale 83-test count) + sandbox execution-evidence limitations (accepted residual, `DECISION-015`) |
 | 1 | `project/handoffs/ISSUE-0007-handoff.md` (Repair round 1 section) | `79f28638411dd82e04cf3d836baef86ad664cb44` | 85 tests pass; compile clean; validator passed | `project/reviews/issues/ISSUE-0007-79f28638411d-codex.json` | `BLOCKED` — F001 (second stale 83-test count in README) + F002 (CURRENT.md/ISSUE-0007.md not synced with round-0 review) + sandbox execution-evidence limitations (accepted residual) |
-| 2 | `project/handoffs/ISSUE-0007-handoff.md` (Repair round 2 section) | (this branch HEAD) | 85 tests pass; compile clean; validator passed | pending | pending |
+| 2 | `project/handoffs/ISSUE-0007-handoff.md` (Repair round 2 section) | `b314d82087f36b5fadae3119410e838ec2255997` | 85 tests pass; compile clean; validator passed | `project/reviews/issues/ISSUE-0007-b314d82087f3-codex.json` | `BLOCKED` — zero findings; sole blocker is the sandbox execution-evidence limitation (accepted residual, `DECISION-015`) |
 
-Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
-No workflow loop may exceed five total iterations; the tighter two-round issue
-limit applies first, and exhaustion blocks for the human.
+Maximum two repair rounds — **both used**. Round 2 was the last permitted
+repair round; no further Claude-initiated repair may occur in this task.
+Every Codex review/re-review must be a new ephemeral read-only process
+against the named SHA. No workflow loop may exceed five total iterations;
+the tighter two-round issue limit applies first, and exhaustion blocks for
+the human.
 
 ## Completion
 
-- Final reviewed product SHA: `pending`
-- Human advance/merge decision: `pending`
+- Final reviewed product SHA: `b314d82087f36b5fadae3119410e838ec2255997` — clean of
+  all actionable findings; `BLOCKED` solely on the accepted sandbox
+  execution-evidence residual.
+- Human advance/merge decision: `pending` — per `AGENTS.md`'s completion
+  standard and the `DECISION-010` precedent for the analogous ISSUE-0006
+  case, this requires an explicit human decision even though no product
+  defect remains; this Claude task does not decide it.
 - Merge/result SHA: `pending`
-- Residual risks or follow-up: none identified
-- Status record updated: `pending`
+- Residual risks or follow-up: none identified beyond the accepted,
+  previously-approved sandbox execution-evidence limitation.
+- Status record updated: this commit.

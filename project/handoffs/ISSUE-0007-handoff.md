@@ -117,3 +117,22 @@ two required findings plus the same accepted sandbox-limitation residual:
   one available. If the next Codex review reports any finding beyond the
   accepted sandbox-limitation residual, this issue task must stop and
   present the unresolved findings to the human rather than repair again.
+
+## Round-2 review result and stop point
+
+The round-2 Codex review (`project/reviews/issues/ISSUE-0007-b314d82087f3-codex.json`,
+candidate `b314d82087f36b5fadae3119410e838ec2255997`) returned `BLOCKED` with
+`findings: []` — zero actionable defects. The sole blocker is the same
+sandbox execution-evidence limitation present in every prior round: the
+read-only checkout cannot bind loopback sockets, write `__pycache__`, or
+create a temp directory, so the three required repository-wide checks
+cannot complete independently inside the review process itself, even though
+they pass locally and their real output is recorded above.
+
+Both permitted issue repair rounds are now used. Per `AGENTS.md`'s
+completion standard ("the human has made any required advance or merge
+decision") and the `DECISION-010` precedent — where the same
+sandbox-only-blocker pattern on `ISSUE-0006` required an explicit human
+closeout decision despite zero product findings — this Claude task stops
+here and presents the clean round-2 result to the human rather than
+unilaterally marking `ISSUE-0007` complete or starting `ISSUE-0008`.

@@ -1,13 +1,27 @@
-"""OAuth 2.0 device-code authentication for CAreview (ISSUE-0002).
+"""OAuth 2.0 device-code and app-only authentication for CAreview.
 
-Uses the Microsoft Graph PowerShell first-party public client to obtain a
-delegated Microsoft Graph token via the device-code flow. No client secret and no
-Azure app registration are involved. Tokens live only in this process's memory and
-are never written to disk, logs, or the repository.
+Device-code flow (ISSUE-0002) uses the Microsoft Graph PowerShell first-party
+public client to obtain a delegated Microsoft Graph token. No client secret and
+no Azure app registration are involved.
 
-The manager is transport- and clock-injectable so the full poll state machine can
-be unit-tested without any network access or real sign-in. The default transport
-only ever contacts ``login.microsoftonline.com`` for the validated tenant.
+App-only flow (ISSUE-0008, opt-in, brief v2 / ``DECISION-014``) uses the OAuth
+2.0 client-credentials grant against a user-supplied tenant, app registration
+client ID, and client secret. Per ``DECISION-014``, the submitted secret is
+retained in this manager instance's memory for the whole app-only session (not
+discarded after the first request) and reused to silently mint a fresh token on
+expiry with no re-entry required; it is cleared on logout, on supersession by a
+new sign-in (either mode), and on process exit. It is never written to disk,
+logs, or any tracked file, and never appears in a returned value, a raised
+exception, or this manager's ``repr()`` — failures map to a small fixed set of
+local error labels rather than echoing provider response text.
+
+Tokens (either mode) live only in this process's memory and are never written to
+disk, logs, or the repository.
+
+The manager is transport- and clock-injectable so the full poll state machine and
+the app-only lifecycle can be unit-tested without any network access or real
+sign-in. The default transport only ever contacts ``login.microsoftonline.com``
+for the validated tenant.
 """
 
 from __future__ import annotations
@@ -43,6 +57,21 @@ SCOPES = "https://graph.microsoft.com/Policy.Read.All"
 DEFAULT_TENANT = "organizations"
 _TENANT_RE = re.compile(r"^[A-Za-z0-9._-]+$")
 
+# App-only mode requests whatever application permissions the app registration
+# already holds (brief A7: the client cannot request a narrower app-only scope).
+APP_ONLY_SCOPE = "https://graph.microsoft.com/.default"
+
+# App-only tenant validation is stricter than the device-code path's: the
+# multi-tenant aliases below are meaningless for a specific app registration's
+# client-credentials grant, and only a GUID or a DNS-style domain identifies one
+# tenant unambiguously (DECISION-014, brief v2 Q5).
+_APP_ONLY_DISALLOWED_TENANTS = frozenset({"organizations", "common", "consumers"})
+_GUID_RE = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
+_DOMAIN_LABEL = r"(?!-)[A-Za-z0-9-]{1,63}(?<!-)"
+_DOMAIN_RE = re.compile(rf"^{_DOMAIN_LABEL}(\.{_DOMAIN_LABEL})+$")
+
 Transport = Callable[[str, bytes], "tuple[int, dict]"]
 
 
@@ -56,6 +85,21 @@ def _safe_error(payload: dict) -> str:
     return str(value)[:200] if value else ""
 
 
+def _classify_app_only_error(status: int, payload: dict) -> str:
+    """Map any app-only failure to one of a small, fixed set of local labels.
+
+    Never returns provider-supplied text (error description, error code, or
+    any other field): the client secret must never be able to reach a raised
+    exception even if a compromised or misconfigured provider response were to
+    echo it back, literally, URL-encoded, or JSON-escaped.
+    """
+    if status == 0:
+        return "network_error"
+    if payload.get("error") == "bad_response":
+        return "invalid_response"
+    return "provider_error"
+
+
 def _authority(tenant: str) -> str:
     # Validate the tenant so it cannot redirect the request to another host
     # (SSRF/open-redirect defence): only a GUID or a simple label is allowed.
@@ -67,6 +111,31 @@ def _authority(tenant: str) -> str:
 def build_devicecode_request(tenant: str, client_id: str, scopes: str) -> tuple[str, bytes]:
     url = f"{_authority(tenant)}/oauth2/v2.0/devicecode"
     data = urllib.parse.urlencode({"client_id": client_id, "scope": scopes}).encode("utf-8")
+    return url, data
+
+
+def _app_only_authority(tenant: str) -> str:
+    # Reject the multi-tenant aliases and anything that is not a GUID or a
+    # DNS-style domain, before any outbound request (DECISION-014).
+    if tenant in _APP_ONLY_DISALLOWED_TENANTS:
+        raise AuthError("invalid_tenant")
+    if not (_GUID_RE.fullmatch(tenant) or _DOMAIN_RE.fullmatch(tenant)):
+        raise AuthError("invalid_tenant")
+    return f"https://login.microsoftonline.com/{tenant}"
+
+
+def build_client_credentials_request(
+    tenant: str, client_id: str, client_secret: str, scope: str = APP_ONLY_SCOPE
+) -> tuple[str, bytes]:
+    url = f"{_app_only_authority(tenant)}/oauth2/v2.0/token"
+    data = urllib.parse.urlencode(
+        {
+            "grant_type": "client_credentials",
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "scope": scope,
+        }
+    ).encode("utf-8")
     return url, data
 
 
@@ -156,6 +225,12 @@ class AuthManager:
         self._session: _Session | None = None
         self._access_token: str | None = None
         self._token_expires_at: float = 0.0
+        # App-only (client-credentials) state, retained for the session per
+        # DECISION-014 so get_token() can silently renew on expiry. None outside
+        # an active app-only session.
+        self._app_only_tenant: str | None = None
+        self._app_only_client_id: str | None = None
+        self._app_only_secret: str | None = None
 
     # -- sign-in lifecycle ------------------------------------------------
     def start(self, tenant: str = DEFAULT_TENANT) -> dict:
@@ -171,6 +246,9 @@ class AuthManager:
             self._session = None
             self._access_token = None
             self._token_expires_at = 0.0
+            self._app_only_tenant = None
+            self._app_only_client_id = None
+            self._app_only_secret = None
         url, data = build_devicecode_request(tenant, self.client_id, self.scopes)
         status, payload = self._transport(url, data)
         if status != 200 or "device_code" not in payload or "user_code" not in payload:
@@ -255,22 +333,111 @@ class AuthManager:
             return {"state": "error", "error": error or "unexpected_response"}
 
     def logout(self) -> None:
-        """Clear any pending session and token from memory."""
+        """Clear any pending session, token, and retained app-only secret."""
         with self._lock:
-            self._generation += 1  # invalidate any in-flight start()
+            self._generation += 1  # invalidate any in-flight start()/start_app_only()
             self._session = None
             self._access_token = None
             self._token_expires_at = 0.0
+            self._app_only_tenant = None
+            self._app_only_client_id = None
+            self._app_only_secret = None
 
-    # -- token access (used by later issues) ------------------------------
+    # -- app-only (client-credentials) lifecycle (ISSUE-0008) --------------
+    def start_app_only(self, tenant: str, client_id: str, client_secret: str) -> dict:
+        """Acquire an app-only token, superseding any prior session/token.
+
+        Validates ``tenant`` before touching any state or the network. On
+        success, retains ``client_secret`` for the session (DECISION-014) so
+        ``get_token()`` can silently renew. Raises ``AuthError`` with a stable
+        local label on any failure; the raw provider response is never
+        returned or retained.
+        """
+        _app_only_authority(tenant)  # raises AuthError("invalid_tenant") first
+        with self._lock:
+            self._generation += 1
+            generation = self._generation
+            # Immediately supersede any existing session/token/secret, mirroring
+            # start()'s single-concurrency guarantee.
+            self._session = None
+            self._access_token = None
+            self._token_expires_at = 0.0
+            self._app_only_tenant = None
+            self._app_only_client_id = None
+            self._app_only_secret = None
+        url, data = build_client_credentials_request(tenant, client_id, client_secret)
+        status, payload = self._transport(url, data)
+        with self._lock:
+            if generation != self._generation:
+                raise AuthError("superseded")
+            if status != 200 or "access_token" not in payload:
+                raise AuthError(_classify_app_only_error(status, payload))
+            try:
+                expires_in = int(payload.get("expires_in", 3600))
+            except (TypeError, ValueError):
+                raise AuthError("invalid_response")
+            self._access_token = payload["access_token"]
+            self._token_expires_at = self._clock() + expires_in
+            self._app_only_tenant = tenant
+            self._app_only_client_id = client_id
+            self._app_only_secret = client_secret
+            return {"state": "success"}
+
+    def _renew_app_only(self) -> bool:
+        """Silently mint a fresh app-only token from the retained secret.
+
+        Returns ``True`` if a valid token is installed afterward. The network
+        call happens outside the lock; the result is only installed if this
+        manager's generation has not changed meanwhile (logout or a new
+        sign-in during the call wins), mirroring ``poll()``'s stale-response
+        guard.
+        """
+        with self._lock:
+            if self._app_only_secret is None:
+                return False
+            generation = self._generation
+            tenant = self._app_only_tenant
+            client_id = self._app_only_client_id
+            secret = self._app_only_secret
+        url, data = build_client_credentials_request(tenant, client_id, secret)
+        status, payload = self._transport(url, data)
+        with self._lock:
+            if generation != self._generation:
+                return False
+            if status != 200 or "access_token" not in payload:
+                self._access_token = None
+                self._token_expires_at = 0.0
+                return False
+            try:
+                expires_in = int(payload.get("expires_in", 3600))
+            except (TypeError, ValueError):
+                expires_in = 3600
+            self._access_token = payload["access_token"]
+            self._token_expires_at = self._clock() + expires_in
+            return True
+
+    # -- token access -------------------------------------------------------
     def get_token(self) -> str | None:
-        """Return the access token if present and unexpired, else ``None``."""
+        """Return the access token if present and unexpired, else ``None``.
+
+        For an app-only session, an expired token triggers one silent renewal
+        attempt using the retained secret (DECISION-014) before giving up.
+        """
         with self._lock:
             if self._access_token is not None and self._clock() < self._token_expires_at:
                 return self._access_token
-            # Expired or absent: drop it. The MVP re-authenticates rather than
-            # refreshing (no refresh token is retained).
+            # Expired or absent: drop it. The device-code path re-authenticates
+            # rather than refreshing (no refresh token is retained); the
+            # app-only path below renews instead.
             self._access_token = None
+            has_app_only = self._app_only_secret is not None
+        if not has_app_only:
+            return None
+        if not self._renew_app_only():
+            return None
+        with self._lock:
+            if self._access_token is not None and self._clock() < self._token_expires_at:
+                return self._access_token
             return None
 
     def is_authenticated(self) -> bool:

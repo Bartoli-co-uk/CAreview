@@ -17,6 +17,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 APP_JS = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+INDEX_HTML = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+
+
+def _function_body(source: str, signature: str, length: int = 600) -> str:
+    start = source.index(signature)
+    return source[start:start + length]
 
 # Sinks that would let untrusted data become executable markup or code.
 _DANGEROUS_SINKS = (
@@ -66,6 +72,71 @@ class SampleDataHostileFixtureTests(unittest.TestCase):
     def test_sample_data_is_valid_json_no_scripts(self) -> None:
         raw = (ROOT / "web" / "sample-data.json").read_text(encoding="utf-8")
         self.assertNotIn("<script", raw.lower())
+
+
+class AppOnlyModeToggleTests(unittest.TestCase):
+    """Static checks for the app-only sign-in toggle/form (ISSUE-0010)."""
+
+    def test_default_view_is_device_code(self) -> None:
+        # The device-code container is visible by default...
+        self.assertIn('<div id="devicecode-mode">', INDEX_HTML)
+        # ...and the app-only container is hidden by default.
+        self.assertIn('<div id="app-only-mode" hidden>', INDEX_HTML)
+
+    def test_secret_input_is_password_with_autocomplete_off(self) -> None:
+        start = INDEX_HTML.index('id="app-only-secret"')
+        tag = INDEX_HTML[max(0, start - 80):start + 80]
+        self.assertIn('type="password"', tag)
+        self.assertIn('autocomplete="off"', tag)
+
+    def test_caution_text_present(self) -> None:
+        self.assertIn('class="caution"', INDEX_HTML)
+        caution_start = INDEX_HTML.index('class="caution"')
+        caution_text = INDEX_HTML[caution_start:caution_start + 400]
+        self.assertIn("grants", caution_text)
+        self.assertIn("password", caution_text)
+
+    def test_client_side_tenant_alias_rejection_mirrors_server(self) -> None:
+        start = APP_JS.index("APP_ONLY_DISALLOWED_TENANTS")
+        block = APP_JS[start:start + 200]
+        for alias in ("organizations", "common", "consumers"):
+            self.assertIn(alias, block)
+
+    def test_secret_field_cleared_on_submit(self) -> None:
+        body = _function_body(APP_JS, "async function submitAppOnly")
+        self.assertIn("clearAppOnlySecretField()", body)
+
+    def test_secret_field_cleared_on_mode_switch_both_directions(self) -> None:
+        to_app_only = _function_body(APP_JS, "function showAppOnlyMode")
+        self.assertIn("clearAppOnlySecretField()", to_app_only)
+        to_device_code = _function_body(APP_JS, "function showDeviceCodeMode")
+        self.assertIn("clearAppOnlySecretField()", to_device_code)
+
+    def test_secret_field_cleared_on_logout(self) -> None:
+        body = _function_body(APP_JS, "async function signOut")
+        self.assertIn("clearAppOnlySecretField()", body)
+
+    def test_secret_never_reaches_console_storage_or_cookies(self) -> None:
+        # The app has no legitimate reason to touch any of these for the
+        # secret (or anything else) — their outright absence is the
+        # strongest available static proof the secret cannot reach them.
+        for sink in ("console.", "localStorage", "sessionStorage", "document.cookie"):
+            self.assertNotIn(sink, APP_JS, f"app.js must not use {sink!r}")
+
+    def test_secret_sent_only_as_json_body_not_url_or_query_string(self) -> None:
+        submit_body = _function_body(APP_JS, "async function submitAppOnly", length=1200)
+        self.assertIn('postJson("/api/auth/app"', submit_body)
+        # The secret variable must only appear inside the JSON payload object
+        # passed to postJson, never concatenated into a URL/query string.
+        self.assertNotIn("clientSecret +", submit_body)
+        self.assertNotIn("+ clientSecret", submit_body)
+        self.assertNotIn("?", submit_body[: submit_body.index("clientSecret,")])
+
+    def test_csp_meta_unchanged(self) -> None:
+        self.assertIn(
+            "default-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'",
+            INDEX_HTML,
+        )
 
 
 if __name__ == "__main__":

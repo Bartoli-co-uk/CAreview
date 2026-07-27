@@ -116,6 +116,11 @@ async function signOut() {
   // cannot remain visible even briefly, and so it wins over any in-flight load.
   clearResults();
   setResultsState("sign in to see your tenant's analysis", null);
+  // The app-only secret field is cleared on logout (either mode may have been
+  // used to sign in), and the form resets to the default device-code view.
+  clearAppOnlySecretField();
+  document.getElementById("app-only-mode").hidden = true;
+  document.getElementById("devicecode-mode").hidden = false;
   await postJson("/api/auth/logout", {});
   showSignedOut();
   setAuthStatus("signed out", null);
@@ -124,6 +129,80 @@ async function signOut() {
 function initAuth() {
   document.getElementById("signin-btn").addEventListener("click", startSignIn);
   document.getElementById("signout-btn").addEventListener("click", signOut);
+}
+
+// -- App-only sign-in (ISSUE-0010) -------------------------------------------
+// Client-side mirror of the server's disallowed multi-tenant aliases
+// (auth.py/server.py, DECISION-014): these are meaningless for a specific app
+// registration's client-credentials grant, so reject them here before any
+// request is made, same as the server does.
+const APP_ONLY_DISALLOWED_TENANTS = new Set(["organizations", "common", "consumers"]);
+
+function isDisallowedAppOnlyTenant(tenant) {
+  return APP_ONLY_DISALLOWED_TENANTS.has(tenant.trim().toLowerCase());
+}
+
+function clearAppOnlySecretField() {
+  document.getElementById("app-only-secret").value = "";
+}
+
+function showAppOnlyMode() {
+  document.getElementById("devicecode-mode").hidden = true;
+  document.getElementById("app-only-mode").hidden = false;
+  clearAppOnlySecretField();
+}
+
+function showDeviceCodeMode() {
+  document.getElementById("app-only-mode").hidden = true;
+  document.getElementById("devicecode-mode").hidden = false;
+  // The secret field is cleared on every mode switch, in both directions,
+  // so it never lingers in the DOM once the form is no longer in view.
+  clearAppOnlySecretField();
+}
+
+async function submitAppOnly() {
+  stopPolling();
+  const tenant = document.getElementById("app-only-tenant").value.trim();
+  const clientId = document.getElementById("app-only-client-id").value.trim();
+  const clientSecret = document.getElementById("app-only-secret").value;
+
+  if (!tenant || !clientId || !clientSecret) {
+    clearAppOnlySecretField();
+    setAuthStatus("tenant, client ID, and client secret are all required", "error");
+    return;
+  }
+  if (isDisallowedAppOnlyTenant(tenant)) {
+    clearAppOnlySecretField();
+    setAuthStatus("tenant must be a specific tenant GUID or domain, not organizations/common/consumers", "error");
+    return;
+  }
+
+  setAuthStatus("signing in…", null);
+  const { ok, data } = await postJson("/api/auth/app", {
+    tenant,
+    client_id: clientId,
+    client_secret: clientSecret,
+  });
+  // The secret field is cleared immediately after every submit attempt,
+  // success or failure — it is never retained in the DOM past this point.
+  clearAppOnlySecretField();
+
+  if (!ok || data.state !== "success") {
+    setAuthStatus("app-only sign-in failed" + (data.error ? ": " + data.error : ""), "error");
+    return;
+  }
+  document.getElementById("app-only-mode").hidden = true;
+  document.getElementById("devicecode-mode").hidden = false;
+  document.getElementById("signin-btn").hidden = true;
+  document.getElementById("signout-btn").hidden = false;
+  setAuthStatus("signed in (app-only)", "ok");
+  loadLiveAnalysis();
+}
+
+function initAppOnly() {
+  document.getElementById("app-only-toggle-btn").addEventListener("click", showAppOnlyMode);
+  document.getElementById("app-only-cancel-btn").addEventListener("click", showDeviceCodeMode);
+  document.getElementById("app-only-submit-btn").addEventListener("click", submitAppOnly);
 }
 
 // -- Analysis rendering (ISSUE-0005) -----------------------------------------
@@ -300,5 +379,6 @@ function initResults() {
 document.addEventListener("DOMContentLoaded", () => {
   refreshHealth();
   initAuth();
+  initAppOnly();
   initResults();
 });

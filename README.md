@@ -78,6 +78,13 @@ Open <http://127.0.0.1:8765/> (`localhost` works too). Then either:
   `microsoft.com/devicelogin`. Once approved, the page automatically fetches
   your policies and renders the score, findings and policy cards. **Sign out**
   clears the in-memory token and the analysis.
+- **App-only sign-in (advanced)** — if you'd rather authenticate with an
+  Entra app registration's client credentials instead of your own account,
+  click **"Use app-only sign-in (advanced)"** on the Sign in card and enter
+  the tenant, client (application) ID, and client secret. The secret field
+  is never written to `localStorage`, `sessionStorage`, a cookie, the URL, or
+  the console, and is cleared from the page immediately after every submit,
+  on switching back to standard sign-in, and on sign-out.
 
 To use a different port: `CAREVIEW_PORT=8888 python3 server.py`.
 

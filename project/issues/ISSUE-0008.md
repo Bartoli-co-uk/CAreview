@@ -1,12 +1,13 @@
 # ISSUE-0008: App-only token acquisition inside auth.py only
 
-**Status:** `REVIEWING`
+**Status:** `COMPLETE`
 **Milestone:** `M2`
 **Approved roadmap:** `ROADMAP.md` version `4` at `9e5ba6d2f6c2b7f7efa81dcfc415e1f787aaa458` (approved by `DECISION-015`)
 **Dependencies:** `ISSUE-0007` (COMPLETE, `DECISION-016`); `DECISION-014` (retention model, `RISK-002` acceptance)
-**Branch:** `ai/ISSUE-0008-app-only-token`
+**Branch:** `ai/ISSUE-0008-app-only-token` (merged into `main`)
 **Starting SHA:** `e088b33fb78953e9b351618ae3d23bb751bf690f`
-**Candidate SHA:** `this commit (branch HEAD); the launcher records the full SHA`
+**Candidate SHA:** `205125474389932f02e7c484dd59ad612892ac4b` (round 1, final reviewed candidate)
+**Merge SHA:** `04e68ee930c44a6c6dc438dfab39c381b6105e6d` (merge commit on `main`)
 
 ## Objective
 
@@ -135,11 +136,8 @@ limit applies first, and exhaustion blocks for the human.
 - Final reviewed product SHA: `205125474389932f02e7c484dd59ad612892ac4b` —
   clean of all actionable findings; `BLOCKED` solely on the accepted sandbox
   execution-evidence residual.
-- Human advance/merge decision: `pending` — per `AGENTS.md`'s completion
-  standard and the `DECISION-010`/`DECISION-016` precedent, this requires an
-  explicit human decision even though no product defect remains; this
-  Claude task does not decide it.
-- Merge/result SHA: `pending`
+- Human advance/merge decision: `APPROVE` — `project/decisions/DECISION-017-issue-0008-advance-and-merge.md`.
+- Merge/result SHA: `04e68ee930c44a6c6dc438dfab39c381b6105e6d` (merge commit on `main`).
 - Residual risks or follow-up: none identified beyond `RISK-002`/`RISK-006`,
   already accepted by `DECISION-014`
 - Status record updated: this commit.

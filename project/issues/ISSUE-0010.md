@@ -1,12 +1,13 @@
 # ISSUE-0010: Sign-in card mode toggle and app-only form in web/
 
-**Status:** `AWAITING_HUMAN_DECISION`
+**Status:** `COMPLETE`
 **Milestone:** `M2`
 **Approved roadmap:** `ROADMAP.md` version `4` at `9e5ba6d2f6c2b7f7efa81dcfc415e1f787aaa458` (approved by `DECISION-015`)
 **Dependencies:** `ISSUE-0009` (COMPLETE, `DECISION-019`)
-**Branch:** `ai/ISSUE-0010-app-only-ui`
+**Branch:** `ai/ISSUE-0010-app-only-ui` (merged into `main`)
 **Starting SHA:** `f3b5414a4f2d3104d11bbb1ce6d5669a58123e79`
-**Candidate SHA:** this commit (branch HEAD); the launcher records the full SHA
+**Candidate SHA:** `2a2d0b73e94d2635a645728e5b78f7f500c0a6b2` (round 2, final reviewed candidate)
+**Merge SHA:** `9d346f64422bf9bd5f89b43837a5f62f3e64d09b` (merge commit on `main`)
 
 ## Objective
 
@@ -122,14 +123,9 @@ limit applies first, and exhaustion blocks for the human.
   execution-evidence residual (loopback sockets, `__pycache__` writes, and
   a writable temp directory are all unavailable inside the read-only
   review sandbox).
-- Human advance/merge decision: **pending** — not yet requested/recorded.
+- Human advance/merge decision: `APPROVE` — `project/decisions/DECISION-020-issue-0010-advance-and-merge.md`.
+- Merge/result SHA: `9d346f64422bf9bd5f89b43837a5f62f3e64d09b` (merge commit on `main`). Required checks re-run on the merged tree: 173 tests passed, `py_compile` clean, `validate_repo.py` clean.
 - Residual risks or follow-up: none identified beyond the pre-accepted
   `RISK-005` (client secret exposed browser-side), which this issue
   implements the roadmap's own mitigations for.
-- Status record: this commit updates `project/status/CURRENT.md` and stops
-  this Claude task here, per the completion standard and the
-  `DECISION-010`/`DECISION-016`/`DECISION-017`/`DECISION-019` precedent for
-  the same sandbox-only-blocker pattern — presenting the clean round-2
-  result to the human rather than unilaterally marking `ISSUE-0010`
-  complete or merging it. Both permitted repair rounds were used; no
-  further repair is available for this issue task.
+- Status record updated: this commit.

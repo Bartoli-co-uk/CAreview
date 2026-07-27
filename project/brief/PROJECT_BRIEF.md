@@ -1,6 +1,6 @@
 # Project brief: CAreview — Conditional Access policy analyzer
 
-**Status:** `DRAFT` (v2 amendment — not yet approved; supersedes `APPROVED` v1 pending a new decision record)
+**Status:** `APPROVED` (v2 amendment approved by `DECISION-013`, binding this exact commit)
 **Version:** `2`
 **Amends:** v1, approved by `DECISION-001` at `179a023`
 **Source description:** `project/intake/PROJECT_DESCRIPTION.md` at `19e5863d19f856b635df878234a37333f391b4e9`
@@ -306,4 +306,4 @@ version, and commit SHA. Approval permits roadmap drafting only; it does not
 permit implementation or protected actions.
 
 **v1 decision record:** `project/decisions/DECISION-001-brief-approval.md` (APPROVE, binds v1 at `179a02354aecbafa2c9d5aa34f9c9a5a04bbc79a`)
-**v2 decision record:** `Not yet recorded` — pending this session's human review of the amendment above.
+**v2 decision record:** `project/decisions/DECISION-013-brief-v2-approval.md` (APPROVE, binds v2 at `98feea68b840bc2c92eda1cd46af8217555daeb5`). This approval covers the brief as written; it does not itself resolve Questions 3, 5, and 6 above — those remain open and gate `ISSUE-0008` in `ROADMAP.md`.

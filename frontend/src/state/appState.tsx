@@ -12,6 +12,27 @@ import {
 } from "../api/client";
 import type { Analysis, Policy } from "../api/types";
 
+// Bounded retry/backoff for authAbandon (ISSUE-0013 round-0 review finding):
+// a single fire-and-forget POST can fail (network blip, transient server
+// error) and silently leave the abandoned attempt's token installed. This
+// retries a few times before giving up — there is no way to guarantee
+// delivery from a browser tab that might close, but this narrows the
+// failure window from "any single request" to "several requests over a few
+// seconds all failing outright."
+const ABANDON_RETRY_DELAYS_MS = [500, 1500, 4000];
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function abandonWithRetry(handle: string): Promise<void> {
+  if (await authAbandon(handle)) return;
+  for (const ms of ABANDON_RETRY_DELAYS_MS) {
+    await delay(ms);
+    if (await authAbandon(handle)) return;
+  }
+}
+
 export type DataStatus =
   | "idle"
   | "loading"
@@ -97,7 +118,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     authAttempt.current += 1;
     stopPolling();
     if (pendingHandle.current) {
-      void authAbandon(pendingHandle.current);
+      void abandonWithRetry(pendingHandle.current);
       pendingHandle.current = null;
     }
   }, [stopPolling]);

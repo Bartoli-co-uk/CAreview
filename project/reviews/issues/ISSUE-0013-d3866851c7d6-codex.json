@@ -1,0 +1,117 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-28T22:14:05Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faac8-1785-7ab1-bf7d-4abe61180c8d"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "959fbcfc1f127289eb1a1798374fae1c96d7cbc2",
+    "evidence": [
+      {
+        "detail": "The isolated checkout was clean and detached at the exact target SHA. The target descends from the supplied base, and the reviewed diff contains 13 changed files.",
+        "reference": "git status --short --branch; git rev-parse HEAD; git merge-base; git diff --stat",
+        "source": "command"
+      },
+      {
+        "detail": "The issue requires abandonment to reliably clear the named attempt and explicitly identifies an unawaited cleanup request as unsafe because a failed request leaves the token installed.",
+        "reference": "project/issues/ISSUE-0013.md:12",
+        "source": "file"
+      },
+      {
+        "detail": "Cancellation invokes authAbandon without awaiting its promise, immediately discards the only retained handle, and has no retry or error handling.",
+        "reference": "frontend/src/state/appState.tsx:96",
+        "source": "diff"
+      },
+      {
+        "detail": "The frontend race test only verifies that an abandon request was initiated against a successful mock response; it does not simulate rejection, transport failure, or verify confirmed server cleanup.",
+        "reference": "frontend/src/test/deviceCodeRace.test.tsx:39",
+        "source": "diff"
+      },
+      {
+        "detail": "AuthManager.abandon is lock-protected and correctly scopes pending-session and installed-token cleanup to the matching handle. Unknown or superseded handles are no-ops and app-only state is untouched.",
+        "reference": "auth.py:358",
+        "source": "diff"
+      },
+      {
+        "detail": "The endpoint applies the shared Host, Origin, and request-body-size checks, validates a non-empty string handle, and delegates to AuthManager.abandon.",
+        "reference": "server.py:294",
+        "source": "diff"
+      },
+      {
+        "detail": "The committed handoff records 188 Python tests, 89 frontend tests, py_compile, repository validation, TypeScript compilation, and Vite build as passing against the candidate.",
+        "reference": "project/handoffs/ISSUE-0013-handoff.md",
+        "source": "file"
+      },
+      {
+        "detail": "Independent backend execution reached all 188 tests but produced 76 errors because the read-only review sandbox prohibited loopback socket binding; the failures were environmental PermissionError exceptions in server test setup.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Independent governance validation could not create its required temporary directory in the read-only environment.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "Independent frontend test execution could not start because dependencies are absent from the isolated checkout (`vitest: command not found`). Installing them is not authorized for this review.",
+        "reference": "cd frontend && npm test -- --run",
+        "source": "check"
+      },
+      {
+        "detail": "The exact diff passed git diff --check.",
+        "reference": "git diff --check 959fbcfc1f127289eb1a1798374fae1c96d7cbc2 d3866851c7d65c5e237e6e9f46ae94adc153a166",
+        "source": "check"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: cancellation must reliably clear the exact server-side attempt, including the token it produced, and the issue specifically states that an unawaited request is unsafe because failure leaves the token installed (`project/issues/ISSUE-0013.md:14-38`).",
+          "Observed: `cancelDeviceCodeAttempt()` executes `void authAbandon(pendingHandle.current)` and immediately sets `pendingHandle.current = null` (`frontend/src/state/appState.tsx:96-102`). A rejected request, connection interruption, or server error is ignored, and the handle needed for retry is lost.",
+          "If an in-flight poll succeeds before or after that failed request, the client suppresses the stale response at `frontend/src/state/appState.tsx:156` while the server can retain the resulting access token. This reproduces the orphaned authenticated-state consequence that the issue is intended to eliminate.",
+          "The added frontend test always returns a successful abandon response and only asserts that fetch was called; it does not cover cleanup-delivery failure (`frontend/src/test/deviceCodeRace.test.tsx:55-89`)."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 96,
+            "path": "frontend/src/state/appState.tsx"
+          },
+          {
+            "line": 39,
+            "path": "frontend/src/test/deviceCodeRace.test.tsx"
+          }
+        ],
+        "remediation": "Make abandonment completion observable and handle failure without losing the handle. Transitions that can await should await confirmed abandonment; synchronous lifecycle paths need an explicit reliable strategy that retains/retries the scoped handle or surfaces cleanup failure. Preserve the handle until the server acknowledges success. Add frontend tests where the abandon request rejects or returns an error and prove the attempt is not silently treated as cleaned up. Keep the server-side handle scoping so a retry cannot clear a newer session.",
+        "severity": "high",
+        "title": "Scoped cleanup is still fire-and-forget, so failed delivery leaves the abandoned token installed",
+        "verification": "Use a deferred poll plus a rejected/failed abandon request. Cancel the attempt, let the poll succeed, and verify the client does not discard cleanup responsibility or claim completion until the exact handle is acknowledged as abandoned. Then retry/complete abandonment and verify the server has no token for that handle. Rerun all required checks and a fresh review against the repaired SHA."
+      }
+    ],
+    "limitations": [
+      "The required backend suite could not complete independently because this read-only sandbox denies loopback socket binding. The committed handoff's passing output is available but remains author-recorded evidence.",
+      "Repository validation could not complete independently because no writable temporary directory is available.",
+      "Frontend dependencies are not present in the isolated checkout, so Vitest and the required Vite build could not be independently executed. Installing dependencies is a protected action and was not authorized.",
+      "The py_compile check was not run because it writes bytecode in a read-only checkout. The handoff records a passing run, but it was not independently reproduced.",
+      "No live Microsoft identity or tenant operation was attempted; none is required by this issue."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "d3866851c7d65c5e237e6e9f46ae94adc153a166",
+    "schema_version": "1.0",
+    "summary": "The base/target identity and diff scope are correct, and the server-side handle scoping itself is sound. The review is blocked by unavailable independent required-check execution and one high-severity required defect: the frontend still sends abandonment as an unawaited request, discards the handle immediately, and ignores delivery failure, so an abandoned poll can still leave an orphaned access token installed.",
+    "target_id": "ISSUE-0013"
+  },
+  "test_only": false
+}

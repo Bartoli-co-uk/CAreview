@@ -1,9 +1,10 @@
-# Claude handoff: ISSUE-0013, round 0
+# Claude handoff: ISSUE-0013, rounds 0-1
 
 **Claude issue task:** `ISSUE-0013 scoped-device-code-abandon implementation`
 **Approved issue:** `project/issues/ISSUE-0013.md` at this commit
-**Starting SHA:** `959fbcf` (`main` tip after the `ISSUE-0012` merge)
-**Candidate SHA:** this commit (branch HEAD); the launcher records the full SHA
+**Starting SHA:** `959fbcfc1f127289eb1a1798374fae1c96d7cbc2` (`main` tip after the `ISSUE-0012` merge)
+**Round 0 candidate SHA:** `d3866851c7d65c5e237e6e9f46ae94adc153a166` (`BLOCKED`)
+**Round 1 candidate SHA:** this commit (branch HEAD); the launcher records the full SHA
 **Created at:** `2026-07-28`
 
 ## Outcome
@@ -156,3 +157,106 @@ exit=0
 | `docs/security-boundaries.md` | New bullet describing the scoped-abandon mechanism and why it can't widen its own effect. |
 | `project/issues/ISSUE-0013.md` | Round 0 entry, this handoff reference. |
 | `project/status/CURRENT.md` | Updated for round 0. |
+
+---
+
+## Round 1: fixing round 0's `BLOCKED` finding
+
+Round 0's fresh Codex issue review against candidate
+`d3866851c7d65c5e237e6e9f46ae94adc153a166`
+(`project/reviews/issues/ISSUE-0013-d3866851c7d6-codex.json`) confirmed
+`AuthManager.abandon()` itself is correctly lock-protected and scoped, but
+found **F-001** (high, blocking): `cancelDeviceCodeAttempt()` called
+`void authAbandon(pendingHandle.current)` — fire-and-forget, no retry, no
+error handling — and immediately discarded the handle. A single failed
+delivery (network blip, transient 5xx) would silently leave the abandoned
+attempt's token installed server-side if its poll happened to succeed
+around the same time, reproducing the exact class of problem this issue
+exists to fix.
+
+### F-001 fix
+
+- `frontend/src/api/client.ts`: `authAbandon()` now returns a `boolean`
+  (whether the request was delivered and acknowledged) instead of `void`,
+  so callers can detect failure.
+- `frontend/src/state/appState.tsx`: new `abandonWithRetry(handle)` —
+  attempts `authAbandon(handle)`, and on failure retries up to 3 more
+  times with a `[500, 1500, 4000]`ms backoff before giving up.
+  `cancelDeviceCodeAttempt()` now calls this instead of a single bare
+  `authAbandon()` call. (There is no way to *guarantee* delivery from a
+  browser tab that might close mid-retry — this narrows the failure
+  window from "any single request" to "several requests over several
+  seconds all failing outright," which is the honest limit of what a
+  fire-and-forget browser-side cleanup call can offer; a stronger
+  guarantee would require the browser to block navigation/exit pending
+  confirmation, which is out of scope for this issue.)
+- `frontend/src/test/deviceCodeRace.test.tsx`: new regression test — the
+  first `authAbandon` delivery attempt fails (mocked `502`), and advancing
+  fake timers past the first backoff delay proves a second, successful
+  attempt fires.
+
+## Required check evidence (round 1 candidate)
+
+### `python3 -m unittest discover -s tests`
+
+```
+............................................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 188 tests in 38.508s
+
+OK
+exit=0
+```
+
+### `python3 -m py_compile $(git ls-files '*.py')`
+
+```
+exit=0
+```
+
+### `python3 scripts/validate_repo.py`
+
+```
+NOTICE: PowerShell syntax check skipped because pwsh is unavailable; CI runs it on Ubuntu.
+Repository validation passed (67 required files checked).
+exit=0
+```
+
+### `cd frontend && npx tsc -b && npx vite build`
+
+```
+vite v8.1.5 building client environment for production...
+transforming...✓ 42 modules transformed.
+rendering chunks...
+computing gzip size...
+../web/index.html    0.54 kB │ gzip:  0.34 kB
+../web/index.css     6.56 kB │ gzip:  1.87 kB
+../web/index.js    237.08 kB │ gzip: 71.56 kB
+
+✓ built in 62ms
+exit=0
+```
+
+### `cd frontend && npx vitest run`
+
+```
+ RUN  v4.1.10 /Users/jaybartoli/CAreview/frontend
+
+ Test Files  7 passed (7)
+      Tests  90 passed (90)
+   Start at  23:15:39
+   Duration  1.14s
+exit=0
+```
+
+## Changed files (round 1, relative to round 0's candidate)
+
+| Path | Change and reason |
+|---|---|
+| `frontend/src/api/client.ts` | `authAbandon()` returns success boolean. |
+| `frontend/src/state/appState.tsx` | New `abandonWithRetry()` with bounded backoff; `cancelDeviceCodeAttempt()` uses it. |
+| `frontend/src/test/deviceCodeRace.test.tsx` | New retry regression test. |
+| `project/handoffs/ISSUE-0013-handoff.md` | This round-1 section. |
+| `project/issues/ISSUE-0013.md` | Round 1 entry recorded. |
+| `project/status/CURRENT.md` | Updated for round 1. |
+| `project/reviews/issues/ISSUE-0013-d3866851c7d6-codex.json` | Round 0's `BLOCKED` review report, committed for the record. |

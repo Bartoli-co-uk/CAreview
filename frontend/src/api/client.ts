@@ -104,10 +104,12 @@ export async function authLogout(): Promise<void> {
 
 // Tells the server to abandon exactly the device-code attempt named by
 // `handle` (ISSUE-0013) — scoped, unlike authLogout(), so it can never clear
-// a different, newer session. Fire-and-forget is safe here specifically
-// because it's scoped: an unknown/already-superseded handle is a no-op.
-export async function authAbandon(handle: string): Promise<void> {
-  await postJson("/api/auth/abandon", { handle });
+// a different, newer session. Returns whether the request was actually
+// delivered and acknowledged, so the caller can retry on failure rather than
+// silently treating cleanup as done (round-0 review finding).
+export async function authAbandon(handle: string): Promise<boolean> {
+  const result = await postJson<{ state: string }>("/api/auth/abandon", { handle });
+  return result.ok;
 }
 
 export async function setBreakGlassIds(ids: string[]): Promise<{ ok: boolean; count: number }> {

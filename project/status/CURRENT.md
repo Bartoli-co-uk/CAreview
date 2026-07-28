@@ -125,9 +125,17 @@ attempt), and `pollOnce()`'s round-2 reactive `authLogout()` call is
 removed entirely — superseded and unnecessary. New tests directly exercise
 the round-2 race (a late `abandon()` for an old handle must not clear a
 newer, currently-installed session) in both `tests/test_auth.py` and
-`tests/test_server.py`. Real command output for all required checks is
-recorded in `project/handoffs/ISSUE-0013-handoff.md`. A fresh Codex review
-of this round-0 candidate is the next step.
+`tests/test_server.py`.
+
+**Round 0 result: `BLOCKED`.** The fresh Codex issue review
+(`project/reviews/issues/ISSUE-0013-d3866851c7d6-codex.json`) confirmed
+`AuthManager.abandon()` itself is sound, but found F-001 (high): the
+frontend's `authAbandon` call was fire-and-forget with no retry, so a
+single failed delivery could silently leave the abandoned token installed.
+Round 1 fixed this: `authAbandon()` now returns a success boolean, and a
+new `abandonWithRetry()` retries up to 3 times with backoff before giving
+up, with a regression test proving the retry fires on a failed first
+attempt. A fresh Codex review of round 1 is the next step.
 
 | Field | Current value |
 |---|---|

@@ -7,7 +7,9 @@
 **Dependencies:** `ISSUE-0012` (`COMPLETE`, merged with this tracked residual)
 **Branch:** `ai/ISSUE-0013-scoped-device-code-abandon`
 **Starting SHA:** `959fbcfc1f127289eb1a1798374fae1c96d7cbc2`
-**Candidate SHA:** this commit (branch HEAD); the launcher records the full HEAD SHA.
+**Candidate SHA:** round 0 `d3866851c7d65c5e237e6e9f46ae94adc153a166`
+(`BLOCKED`); round 1 candidate is this commit — the launcher records the
+full HEAD SHA.
 
 ## Objective
 
@@ -155,7 +157,8 @@ unscoped (it can clear a different, newer session if one is racing it).
 
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
-| 0 | `project/handoffs/ISSUE-0013-handoff.md` | this commit | Real command output recorded in the handoff, bound to the candidate SHA (188 Python tests, 89 Vitest tests, `py_compile`, `validate_repo.py`, `tsc`/`vite build`, all passing) | *pending* | *pending* |
+| 0 | `project/handoffs/ISSUE-0013-handoff.md` (rounds 0-1) | `d3866851c7d65c5e237e6e9f46ae94adc153a166` | Real command output recorded in the handoff (188 Python tests, 89 Vitest tests, `py_compile`, `validate_repo.py`, `tsc`/`vite build`, all passing) | `project/reviews/issues/ISSUE-0013-d3866851c7d6-codex.json` | `BLOCKED` — F-001 (high): `authAbandon` was fire-and-forget with no retry; a failed delivery could silently leave the abandoned token installed |
+| 1 | `project/handoffs/ISSUE-0013-handoff.md` (round 1 section) | this commit | Real command output recorded in the handoff (188 Python, 90 Vitest tests, all passing) | *pending* | *pending* |
 
 Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
 No workflow loop may exceed five total iterations; the tighter two-round issue

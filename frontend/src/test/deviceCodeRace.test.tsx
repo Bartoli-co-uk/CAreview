@@ -138,4 +138,44 @@ describe("device-code polling cancellation", () => {
 
     expect(fetchMock.mock.calls.some(([u]) => String(u).includes("/api/auth/abandon"))).toBe(false);
   });
+
+  it("retries authAbandon if the first delivery attempt fails (round-0 review finding)", async () => {
+    let abandonAttempts = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/auth/start")) {
+        return Promise.resolve(
+          jsonResponse({ handle: "h1", user_code: "ABC-123", verification_uri: "https://example.test", expires_in: 900, interval: 5 }),
+        );
+      }
+      if (url.includes("/api/auth/poll")) {
+        return new Promise<Response>(() => {}); // never resolves in this test
+      }
+      if (url.includes("/api/auth/abandon")) {
+        abandonAttempts += 1;
+        if (abandonAttempts === 1) {
+          return Promise.resolve({ ok: false, status: 502, json: async () => ({ error: "graph_error" }) } as Response);
+        }
+        return Promise.resolve(jsonResponse({ state: "ok" }));
+      }
+      if (url.includes("/sample-data.json")) {
+        return Promise.resolve(jsonResponse({ policies: [], analysis: { score: 100, scoreIsHeuristic: true, policyCount: 0, findings: [], evaluated: [], notEvaluable: [] } }));
+      }
+      return Promise.resolve(jsonResponse({}));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    vi.useFakeTimers();
+
+    const { result } = renderHook(() => useAppState(), { wrapper: AppStateProvider });
+
+    await act(() => result.current.startDeviceCodeSignIn("organizations"));
+    await act(() => vi.advanceTimersByTimeAsync(5000)); // schedules the poll
+    await act(() => result.current.viewSampleData()); // triggers the first (failing) abandon attempt
+    expect(abandonAttempts).toBe(1);
+
+    // The retry backoff schedule is [500, 1500, 4000]ms — advancing past the
+    // first delay must trigger the second, successful attempt.
+    await act(() => vi.advanceTimersByTimeAsync(500));
+    expect(abandonAttempts).toBe(2);
+  });
 });

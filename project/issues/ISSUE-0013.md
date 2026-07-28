@@ -1,8 +1,9 @@
 # ISSUE-0013: Scoped, server-side device-code session abandonment
 
-**Status:** `BLOCKED` — repair-round budget exhausted (2 of 2 used, `AGENTS.md`);
-unresolved `CHANGES_REQUIRED`-class finding presented to the human, not
-implemented further by this task.
+**Status:** `COMPLETE` (merged, with an accepted residual) — the human
+reviewed the exhausted repair budget and the unresolved round-2 finding
+(see "Human decision required" below) and chose option 1: accept the
+residual as documented and merge (`DECISION-027`).
 **Milestone:** `None` — out-of-band, remediating a residual from `ISSUE-0012`
 (itself out-of-band per `DECISION-024`). Not governed by `ROADMAP.md` v4.
 **Approved roadmap:** `N/A` — see `ISSUE-0012.md`'s equivalent note.
@@ -218,12 +219,15 @@ call it settled.
    already-existing "wait for natural expiry" behavior instead of adding
    this endpoint.
 
+**Human decision (`DECISION-027`):** option 1 — accept the documented
+residual exactly as written and merge.
+
 ## Completion
 
-- Final reviewed product SHA: `8858858a2090aa72d8d0b14a6de64a17a447c120` —
-  blocked pending the human decision above
-- Human advance/merge decision: *pending*
-- Merge/result SHA: *pending*
-- Residual risks or follow-up: the round-2 F-001 residual above, awaiting
-  explicit human risk acceptance or further authorized work
+- Final reviewed product SHA: `8858858a2090aa72d8d0b14a6de64a17a447c120`
+- Human advance/merge decision: `project/decisions/DECISION-027-issue-0013-risk-acceptance-and-merge.md`
+- Merge/result SHA: *pending* (fast-forward merge in progress)
+- Residual risks or follow-up: the round-2 F-001 residual is accepted per
+  `DECISION-027`, not eliminated — option 2 (an observable cleanup-pending
+  state) remains available as future work if ever prioritized
 - Status record updated: `project/status/CURRENT.md`, this commit

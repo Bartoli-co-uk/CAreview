@@ -25,8 +25,10 @@ fetches the tenant's Conditional Access policies from Microsoft Graph. It shows 
 0–100 security score, a severity-sorted list of best-practice / vulnerability
 findings, and a simple per-policy visualization (Users → Conditions → Apps →
 Controls). The analyzer is unit-tested offline against committed sanitized
-fixtures. No Azure app registration, no client secret, no Node.js, and no
-third-party Python packages are required **to use the default (M1) path**.
+fixtures. No Azure app registration, no client secret, and no third-party
+Python packages are required **to use the default (M1) path**. **(DECISION-024)**
+Node.js/npm is required once, to build the UI (`cd frontend && npm install &&
+npm run build`); the running app itself still needs nothing beyond Python.
 **(v4)** A user who already holds an Entra app registration with application
 `Policy.Read.All` may instead opt into a second sign-in mode — client-credentials
 with a secret they supply — for the same policies/score/findings output,
@@ -45,7 +47,14 @@ auth is not supported and is documented as a deferred future enhancement.
 
 ### Constraints
 
-- Python 3.10+ standard library only; no third-party packages, no Node.js, no build step.
+- Python 3.10+ standard library only; no third-party packages, no build step —
+  **for the backend** (`server.py`, `auth.py`, `graph.py`, `analyzer.py`,
+  `rules.py`). **(DECISION-024)** The UI is a documented exception: it is now
+  a React/TypeScript app built with Vite (`frontend/`, requiring Node.js/npm
+  to build), replacing the earlier hand-written vanilla-JS/HTML/CSS `web/`
+  UI. The served artifact remains a static bundle with the same CSP and
+  loopback-only posture; only *producing* it now requires a build step. See
+  `project/decisions/DECISION-024-react-frontend-build-step.md`.
 - Serve on `127.0.0.1:8765` only; no local authentication beyond loopback binding (DECISION-001, re-examined by `RISK-002` below for app-only mode).
 - **(v4)** Delegated Graph scopes limited to `Policy.Read.All`; read-only.
   `Application.Read.All` and `Directory.Read.All` are removed — `graph.py` calls

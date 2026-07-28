@@ -161,24 +161,31 @@ Approval for a plan or issue does not imply approval for these actions.
 
 ## Project commands
 
-CAreview is a standard-library Python application with no third-party
-dependencies and no build step. Run these against the exact candidate commit and
-record the real command, exit status, and relevant output as evidence — an
-agent's claim that a check passed is not evidence.
+CAreview's backend (`server.py`, `auth.py`, `graph.py`, `analyzer.py`,
+`rules.py`) is a standard-library Python application with no third-party
+dependencies and no build step. The UI (`frontend/`) is a documented,
+approved exception to that constraint — see
+[`project/decisions/DECISION-024-react-frontend-build-step.md`](project/decisions/DECISION-024-react-frontend-build-step.md)
+— and requires Node.js/npm to build. Run these against the exact candidate
+commit and record the real command, exit status, and relevant output as
+evidence — an agent's claim that a check passed is not evidence.
 
 | Purpose | Command |
 |---|---|
-| Run the app | `python3 server.py` (serves `http://localhost:8765`) |
-| Tests | `python3 -m unittest discover -s tests` |
+| Build the UI | `cd frontend && npm install && npm run build` (writes `web/index.html`, `index.js`, `index.css`) |
+| Run the app | `python3 server.py` (serves `http://localhost:8765`; requires the UI to already be built) |
+| Backend tests | `python3 -m unittest discover -s tests` |
+| Frontend tests | `cd frontend && npm test` |
 | Lint / compile | `python3 -m py_compile $(git ls-files '*.py')` |
 | Governance validation | `python3 scripts/validate_repo.py` |
 | Security review | Manual, via the milestone security-review gate in `docs/workflow.md` |
 
 These commands become live as the issues that create the corresponding files
-land. Until then, run only the governance validator. Do not add third-party
-runtime dependencies or a Node.js toolchain without a separate, approved
-decision; the stdlib-only, zero-registration constraint is a project requirement
-recorded in `project/intake/PROJECT_DESCRIPTION.md`.
+land. Do not add third-party Python runtime dependencies, or expand the
+Node.js toolchain beyond what `DECISION-024` already covers, without a
+separate, approved decision; the backend's stdlib-only, zero-registration
+constraint remains a project requirement recorded in
+`project/intake/PROJECT_DESCRIPTION.md`.
 
 ## Completion standard
 

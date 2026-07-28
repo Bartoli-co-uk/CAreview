@@ -56,11 +56,16 @@ WEB_ROOT = (Path(__file__).resolve().parent / "web").resolve()
 # Static files this shell will serve, mapped to their content types. Keeping an
 # explicit allowlist (rather than serving the whole directory) avoids any path
 # traversal surprises while the UI is tiny.
+#
+# index.html/index.js/index.css are the React/Vite frontend's build output
+# (see frontend/), written into this directory by `npm run build` with fixed,
+# non-hashed filenames precisely so this allowlist can name them explicitly
+# rather than serving a wildcard/hashed-filename directory listing.
 STATIC_FILES: dict[str, str] = {
     "/": "text/html; charset=utf-8",
     "/index.html": "text/html; charset=utf-8",
-    "/app.js": "text/javascript; charset=utf-8",
-    "/style.css": "text/css; charset=utf-8",
+    "/index.js": "text/javascript; charset=utf-8",
+    "/index.css": "text/css; charset=utf-8",
     # Committed, sanitized sample data so the UI can be reviewed offline without
     # signing in (ISSUE-0005). Contains no real tenant data.
     "/sample-data.json": "application/json; charset=utf-8",

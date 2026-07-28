@@ -3,8 +3,9 @@
 CAreview is a locally-hosted tool that signs into Microsoft Entra ID, reads your
 Conditional Access (CA) policies through Microsoft Graph, scores them against
 security best practice, and explains what to fix. Everything runs on your own
-machine: one Python process, no installs, no Azure app registration, no build
-step.
+machine: one Python process, no installs, no Azure app registration to use it.
+Building the UI (once, or after a UI change) does require Node.js/npm — see
+[DECISION-024](project/decisions/DECISION-024-react-frontend-build-step.md).
 
 It is inspired by [`Jhope188/ca-policy-analyzer`](https://github.com/Jhope188/ca-policy-analyzer),
 re-scoped to run entirely locally.
@@ -61,7 +62,9 @@ closing the process discards everything.
 
 ## Quick start
 
-Requires **Python 3.10 or newer**. Nothing to `pip install`.
+Requires **Python 3.10 or newer** and, for building the UI, **Node.js/npm**
+(see [DECISION-024](project/decisions/DECISION-024-react-frontend-build-step.md)).
+Nothing to `pip install`.
 
 On Windows, or if you have not used Git or Python before, follow
 [Step-by-step setup for beginners (Windows)](#step-by-step-setup-for-beginners-windows)
@@ -70,13 +73,14 @@ instead — it covers installing both from scratch.
 ```sh
 git clone https://github.com/Bartoli-co-uk/CAreview.git
 cd CAreview
+cd frontend && npm install && npm run build && cd ..
 python3 server.py
 ```
 
 Open <http://127.0.0.1:8765/> (`localhost` works too). Then either:
 
 - **Try it without signing in** — click **"View a sample analysis"** on the
-  Server status card. This renders the committed, sanitized
+  sign-in screen. This renders the committed, sanitized
   [`web/sample-data.json`](web/sample-data.json) (fake GUIDs, no real tenant
   data) through exactly the same code path as a live analysis.
 - **Analyse your own tenant** — click **Sign in**, optionally change the tenant
@@ -173,7 +177,7 @@ credentials.
 
 **Device-code (default):**
 
-1. `python3 server.py`, then open <http://127.0.0.1:8765/>.
+1. `cd frontend && npm install && npm run build && cd ..` (once, or after any UI change), then `python3 server.py`, then open <http://127.0.0.1:8765/>.
 2. Click **Sign in** (optionally change the tenant from `organizations`).
 3. **Live step:** open the displayed `microsoft.com/devicelogin` link and
    enter the code shown on the page, using your own Microsoft account.
@@ -183,7 +187,7 @@ credentials.
 
 **App-only (advanced):**
 
-1. `python3 server.py`, then open <http://127.0.0.1:8765/>.
+1. `cd frontend && npm install && npm run build && cd ..` (once, or after any UI change), then `python3 server.py`, then open <http://127.0.0.1:8765/>.
 2. Click **"Use app-only sign-in (advanced)"** and enter your tenant,
    Application (client) ID, and client secret — see
    [App-only mode (advanced)](#app-only-mode-advanced) for the prerequisite.
@@ -197,7 +201,7 @@ credentials.
    retained client secret.
 
 Either walkthrough can be tried without the live step: click **"View a
-sample analysis"** on the Server status card instead of signing in, which
+sample analysis"** on the sign-in screen instead of signing in, which
 exercises the identical scoring/rendering path against the committed,
 sanitized [`web/sample-data.json`](web/sample-data.json).
 
@@ -257,7 +261,29 @@ either way unless noted.
    (If you used "Download ZIP" and extracted it somewhere else, `cd` to that
    extracted folder instead — e.g. `cd Downloads\CAreview-main`.)
 
-6. **Run CAreview:**
+6. **Check whether Node.js is already installed** (needed once, to build the
+   UI):
+   ```powershell
+   node --version
+   ```
+   If you see something like `v20.11.0`, skip to step 8. Otherwise, install
+   it:
+   ```powershell
+   winget install --id OpenJS.NodeJS.LTS -e
+   ```
+   No `winget`? Download the installer from
+   [nodejs.org](https://nodejs.org). After installing, **close and reopen
+   PowerShell**.
+
+7. **Build the UI** (once, or again after pulling a UI change):
+   ```powershell
+   cd frontend
+   npm install
+   npm run build
+   cd ..
+   ```
+
+8. **Run CAreview:**
    ```powershell
    python server.py
    ```
@@ -266,12 +292,12 @@ either way unless noted.
    py server.py
    ```
 
-7. **Open it in your browser:** go to
-   [http://127.0.0.1:8765](http://127.0.0.1:8765). You should see a health
-   badge reading "ok". Click **Sign in** to connect to your tenant, or **View
-   a sample analysis** to try it without signing in.
+9. **Open it in your browser:** go to
+   [http://127.0.0.1:8765](http://127.0.0.1:8765). Click **Sign in** to
+   connect to your tenant, or **View a sample analysis** to try it without
+   signing in.
 
-8. **To stop it**, go back to the PowerShell window and press `Ctrl+C`.
+10. **To stop it**, go back to the PowerShell window and press `Ctrl+C`.
 
 **Troubleshooting:**
 
@@ -336,8 +362,9 @@ documented at the bottom of [`rules.py`](rules.py).
 | [`graph.py`](graph.py) | Read-only Microsoft Graph client. Fetches `identity/conditionalAccess/policies`, follows paging, and normalizes each policy into the internal data contract the analyzer and UI consume. Refuses to attach the bearer token to any non-Graph host. |
 | [`rules.py`](rules.py) | The declarative rule set: ten rules with severity, weight, rationale, remediation and required fields, plus the evaluability model. |
 | [`analyzer.py`](analyzer.py) | Runs the rules over normalized policies, computes the weighted score, and returns severity-sorted findings. |
-| [`web/`](web/) | The UI — `index.html`, `app.js`, `style.css`, and the sanitized `sample-data.json`. No frameworks, no external assets. Untrusted tenant strings are inserted as text, never HTML. |
-| [`tests/`](tests/) | 173 unit tests plus sanitized fixtures (`strong`, `weak`, `incomplete` tenants). Fully offline — no sign-in, no network. |
+| [`frontend/`](frontend/) | The UI source — a React + TypeScript app built with Vite (see [DECISION-024](project/decisions/DECISION-024-react-frontend-build-step.md) for why this needed its own approved exception to the stdlib-only/no-build-step constraint). `npm run build` compiles it into `web/` with fixed, non-hashed filenames. |
+| [`web/`](web/) | Served static output — `index.html`, `index.js`, `index.css` (all generated by `frontend/`'s build, not committed) plus the hand-maintained, sanitized `sample-data.json`. Untrusted tenant strings are always rendered as text, never HTML (JSX escaping on the frontend side). |
+| [`tests/`](tests/) | 174 unit tests plus sanitized fixtures (`strong`, `weak`, `incomplete` tenants), all offline — no sign-in, no network. The frontend has its own parallel test suite (`frontend/src/test/`, run via `npm test`). |
 
 The remaining top-level directories (`docs/`, `project/`, `prompts/`,
 `scripts/`, `.claude/`, `.codex/`) belong to the build process rather than the
@@ -360,12 +387,17 @@ carry a loopback `Host` header; every `POST` must also carry a loopback
 | `POST` | `/api/auth/logout` | Clear the in-memory token, session, and any retained app-only secret. |
 | `POST` | `/api/breakglass` | Supply break-glass account object IDs (GUIDs, memory only). Body: `{"ids": [...]}`; an empty list clears them. |
 
-Static routes: `/`, `/index.html`, `/app.js`, `/style.css`, `/sample-data.json`.
+Static routes: `/`, `/index.html`, `/index.js`, `/index.css`, `/sample-data.json`.
+The first four are the React frontend's build output (see
+[`frontend/`](frontend/)) — run `npm install && npm run build` inside
+`frontend/` before starting the server, or these routes 404.
 
 ## Verify it offline
 
 ```sh
-python3 -m unittest discover -s tests            # 173 tests; no sign-in, no network
+cd frontend && npm install && npm run build      # builds web/index.html, index.js, index.css
+cd frontend && npm test                          # frontend unit/component tests
+python3 -m unittest discover -s tests            # 174 tests; no sign-in, no network
 python3 -m py_compile $(git ls-files '*.py')     # compile check
 python3 scripts/validate_repo.py                 # governance/docs validator
 ```
@@ -375,8 +407,11 @@ The analyzer is unit-tested against committed **sanitized** fixtures
 tenant data): the strong tenant scores 100 and the weak tenant scores low,
 deterministically.
 
-GitHub Actions runs exactly these three commands on every push and pull request
-(plus a PowerShell syntax check of the review launcher), so the checks you run
+GitHub Actions currently runs the three Python commands above on every push and
+pull request (plus a PowerShell syntax check of the review launcher); the two
+new `frontend/` commands are not yet wired into CI — see
+[DECISION-024](project/decisions/DECISION-024-react-frontend-build-step.md) for this
+known gap. So for now, the checks you run
 locally are the checks that gate the repository — see
 [`.github/workflows/validate.yml`](.github/workflows/validate.yml).
 
@@ -384,12 +419,17 @@ locally are the checks that gate the repository — see
 
 - **Local only.** One Python process on `http://127.0.0.1:8765`. Your policies
   and tokens stay on your machine; the only network egress is to Microsoft.
-- **Zero registration, zero build by default.** The default device-code path
-  needs no Azure app registration and no client secret; there's no Node.js
-  toolchain either way. App-only mode is an explicit opt-in for a user who
-  already has their own app registration — see
+- **Zero registration by default.** The default device-code path needs no
+  Azure app registration and no client secret. App-only mode is an explicit
+  opt-in for a user who already has their own app registration — see
   [App-only mode (advanced)](#app-only-mode-advanced).
-- **Standard library only.** No third-party Python dependencies.
+- **Standard library only on the backend.** `server.py`/`auth.py`/`graph.py`/
+  `analyzer.py`/`rules.py` have no third-party Python dependencies. The UI is
+  the one exception: building it now requires Node.js/npm (see
+  [`frontend/README.md`](frontend/README.md) and
+  [DECISION-024](project/decisions/DECISION-024-react-frontend-build-step.md)) — the
+  *served* artifact is still a static, dependency-free bundle, but producing
+  it is no longer a zero-build step.
 - **Read-only, least privilege.** Delegated Graph scope limited to
   `Policy.Read.All` — the only Graph call CAreview makes is to
   `identity/conditionalAccess/policies`.

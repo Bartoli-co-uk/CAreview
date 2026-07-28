@@ -81,10 +81,57 @@ HEADING_RE = re.compile(r"^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$")
 
 
 def all_files(suffix: str) -> list[Path]:
+    # node_modules (frontend/, DECISION-024) is vendored third-party code, not
+    # project documentation/config — excluded on the same basis as .git.
+    excluded_dirs = {".git", "node_modules"}
     return sorted(
         path for path in ROOT.rglob(f"*{suffix}")
-        if ".git" not in path.relative_to(ROOT).parts and path.is_file()
+        if excluded_dirs.isdisjoint(path.relative_to(ROOT).parts) and path.is_file()
     )
+
+
+def strip_jsonc_comments(text: str) -> str:
+    """Strip // and /* */ comments outside string literals from JSONC.
+
+    TypeScript's tsconfig*.json files are conventionally JSONC (comments
+    allowed); this lets validate_formats() parse them as JSON without
+    special-casing the file name in the caller.
+    """
+    out: list[str] = []
+    in_string = False
+    escape = False
+    i = 0
+    length = len(text)
+    while i < length:
+        char = text[i]
+        if in_string:
+            out.append(char)
+            if escape:
+                escape = False
+            elif char == "\\":
+                escape = True
+            elif char == '"':
+                in_string = False
+            i += 1
+            continue
+        if char == '"':
+            in_string = True
+            out.append(char)
+            i += 1
+            continue
+        if char == "/" and i + 1 < length and text[i + 1] == "/":
+            while i < length and text[i] not in "\r\n":
+                i += 1
+            continue
+        if char == "/" and i + 1 < length and text[i + 1] == "*":
+            i += 2
+            while i + 1 < length and not (text[i] == "*" and text[i + 1] == "/"):
+                i += 1
+            i += 2
+            continue
+        out.append(char)
+        i += 1
+    return "".join(out)
 
 
 def strip_fenced_code(text: str) -> str:
@@ -148,7 +195,13 @@ def validate_links(errors: list[str]) -> None:
 def validate_formats(errors: list[str], notices: list[str]) -> None:
     for path in all_files(".json"):
         try:
-            json.loads(path.read_text(encoding="utf-8"))
+            text = path.read_text(encoding="utf-8")
+            # tsconfig*.json is conventionally JSONC (TypeScript's own
+            # tooling accepts comments in these files); strip them before
+            # strict JSON parsing rather than rejecting valid config.
+            if path.name.startswith("tsconfig"):
+                text = strip_jsonc_comments(text)
+            json.loads(text)
         except (OSError, UnicodeError, json.JSONDecodeError) as exc:
             errors.append(f"{path.relative_to(ROOT)}: invalid JSON: {exc}")
     if tomllib is None and all_files(".toml"):

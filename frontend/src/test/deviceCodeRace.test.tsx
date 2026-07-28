@@ -173,9 +173,47 @@ describe("device-code polling cancellation", () => {
     await act(() => result.current.viewSampleData()); // triggers the first (failing) abandon attempt
     expect(abandonAttempts).toBe(1);
 
-    // The retry backoff schedule is [500, 1500, 4000]ms — advancing past the
-    // first delay must trigger the second, successful attempt.
-    await act(() => vi.advanceTimersByTimeAsync(500));
+    // The retry interval is 3s — advancing past it must trigger the second,
+    // successful attempt.
+    await act(() => vi.advanceTimersByTimeAsync(3000));
     expect(abandonAttempts).toBe(2);
+  });
+
+  it("keeps retrying authAbandon for the full retry window if every attempt fails", async () => {
+    let abandonAttempts = 0;
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/auth/start")) {
+        return Promise.resolve(
+          jsonResponse({ handle: "h1", user_code: "ABC-123", verification_uri: "https://example.test", expires_in: 900, interval: 5 }),
+        );
+      }
+      if (url.includes("/api/auth/poll")) {
+        return new Promise<Response>(() => {});
+      }
+      if (url.includes("/api/auth/abandon")) {
+        abandonAttempts += 1;
+        return Promise.resolve({ ok: false, status: 502, json: async () => ({ error: "graph_error" }) } as Response);
+      }
+      if (url.includes("/sample-data.json")) {
+        return Promise.resolve(jsonResponse({ policies: [], analysis: { score: 100, scoreIsHeuristic: true, policyCount: 0, findings: [], evaluated: [], notEvaluable: [] } }));
+      }
+      return Promise.resolve(jsonResponse({}));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    vi.useFakeTimers();
+
+    const { result } = renderHook(() => useAppState(), { wrapper: AppStateProvider });
+
+    await act(() => result.current.startDeviceCodeSignIn("organizations"));
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    await act(() => result.current.viewSampleData());
+    expect(abandonAttempts).toBe(1);
+
+    // Every attempt fails; retries should continue at the 3s interval well
+    // past a single retry, covering the full ~16-minute retry window rather
+    // than giving up after only a handful of attempts.
+    await act(() => vi.advanceTimersByTimeAsync(60_000));
+    expect(abandonAttempts).toBeGreaterThan(15);
   });
 });

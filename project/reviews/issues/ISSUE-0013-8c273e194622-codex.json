@@ -1,0 +1,133 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-28T22:20:11Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faacf-0839-7b90-82fe-1da564985108"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "959fbcfc1f127289eb1a1798374fae1c96d7cbc2",
+    "evidence": [
+      {
+        "detail": "HEAD exactly matched the launcher target and the working tree was clean.",
+        "reference": "git rev-parse HEAD; git status --short",
+        "source": "command"
+      },
+      {
+        "detail": "Reviewed the exact base-to-target diff. Changes are limited to the authorized ISSUE-0013 implementation, tests, documentation, governance records, and prior review record.",
+        "reference": "git diff --name-status 959fbcfc1f127289eb1a1798374fae1c96d7cbc2..8c273e19462203c9ba8c2f29a693b47c984eb52b",
+        "source": "diff"
+      },
+      {
+        "detail": "The committed round-1 handoff records 188 Python tests, 90 frontend tests, typecheck/build, compile, and governance checks passing at the target candidate. These are durable records but could not all be independently reproduced in this read-only sandbox.",
+        "reference": "project/handoffs/ISSUE-0013-handoff.md",
+        "source": "file"
+      },
+      {
+        "detail": "Independent backend test execution ran 188 tests but ended with 76 errors because the sandbox denied loopback socket binding.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "command"
+      },
+      {
+        "detail": "Independent frontend test execution could not start because the isolated checkout has no installed vitest executable/node_modules.",
+        "reference": "cd frontend && npm test -- --run",
+        "source": "command"
+      },
+      {
+        "detail": "Independent governance validation could not complete because the read-only environment provided no writable temporary directory.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "command"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: abandoning an attempt reliably clears its server-side state, addressing the round-0 finding that failed delivery can leave an orphaned authenticated token (project/issues/ISSUE-0013.md:18).",
+          "Observed: abandonWithRetry makes four attempts over six seconds and then returns silently; cancelDeviceCodeAttempt immediately discards pendingHandle and does not expose failure or retain any means to retry later (frontend/src/state/appState.tsx:28, frontend/src/state/appState.tsx:117).",
+          "Four consecutive network failures, persistent 5xx responses, navigation, tab closure, or server unavailability can therefore still leave the exact abandoned attempt active or its token installed. The implementation comments and handoff explicitly acknowledge that it gives up.",
+          "The added regression test verifies only that a second request follows one failed request; it does not cover retry exhaustion or establish a safe outcome after cleanup remains unacknowledged."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 28,
+            "path": "frontend/src/state/appState.tsx"
+          },
+          {
+            "line": 117,
+            "path": "frontend/src/state/appState.tsx"
+          }
+        ],
+        "remediation": "Define and implement a completion contract that does not silently lose unacknowledged abandonment. For example, retain the handle and visible cleanup state until acknowledgement, prevent or clearly gate the competing transition while cleanup is unresolved, or obtain an explicit human decision narrowing the issue's reliability requirement and accepting the residual. Add tests for total retry exhaustion, persistent network failure, navigation/unmount, and eventual acknowledgement.",
+        "severity": "high",
+        "title": "Bounded fire-and-forget retries still silently abandon cleanup",
+        "verification": "Force every /api/auth/abandon request to fail and verify the application neither reports cleanup complete nor loses the handle; then restore the endpoint and verify the same handle is eventually acknowledged and its pending session/token is cleared without affecting a newer session."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: project/status/CURRENT.md must accurately identify the current gate, repair round, evidence, candidate, and next permitted action using repository files alone.",
+          "Observed: the prose above the table says round 1 is awaiting review, but the table repeatedly identifies round 0 as current, lists the round-0 handoff/test count, says the round-0 review is pending despite its committed BLOCKED report, and instructs launching a round-0 candidate review (project/status/CURRENT.md:142-160).",
+          "The issue record and handoff identify this target as the round-1 candidate with 90 frontend tests, contradicting CURRENT.md's table and verification row, which still records 89 frontend tests."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 142,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 149,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 152,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 154,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 159,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 173,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Synchronize every CURRENT.md field with ISSUE-0013 round 1: current repair round, candidate/review state, latest handoff and check counts, prior round-0 report, next actor, and exact next permitted review command. Rerun governance validation and review the corrected record for internal consistency.",
+        "severity": "medium",
+        "title": "Current-state index contradicts the round-1 candidate",
+        "verification": "A fresh reader using only CURRENT.md and its linked artifacts can identify base 959fbcfc1f127289eb1a1798374fae1c96d7cbc2, round-1 candidate SHA, the completed round-0 BLOCKED review, 188 Python/90 frontend check evidence, and the correct next action without contradiction."
+      }
+    ],
+    "limitations": [
+      "The backend suite could not provide passing independent evidence because sandbox policy denied all loopback socket binds; it ran 188 tests and ended with 76 environment-caused errors.",
+      "Frontend dependencies were absent, and installing them is both unavailable and a separately protected action, so frontend tests, typechecking, and the Vite build were not independently executed.",
+      "Governance validation requires a writable temporary directory, which this read-only environment did not provide.",
+      "The compile command was not run because Python bytecode compilation may write __pycache__ files, which is incompatible with the mandated read-only review.",
+      "No live Microsoft authentication or tenant verification was attempted; it remains a protected, documented residual outside this issue's offline checks."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "8c273e19462203c9ba8c2f29a693b47c984eb52b",
+    "schema_version": "1.0",
+    "summary": "BLOCKED: target identity is correct and the scoped server-side abandon implementation is structurally sound, but the round-1 client still silently gives up after bounded cleanup retries, the authoritative current-state record is stale and contradictory, and required checks could not be independently completed in this read-only sandbox.",
+    "target_id": "ISSUE-0013"
+  },
+  "test_only": false
+}

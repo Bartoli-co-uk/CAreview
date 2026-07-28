@@ -129,6 +129,18 @@ policies, so these project-specific rules apply on top of the general boundaries
   newer, legitimately-current session even if its request arrives late
   relative to a subsequent successful sign-in — it does not touch
   `_generation` or app-only state at all, only the one handle named.
+  **Delivery reliability residual (accepted):** the client retries a
+  failed `abandon` delivery for up to ~16 minutes (safely past a typical
+  device-code attempt's own ~15-minute expiry), because this call is
+  loopback-only — browser to this same machine's own CAreview process,
+  not the public internet — so a failed delivery here means either a
+  transient local-stack hiccup (recoverable by retrying) or that the
+  CAreview process itself is unreachable, in which case `AuthManager`'s
+  in-memory state, including any installed token, dies with that process
+  and there is nothing left to clean up. The one case retrying cannot
+  cover is the browser tab closing before delivery succeeds — no
+  client-side code can survive that in any web app, and it is accepted as
+  a residual rather than claimed to be eliminated.
 - **App-only mode cannot narrow its own scope (`RISK-006`).** Client-
   credentials requests always use Microsoft's `.default` scope, which
   returns every application permission the target app registration already

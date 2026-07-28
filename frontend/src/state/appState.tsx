@@ -12,25 +12,36 @@ import {
 } from "../api/client";
 import type { Analysis, Policy } from "../api/types";
 
-// Bounded retry/backoff for authAbandon (ISSUE-0013 round-0 review finding):
-// a single fire-and-forget POST can fail (network blip, transient server
-// error) and silently leave the abandoned attempt's token installed. This
-// retries a few times before giving up — there is no way to guarantee
-// delivery from a browser tab that might close, but this narrows the
-// failure window from "any single request" to "several requests over a few
-// seconds all failing outright."
-const ABANDON_RETRY_DELAYS_MS = [500, 1500, 4000];
+// Retry/backoff for authAbandon (ISSUE-0013 round-0/round-1 review
+// findings): a single fire-and-forget POST can fail and silently leave the
+// abandoned attempt's token installed if its poll later succeeds anyway.
+//
+// This call is loopback-only — browser to this same machine's own CAreview
+// process, not the public internet — so a failed delivery here is not
+// ordinary network flakiness; it means either a transient hiccup in the
+// local HTTP stack (recoverable by retrying) or that the CAreview process
+// itself is unreachable (in which case AuthManager's in-memory state,
+// including any installed token, dies with that process — there is nothing
+// left to clean up). Given that, retrying for as long as the device-code
+// attempt itself could still be pending server-side (its own expiry, up to
+// ~15 minutes per Microsoft's typical `expires_in`) closes the gap for
+// every case where cleanup is still meaningful. The one residual this
+// cannot cover is the browser tab closing before delivery succeeds — no
+// client-side code can survive that, in this or any web app.
+const ABANDON_RETRY_INTERVAL_MS = 3000;
+const ABANDON_RETRY_MAX_DURATION_MS = 16 * 60 * 1000; // safely past a ~15min device-code expiry
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function abandonWithRetry(handle: string): Promise<void> {
-  if (await authAbandon(handle)) return;
-  for (const ms of ABANDON_RETRY_DELAYS_MS) {
-    await delay(ms);
+  const deadline = Date.now() + ABANDON_RETRY_MAX_DURATION_MS;
+  while (Date.now() < deadline) {
     if (await authAbandon(handle)) return;
+    await delay(ABANDON_RETRY_INTERVAL_MS);
   }
+  void authAbandon(handle); // last attempt; nothing more to do if this also fails
 }
 
 export type DataStatus =

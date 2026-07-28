@@ -260,3 +260,120 @@ exit=0
 | `project/issues/ISSUE-0013.md` | Round 1 entry recorded. |
 | `project/status/CURRENT.md` | Updated for round 1. |
 | `project/reviews/issues/ISSUE-0013-d3866851c7d6-codex.json` | Round 0's `BLOCKED` review report, committed for the record. |
+
+---
+
+## Round 2: fixing round 1's `BLOCKED` finding (final permitted repair round)
+
+Round 1's fresh Codex issue review against candidate
+`8c273e19462203c9ba8c2f29a693b47c984eb52b`
+(`project/reviews/issues/ISSUE-0013-8c273e194622-codex.json`) returned
+`BLOCKED` with two findings:
+
+- **F-001 (high, blocking, narrower form of the same id):** `abandonWithRetry()`'s
+  3-attempt/~6-second retry window was still too short — persistent
+  failures (or the tab navigating away before the window elapsed) could
+  still leave cleanup unacknowledged, reproducing the class of problem
+  this issue exists to fix, just with a smaller window than round 0.
+- **F-002 (medium):** `project/status/CURRENT.md` was stale — still
+  described round 0 as current, listed the round-0 handoff/test counts,
+  and instructed launching a round-0 review, despite round 1 already being
+  committed with a `BLOCKED` report.
+
+### F-001 (round 2) fix
+
+`abandonWithRetry()` now retries every 3 seconds for up to ~16 minutes
+(`ABANDON_RETRY_INTERVAL_MS` / `ABANDON_RETRY_MAX_DURATION_MS` in
+`frontend/src/state/appState.tsx`) — safely past a device-code attempt's
+own ~15-minute server-side expiry, rather than giving up after 3 attempts.
+Rationale (also recorded in `docs/security-boundaries.md` and
+`project/issues/ISSUE-0013.md`'s security-impact section): this call is
+loopback-only (browser → this machine's own CAreview process, not the
+public internet), so a failed delivery means either a transient local
+hiccup — now covered by the much longer retry window — or the CAreview
+process itself being unreachable, in which case `AuthManager`'s in-memory
+state (including any installed token) is gone with it regardless of
+whether cleanup "succeeds." The one case that cannot be covered — the
+browser tab closing before delivery succeeds — is documented as an
+accepted residual, not claimed to be eliminated.
+
+New regression test: every `abandon` delivery attempt fails, and advancing
+fake timers by 60 seconds proves retries continue well past the old
+3-attempt limit (>15 attempts), rather than giving up early.
+
+### F-002 fix
+
+`project/status/CURRENT.md` fully resynchronized to round 2: `claudex-state`
+stage, active-issue/repair-round fields, latest handoff/review references,
+test counts (188 Python / 91 Vitest), and the next permitted action all
+updated to describe this exact candidate.
+
+## Required check evidence (round 2 candidate)
+
+### `python3 -m unittest discover -s tests`
+
+```
+............................................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 188 tests in 38.510s
+
+OK
+exit=0
+```
+
+### `python3 -m py_compile $(git ls-files '*.py')`
+
+```
+exit=0
+```
+
+### `python3 scripts/validate_repo.py`
+
+```
+NOTICE: PowerShell syntax check skipped because pwsh is unavailable; CI runs it on Ubuntu.
+Repository validation passed (67 required files checked).
+exit=0
+```
+
+### `cd frontend && npx tsc -b && npx vite build`
+
+```
+vite v8.1.5 building client environment for production...
+transforming...✓ 42 modules transformed.
+rendering chunks...
+computing gzip size...
+../web/index.html    0.54 kB │ gzip:  0.34 kB
+../web/index.css     6.56 kB │ gzip:  1.87 kB
+../web/index.js    237.09 kB │ gzip: 71.55 kB
+
+✓ built in 52ms
+exit=0
+```
+
+### `cd frontend && npx vitest run`
+
+```
+ RUN  v4.1.10 /Users/jaybartoli/CAreview/frontend
+
+ Test Files  7 passed (7)
+      Tests  91 passed (91)
+   Start at  23:24:58
+   Duration  1.15s
+exit=0
+```
+
+## Changed files (round 2, relative to round 1's candidate)
+
+| Path | Change and reason |
+|---|---|
+| `frontend/src/state/appState.tsx` | Extended `abandonWithRetry()` to a ~16-minute retry window with loopback-only rationale documented in comments. |
+| `frontend/src/test/deviceCodeRace.test.tsx` | New test proving retries continue well past the old 3-attempt limit. |
+| `docs/security-boundaries.md` | Documented the accepted delivery-reliability residual. |
+| `project/issues/ISSUE-0013.md` | Security-impact section updated; round 2 entry recorded. |
+| `project/status/CURRENT.md` | Fully resynchronized (F-002 fix). |
+| `project/reviews/issues/ISSUE-0013-8c273e194622-codex.json` | Round 1's `BLOCKED` review report, committed for the record. |
+
+This is the second and final repair round `AGENTS.md` permits for an
+issue. If this round's fresh Codex review does not return `PASS` or
+`PASS_WITH_NOTES`, this issue stops here and the unresolved findings are
+presented to the human rather than attempting a third repair.

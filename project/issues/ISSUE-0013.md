@@ -8,8 +8,9 @@
 **Branch:** `ai/ISSUE-0013-scoped-device-code-abandon`
 **Starting SHA:** `959fbcfc1f127289eb1a1798374fae1c96d7cbc2`
 **Candidate SHA:** round 0 `d3866851c7d65c5e237e6e9f46ae94adc153a166`
-(`BLOCKED`); round 1 candidate is this commit — the launcher records the
-full HEAD SHA.
+(`BLOCKED`); round 1 `8c273e19462203c9ba8c2f29a693b47c984eb52b` (`BLOCKED`);
+round 2 candidate is this commit — the launcher records the full HEAD SHA.
+This is the last repair round `AGENTS.md` permits for an issue.
 
 ## Objective
 
@@ -145,6 +146,19 @@ unscoped (it can clear a different, newer session if one is racing it).
   touches the app-only credential path.
 - Dependency/supply-chain impact: none.
 - Protected actions: none anticipated.
+- **Accepted residual (round 2):** `abandonWithRetry()` retries a failed
+  delivery for up to ~16 minutes (safely past a typical device-code
+  attempt's own ~15-minute server-side expiry), not indefinitely, and not
+  in a way that blocks the UI transition it's cleaning up after. This
+  call is loopback-only (browser → this machine's own CAreview process),
+  so a failed delivery means either a transient local-stack hiccup
+  (covered by the retry window) or the CAreview process itself being
+  unreachable — in which case `AuthManager`'s in-memory state, including
+  any installed token, dies with that process, so there is nothing left
+  to clean up either way. The one case this cannot cover is the browser
+  tab closing before delivery succeeds, which no client-side code in any
+  web app can survive. This is accepted as a documented residual, not
+  claimed to be eliminated — see `docs/security-boundaries.md`.
 
 ## Stop conditions
 
@@ -157,8 +171,9 @@ unscoped (it can clear a different, newer session if one is racing it).
 
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
-| 0 | `project/handoffs/ISSUE-0013-handoff.md` (rounds 0-1) | `d3866851c7d65c5e237e6e9f46ae94adc153a166` | Real command output recorded in the handoff (188 Python tests, 89 Vitest tests, `py_compile`, `validate_repo.py`, `tsc`/`vite build`, all passing) | `project/reviews/issues/ISSUE-0013-d3866851c7d6-codex.json` | `BLOCKED` — F-001 (high): `authAbandon` was fire-and-forget with no retry; a failed delivery could silently leave the abandoned token installed |
-| 1 | `project/handoffs/ISSUE-0013-handoff.md` (round 1 section) | this commit | Real command output recorded in the handoff (188 Python, 90 Vitest tests, all passing) | *pending* | *pending* |
+| 0 | `project/handoffs/ISSUE-0013-handoff.md` (rounds 0-2) | `d3866851c7d65c5e237e6e9f46ae94adc153a166` | Real command output recorded in the handoff (188 Python tests, 89 Vitest tests, `py_compile`, `validate_repo.py`, `tsc`/`vite build`, all passing) | `project/reviews/issues/ISSUE-0013-d3866851c7d6-codex.json` | `BLOCKED` — F-001 (high): `authAbandon` was fire-and-forget with no retry; a failed delivery could silently leave the abandoned token installed |
+| 1 | `project/handoffs/ISSUE-0013-handoff.md` (round 1 section) | `8c273e19462203c9ba8c2f29a693b47c984eb52b` | Real command output recorded in the handoff (188 Python, 90 Vitest tests, all passing) | `project/reviews/issues/ISSUE-0013-8c273e194622-codex.json` | `BLOCKED` — F-001 (high, narrower): 3-attempt/~6s retry window still too short; F-002 (medium): `CURRENT.md` stale after round 1 landed |
+| 2 | `project/handoffs/ISSUE-0013-handoff.md` (round 2 section) | this commit | Real command output recorded in the handoff (188 Python, 91 Vitest tests, all passing) | *pending* | *pending* |
 
 Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
 No workflow loop may exceed five total iterations; the tighter two-round issue

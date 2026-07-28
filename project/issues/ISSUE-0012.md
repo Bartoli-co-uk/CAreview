@@ -1,8 +1,10 @@
 # ISSUE-0012: React/Vite frontend dashboard (retroactive issue record)
 
-**Status:** `BLOCKED` — repair-round budget exhausted (2 of 2 used, `AGENTS.md`);
-unresolved `CHANGES_REQUIRED` finding presented to the human, not
-implemented further by this task.
+**Status:** `COMPLETE` (merged, with a tracked residual) — the human
+reviewed the exhausted repair budget and the unresolved round-2
+`CHANGES_REQUIRED` finding (see "Human decision required" below) and chose
+to merge now, accepting the residual as tracked risk and opening
+`ISSUE-0013` to fix it properly (`DECISION-025`, `DECISION-026`).
 **Milestone:** `None` — no M3 exists; this work is out-of-band relative to the
 approved M1/M2 roadmap, authorized directly by the human rather than through
 the normal brief/roadmap cycle (see `DECISION-024`).
@@ -188,7 +190,7 @@ options touch `auth.py`/`server.py` behavior, which is beyond what this
 already-out-of-band frontend issue's allowed paths cover, and beyond what
 another same-day repair round can safely attempt.
 
-**Options for the human:**
+**Options presented:**
 1. Accept this as a documented, narrow residual risk (similar in spirit to
    `DECISION-023`'s SEC-001/SEC-003) and proceed to merge, tracking a
    proper fix as separate future work.
@@ -199,12 +201,21 @@ another same-day repair round can safely attempt.
    device-code sign-in requires the user to manually sign out, accepting
    the smaller original F-001 window as-is).
 
+**Human decision (`DECISION-025`):** options 1 and 2 combined — merge now,
+accepting the residual as tracked risk, and open `ISSUE-0013`
+(`DECISION-026`) with its own fresh repair budget to fix the server-side
+scoping gap properly.
+
 ## Completion
 
-- Final reviewed product SHA: not yet — blocked pending the human decision above
-- Human advance/merge decision: *pending*
-- Merge/result SHA: *pending*
-- Residual risks or follow-up: the round-2 F-001 residual above; CI not yet
-  updated for `npm` commands; no M3 milestone opened; device-code sign-in
-  regression (separately reported, believed tenant-side) tracked separately.
+- Final reviewed product SHA: `195bd8e746884c23b4774162667ee5905f2680e1`
+  (round-2 product candidate); `5189959392ec2331c799199f5d70457ff361a3ba`
+  (metadata-only follow-up, not itself re-reviewed)
+- Human advance/merge decision: `project/decisions/DECISION-025-issue-0012-advance-and-merge.md`
+- Merge/result SHA: fast-forward merge, `main` now points at
+  `5189959392ec2331c799199f5d70457ff361a3ba`
+- Residual risks or follow-up: the round-2 F-001 residual above, now
+  tracked as `ISSUE-0013`; CI not yet updated for `npm` commands; no M3
+  milestone opened; device-code sign-in regression (separately reported,
+  believed tenant-side) tracked separately.
 - Status record updated: `project/status/CURRENT.md`, this commit

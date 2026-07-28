@@ -1,0 +1,105 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-28T21:20:57Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faa98-ea74-77e0-9524-0bb35b496a10"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "8648f2ba11907ac32016c724d8ae49a08bdb6b2d",
+    "evidence": [
+      {
+        "detail": "HEAD exactly matched the launcher-supplied target SHA.",
+        "reference": "3748ff13318241e8cbe2bc38debc55e3d3042ecb",
+        "source": "command"
+      },
+      {
+        "detail": "The supplied base-to-target diff was inspected; it replaces the vanilla frontend with React/Vite and includes the round-1 authentication-race repair.",
+        "reference": "8648f2ba11907ac32016c724d8ae49a08bdb6b2d..3748ff13318241e8cbe2bc38debc55e3d3042ecb",
+        "source": "diff"
+      },
+      {
+        "detail": "The committed handoff records 174 backend tests, 88 frontend tests, Python compilation, governance validation, TypeScript compilation, Vite build, and a manual browser walkthrough against the candidate tree.",
+        "reference": "project/handoffs/ISSUE-0012-handoff.md",
+        "source": "file"
+      },
+      {
+        "detail": "Independent backend-test execution ran 174 tests but failed with 68 errors because the read-only review sandbox denied loopback socket binding; this is an environment limitation rather than evidence of product-test failures.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Frontend checks could not be independently executed because frontend/node_modules is absent and network/install actions are unavailable and unauthorized.",
+        "reference": "frontend/node_modules",
+        "source": "limitation"
+      },
+      {
+        "detail": "The checkout was clean before checks. Test execution did not produce a reported tracked-file change.",
+        "reference": "git status --porcelain=v1",
+        "source": "command"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: moving to sample mode or signing out while device-code authentication is in flight must leave both the UI and backend session unauthenticated, so tenant data and tokens do not remain accessible after the abandoned attempt.",
+          "Observed: pollOnce drops a stale successful response at line 142, but that response means the server-side /api/auth/poll operation has already completed successfully and installed the authenticated session. The client performs no compensating logout.",
+          "viewSampleData only increments the client cancellation/generation tokens and fetches sample data; exitSample only changes client state. Neither calls authLogout.",
+          "Consequently, if an in-flight poll succeeds after viewSampleData, the dashboard remains in sample mode as intended, but the backend can retain the live delegated token. Exiting sample then displays signed-out state while /api/policies and /api/analysis can remain authenticated.",
+          "The new regression test asserts only that the UI stays in sample mode and does not immediately fetch /api/policies; it does not verify server-session cleanup."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 137,
+            "path": "frontend/src/state/appState.tsx"
+          },
+          {
+            "line": 142,
+            "path": "frontend/src/state/appState.tsx"
+          },
+          {
+            "line": 208,
+            "path": "frontend/src/state/appState.tsx"
+          },
+          {
+            "line": 229,
+            "path": "frontend/src/state/appState.tsx"
+          },
+          {
+            "line": 65,
+            "path": "frontend/src/test/deviceCodeRace.test.tsx"
+          }
+        ],
+        "remediation": "Add server-aware cancellation/session cleanup for abandoned device-code attempts, with ordering that cannot log out a newer successful authentication attempt. A stale successful poll must not leave credentials installed server-side. Also ensure exiting sample mode cannot present a signed-out UI over an authenticated backend session.",
+        "severity": "high",
+        "title": "Cancelled device-code success can leave a hidden authenticated backend session",
+        "verification": "Use a deferred integration test where /api/auth/poll succeeds after sample mode is selected. Verify the stale result does not change UI mode, the server no longer retains the token/session, and subsequent /api/policies and /api/analysis requests return unauthenticated. Add equivalent coverage for sign-out and for overlap with a newer authentication attempt."
+      }
+    ],
+    "limitations": [
+      "The checkout is shallow/grafted: the round-0 commit object 4cb61161be32b43506bb0e2c1b6921635561054d and target parent identity were unavailable locally, so the claimed round-0-to-round-1 delta could not be independently reconstructed. The launcher-supplied base-to-target diff and exact target tree were available.",
+      "Backend tests could not complete in this sandbox because all server integration cases requiring loopback socket binding raised PermissionError. Repository-recorded successful output exists, but independent execution failed.",
+      "Frontend dependencies are absent, so TypeScript compilation, Vite build, and Vitest were not independently rerun. Installing dependencies is unavailable and would require separate approval.",
+      "The manual browser walkthrough has no retained recording and cannot be independently verified from the committed artifact.",
+      "No live-tenant authentication or Microsoft Graph access was attempted; those are protected actions and remain deferred."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "3748ff13318241e8cbe2bc38debc55e3d3042ecb",
+    "schema_version": "1.0",
+    "summary": "BLOCKED. The round-1 client token prevents stale device-code responses from overwriting React state, but a stale successful poll can still install and retain authentication on the server, leaving a signed-out/sample UI over a live backend session. Independent verification was also incomplete because the sandbox denied loopback binding and frontend dependencies were absent.",
+    "target_id": "ISSUE-0012"
+  },
+  "test_only": false
+}

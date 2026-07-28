@@ -8,6 +8,13 @@ import { AppStateProvider, useAppState } from "../state/appState";
 // load tenant data. clearTimeout() alone can't stop an in-flight authPoll()
 // request — this proves the authAttempt cancellation token actually blocks
 // a stale poll response from mutating state after each such transition.
+//
+// Round 1 finding (also F-001): blocking the client-side state mutation
+// isn't enough on its own — a stale "success" response means the *server*
+// has already installed a live token for the abandoned attempt, and the
+// client never reaches a mode with a "Sign out" control for it. The second
+// test below proves the stale-success path compensates by calling
+// authLogout() so that orphaned server-side session can't linger forever.
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -69,6 +76,10 @@ describe("device-code polling cancellation", () => {
 
     expect(result.current.mode).toBe("sample");
     expect(fetchMock.mock.calls.some(([u]) => String(u).includes("/api/policies"))).toBe(false);
+    // The client dropped the stale success, but the server had already
+    // installed a token for it — the client must compensate with a logout
+    // so that session doesn't linger with no user-visible way to clear it.
+    expect(fetchMock.mock.calls.filter(([u]) => String(u).includes("/api/auth/logout")).length).toBe(1);
   });
 
   it("a poll that resolves 'pending' after sign-out does not schedule another timer", async () => {

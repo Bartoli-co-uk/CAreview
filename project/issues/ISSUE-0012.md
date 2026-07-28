@@ -12,8 +12,9 @@ rule (the human's current explicit instructions outrank `AGENTS.md`).
 **Branch:** `ai/react-dashboard-frontend`
 **Starting SHA:** `8648f2ba11907ac32016c724d8ae49a08bdb6b2d`
 **Candidate SHA:** round 0 `4cb61161be32b43506bb0e2c1b6921635561054d`
-(`BLOCKED`); round 1 candidate is this commit — the launcher records the
-full HEAD SHA.
+(`BLOCKED`); round 1 `3748ff13318241e8cbe2bc38debc55e3d3042ecb` (`BLOCKED`);
+round 2 candidate is this commit — the launcher records the full HEAD SHA.
+This is the last repair round `AGENTS.md` permits for an issue.
 
 ## Objective
 
@@ -148,7 +149,8 @@ cycle.
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
 | 0 | This issue record (retroactive) | `4cb61161be32b43506bb0e2c1b6921635561054d` | Claimed in the issue record only at this round; no commit-bound artifact (Codex flagged this as F-002) | `project/reviews/issues/ISSUE-0012-4cb61161be32-codex.json` | `BLOCKED` — F-001 (high): device-code polling race could overwrite sample/app-only/signed-out state; F-002 (medium): no durable check evidence |
-| 1 | `project/handoffs/ISSUE-0012-handoff.md` | *this commit* | Real command output for all required checks recorded in the round-1 handoff, bound to this SHA | *pending* | *pending* |
+| 1 | `project/handoffs/ISSUE-0012-handoff.md` (rounds 1-2) | `3748ff13318241e8cbe2bc38debc55e3d3042ecb` | Real command output for all required checks recorded in the handoff, bound to this SHA | `project/reviews/issues/ISSUE-0012-3748ff133182-codex.json` | `BLOCKED` — F-001 (high, deeper form): client-side race fixed, but a stale successful poll left an orphaned authenticated session on the server with no client-reachable way to clear it |
+| 2 | `project/handoffs/ISSUE-0012-handoff.md` (round 2 section) | *this commit* | Real command output for all required checks recorded in the handoff, bound to this SHA | *pending* | *pending* |
 
 Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
 No workflow loop may exceed five total iterations; the tighter two-round issue

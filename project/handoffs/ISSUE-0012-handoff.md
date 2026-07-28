@@ -1,11 +1,13 @@
-# Claude handoff: ISSUE-0012, round 1 (repair)
+# Claude handoff: ISSUE-0012, rounds 1-2 (repair)
 
 **Claude issue task:** `ISSUE-0012 react-dashboard-frontend implementation (retroactive)`
 **Approved issue:** `project/issues/ISSUE-0012.md` at this commit
 **Starting SHA:** `8648f2ba11907ac32016c724d8ae49a08bdb6b2d`
-**Round 0 candidate SHA:** `4cb61161be32b43506bb0e2c1b6921635561054d`
-**Round 1 candidate SHA:** this commit (branch HEAD); the launcher records the full SHA
+**Round 0 candidate SHA:** `4cb61161be32b43506bb0e2c1b6921635561054d` (`BLOCKED`)
+**Round 1 candidate SHA:** `3748ff13318241e8cbe2bc38debc55e3d3042ecb` (`BLOCKED`)
+**Round 2 candidate SHA:** this commit (branch HEAD); the launcher records the full SHA
 **Created at:** `2026-07-28`
+**Repair rounds used:** 2 of the maximum 2 permitted for an issue (`AGENTS.md`) — if round 2's fresh review does not return `PASS`/`PASS_WITH_NOTES`, this issue stops and the unresolved findings go to the human, per the bounded-repair rule.
 
 ## Why this round exists
 
@@ -150,7 +152,7 @@ re-verifiable by a future reader from this document alone (no screen
 recording was saved) — the automated checks above and the regression
 tests are the durable, re-runnable evidence for this round.
 
-## Changed files (this round, relative to round 0's candidate)
+## Changed files (round 1, relative to round 0's candidate)
 
 | Path | Change and reason |
 |---|---|
@@ -159,3 +161,124 @@ tests are the durable, re-runnable evidence for this round.
 | `project/handoffs/ISSUE-0012-handoff.md` | This document (F-002). |
 | `project/issues/ISSUE-0012.md` | Round 1 entry recorded in the rounds table. |
 | `project/status/CURRENT.md` | Updated for round 1. |
+
+---
+
+## Round 2: fresh review of round 1 also returned `BLOCKED`
+
+Round 1's fresh Codex issue review against candidate
+`3748ff13318241e8cbe2bc38debc55e3d3042ecb`
+(`project/reviews/issues/ISSUE-0012-3748ff133182-codex.json`) confirmed
+F-001's client-side race was fixed, but raised a **new, deeper form of the
+same finding (still labeled F-001, high, blocking)**: blocking the client
+state mutation isn't sufficient on its own. A stale `"success"` poll
+response means the *server* has already exchanged the device code and
+installed a live token in `AuthManager` — the client dropping that response
+leaves the dashboard correctly in sample/signed-out mode, but the backend
+now silently retains an authenticated session for an attempt the user
+believes they abandoned. Since `Settings`' "Sign out" control only renders
+while `mode === "live"`, the user has no way to ever reach it for that
+orphaned session — only restarting the whole `server.py` process would
+clear it.
+
+### F-001 (round 2) fix — `frontend/src/state/appState.tsx`
+
+In `pollOnce()`, the stale-response branch now distinguishes `"success"`
+from every other outcome: a stale `"success"` compensates by calling
+`authLogout()` (clearing the orphaned server-side session immediately),
+while a stale `"pending"`/`"expired"`/`"error"` needs no compensation
+since no token was ever installed for those. Comment added in place
+explaining why this asymmetry is correct.
+
+### F-001 (round 2) regression test — `frontend/src/test/deviceCodeRace.test.tsx`
+
+Extended the existing "poll resolves 'success' after `viewSampleData()`"
+test to also assert exactly one `/api/auth/logout` call happened as a
+result of the stale success — proving the compensating cleanup fires and
+fires only once.
+
+## Required check evidence (round 2 candidate)
+
+All commands below were run from the repository root immediately before
+this commit, against a clean worktree matching this commit's tree exactly
+(the only subsequent changes are this handoff section and the issue/status
+record updates, which are documentation/metadata, not product source).
+
+### `python3 -m unittest discover -s tests`
+
+```
+..............................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 174 tests in 34.459s
+
+OK
+exit=0
+```
+
+### `python3 -m py_compile $(git ls-files '*.py')`
+
+```
+exit=0
+```
+(no output on success)
+
+### `python3 scripts/validate_repo.py`
+
+```
+NOTICE: PowerShell syntax check skipped because pwsh is unavailable; CI runs it on Ubuntu.
+Repository validation passed (67 required files checked).
+exit=0
+```
+
+### `cd frontend && npx tsc -b`
+
+```
+exit=0
+```
+(no output on success)
+
+### `cd frontend && npx vite build`
+
+```
+vite v8.1.5 building client environment for production...
+transforming...✓ 42 modules transformed.
+rendering chunks...
+computing gzip size...
+../web/index.html    0.54 kB │ gzip:  0.34 kB
+../web/index.css     6.56 kB │ gzip:  1.87 kB
+../web/index.js    236.75 kB │ gzip: 71.44 kB
+
+✓ built in 61ms
+exit=0
+```
+
+### `cd frontend && npx vitest run`
+
+```
+ RUN  v4.1.10 /Users/jaybartoli/CAreview/frontend
+
+ Test Files  7 passed (7)
+      Tests  88 passed (88)
+   Start at  22:22:10
+   Duration  1.22s
+exit=0
+```
+
+(Same 88 tests as round 1 — `deviceCodeRace.test.tsx` extended in place
+rather than adding a new file.)
+
+## Changed files (round 2, relative to round 1's candidate)
+
+| Path | Change and reason |
+|---|---|
+| `frontend/src/state/appState.tsx` | F-001 (round 2) fix: stale successful device-code polls now trigger a compensating `authLogout()` call. |
+| `frontend/src/test/deviceCodeRace.test.tsx` | Extended to assert the compensating logout call. |
+| `project/handoffs/ISSUE-0012-handoff.md` | This round-2 section. |
+| `project/issues/ISSUE-0012.md` | Round 2 entry recorded in the rounds table. |
+| `project/status/CURRENT.md` | Updated for round 2. |
+| `project/reviews/issues/ISSUE-0012-3748ff133182-codex.json` | Round 1's `BLOCKED` review report, committed for the record. |
+
+This is the second of the two repair rounds `AGENTS.md` permits for an
+issue. If this round's fresh Codex review does not return `PASS` or
+`PASS_WITH_NOTES`, this issue stops here and the unresolved findings are
+presented to the human rather than attempting a third repair.

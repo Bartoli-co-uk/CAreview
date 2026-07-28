@@ -138,8 +138,19 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       // The awaited request may settle after a competing transition (sample
       // mode, app-only mode, sign-out, or a fresh device-code attempt) has
       // already moved authAttempt on — in that case this result is stale and
-      // must not schedule another timer or mutate mode/state at all.
-      if (myAttempt !== authAttempt.current) return;
+      // must not schedule another timer or mutate client mode/state at all.
+      if (myAttempt !== authAttempt.current) {
+        // A stale "success" means the server has already installed a live
+        // token for an attempt the client has abandoned — the client never
+        // reaches a mode where a "Sign out" control exists for it (Settings
+        // only shows one while mode === "live"), so left alone the backend
+        // would retain an authenticated session with no way for the user to
+        // ever clear it. Compensate by logging it out server-side; every
+        // other stale outcome (pending/expired/error) never installed a
+        // token, so no cleanup is needed for those.
+        if (result.state === "success") void authLogout();
+        return;
+      }
       if (result.state === "success") {
         stopPolling();
         setDeviceCode({ phase: "idle" });

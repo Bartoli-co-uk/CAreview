@@ -1,6 +1,6 @@
 # ISSUE-0012: React/Vite frontend dashboard (retroactive issue record)
 
-**Status:** `REVIEWING`
+**Status:** `REPAIRING`
 **Milestone:** `None` — no M3 exists; this work is out-of-band relative to the
 approved M1/M2 roadmap, authorized directly by the human rather than through
 the normal brief/roadmap cycle (see `DECISION-024`).
@@ -11,8 +11,9 @@ rule (the human's current explicit instructions outrank `AGENTS.md`).
 **Dependencies:** None
 **Branch:** `ai/react-dashboard-frontend`
 **Starting SHA:** `8648f2ba11907ac32016c724d8ae49a08bdb6b2d`
-**Candidate SHA:** `Not created` — the launcher will record the full HEAD SHA
-once this issue's changes are committed.
+**Candidate SHA:** round 0 `4cb61161be32b43506bb0e2c1b6921635561054d`
+(`BLOCKED`); round 1 candidate is this commit — the launcher records the
+full HEAD SHA.
 
 ## Objective
 
@@ -146,7 +147,8 @@ cycle.
 
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
-| 0 | This issue record (retroactive) | *pending commit* | See "Required checks" above, run against the working tree prior to commit | *pending* | *pending* |
+| 0 | This issue record (retroactive) | `4cb61161be32b43506bb0e2c1b6921635561054d` | Claimed in the issue record only at this round; no commit-bound artifact (Codex flagged this as F-002) | `project/reviews/issues/ISSUE-0012-4cb61161be32-codex.json` | `BLOCKED` — F-001 (high): device-code polling race could overwrite sample/app-only/signed-out state; F-002 (medium): no durable check evidence |
+| 1 | `project/handoffs/ISSUE-0012-handoff.md` | *this commit* | Real command output for all required checks recorded in the round-1 handoff, bound to this SHA | *pending* | *pending* |
 
 Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
 No workflow loop may exceed five total iterations; the tighter two-round issue

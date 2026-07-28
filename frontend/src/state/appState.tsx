@@ -70,12 +70,25 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const generation = useRef(0);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Per-attempt cancellation token for device-code polling. clearTimeout()
+  // alone cannot stop an authPoll() request that has already been sent and
+  // is awaiting a response — bumping this token and having pollOnce check it
+  // after every await is what actually invalidates that in-flight attempt,
+  // so it can never schedule another timer or flip mode back to "live" after
+  // the user has moved to sample mode, app-only mode, or signed out.
+  const authAttempt = useRef(0);
+
   const stopPolling = useCallback(() => {
     if (pollTimer.current !== null) {
       clearTimeout(pollTimer.current);
       pollTimer.current = null;
     }
   }, []);
+
+  const cancelDeviceCodeAttempt = useCallback(() => {
+    authAttempt.current += 1;
+    stopPolling();
+  }, [stopPolling]);
 
   const loadLive = useCallback(async () => {
     generation.current += 1;
@@ -107,7 +120,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    stopPolling();
+    cancelDeviceCodeAttempt();
     generation.current += 1; // invalidate any in-flight load immediately
     setPolicies([]);
     setAnalysis(null);
@@ -117,11 +130,16 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setMode("signedOut");
     setTenant(null);
     await authLogout();
-  }, [stopPolling]);
+  }, [cancelDeviceCodeAttempt]);
 
   const pollOnce = useCallback(
-    async (handle: string, intervalMs: number) => {
+    async (handle: string, intervalMs: number, myAttempt: number) => {
       const result = await authPoll(handle);
+      // The awaited request may settle after a competing transition (sample
+      // mode, app-only mode, sign-out, or a fresh device-code attempt) has
+      // already moved authAttempt on — in that case this result is stale and
+      // must not schedule another timer or mutate mode/state at all.
+      if (myAttempt !== authAttempt.current) return;
       if (result.state === "success") {
         stopPolling();
         setDeviceCode({ phase: "idle" });
@@ -130,7 +148,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         return;
       }
       if (result.state === "pending") {
-        pollTimer.current = setTimeout(() => void pollOnce(handle, intervalMs), intervalMs);
+        pollTimer.current = setTimeout(() => void pollOnce(handle, intervalMs, myAttempt), intervalMs);
         return;
       }
       stopPolling();
@@ -144,10 +162,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const startDeviceCodeSignIn = useCallback(
     async (tenantInput: string) => {
+      authAttempt.current += 1;
+      const myAttempt = authAttempt.current;
       stopPolling();
       setDeviceCode({ phase: "idle" });
       const tenantValue = tenantInput || "organizations";
       const result = await authStart(tenantValue);
+      if (myAttempt !== authAttempt.current) return; // superseded while authStart was in flight
       if (!result.ok || !result.data || !("user_code" in result.data)) {
         setDeviceCode({ phase: "error", message: "Could not start sign-in." });
         return;
@@ -160,14 +181,16 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         verificationUri: data.verification_uri || "https://microsoft.com/devicelogin",
       });
       const intervalMs = Math.max(1, Number(data.interval) || 5) * 1000;
-      pollTimer.current = setTimeout(() => void pollOnce(data.handle, intervalMs), intervalMs);
+      pollTimer.current = setTimeout(() => void pollOnce(data.handle, intervalMs, myAttempt), intervalMs);
     },
     [pollOnce, stopPolling],
   );
 
   const submitAppOnlySignIn = useCallback(
     async (tenantInput: string, clientId: string, clientSecret: string) => {
-      stopPolling();
+      // Invalidates any in-flight device-code attempt so it can never later
+      // flip mode back to "live" out from under this app-only attempt.
+      cancelDeviceCodeAttempt();
       const result = await authAppOnly(tenantInput, clientId, clientSecret);
       if (!result.ok || !result.data || result.data.state !== "success") {
         const message =
@@ -179,10 +202,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       void loadLive();
       return { ok: true };
     },
-    [loadLive, stopPolling],
+    [cancelDeviceCodeAttempt, loadLive],
   );
 
   const viewSampleData = useCallback(async () => {
+    // Invalidates any in-flight device-code attempt so a pending/success poll
+    // response can never overwrite sample mode after the user has moved to it.
+    cancelDeviceCodeAttempt();
     generation.current += 1;
     const myGeneration = generation.current;
     setMode("sample");
@@ -198,15 +224,16 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setAnalysis(result.data.analysis);
     setStatus("ready");
     setLastRefreshed(new Date());
-  }, []);
+  }, [cancelDeviceCodeAttempt]);
 
   const exitSample = useCallback(() => {
+    cancelDeviceCodeAttempt();
     generation.current += 1;
     setMode("signedOut");
     setStatus("idle");
     setPolicies([]);
     setAnalysis(null);
-  }, []);
+  }, [cancelDeviceCodeAttempt]);
 
   useEffect(() => stopPolling, [stopPolling]);
 

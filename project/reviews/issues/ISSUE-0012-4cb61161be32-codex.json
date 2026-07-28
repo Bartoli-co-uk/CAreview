@@ -1,0 +1,133 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-28T21:12:08Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faa90-765a-7382-91e4-b0d56a3cb135"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "8648f2ba11907ac32016c724d8ae49a08bdb6b2d",
+    "evidence": [
+      {
+        "detail": "HEAD and the supplied target both resolve to 4cb61161be32b43506bb0e2c1b6921635561054d; the supplied base resolves to 8648f2ba11907ac32016c724d8ae49a08bdb6b2d. The worktree was clean before and after review.",
+        "reference": "git rev-parse; git status --short",
+        "source": "command"
+      },
+      {
+        "detail": "The exact base-to-target diff contains 63 changed paths, all within the issue's allowed paths. web/sample-data.json has no diff.",
+        "reference": "git diff --name-status 8648f2ba11907ac32016c724d8ae49a08bdb6b2d..4cb61161be32b43506bb0e2c1b6921635561054d",
+        "source": "diff"
+      },
+      {
+        "detail": "The device-code poll callback can schedule another poll or switch the application to live mode after its awaited request completes. There is no generation/cancellation check after that await.",
+        "reference": "frontend/src/state/appState.tsx:122",
+        "source": "file"
+      },
+      {
+        "detail": "Sample mode invalidates data-load generations but does not stop or invalidate device-code polling. An already scheduled or in-flight poll can subsequently overwrite sample mode.",
+        "reference": "frontend/src/state/appState.tsx:185",
+        "source": "file"
+      },
+      {
+        "detail": "Frontend tests and the typecheck/build could not run because this isolated checkout has no installed frontend dependencies: npm test reported `vitest: command not found`; npm run build reported `tsc: command not found`. Installing dependencies was not authorized during this read-only review.",
+        "reference": "cd frontend && npm test; cd frontend && npm run build",
+        "source": "check"
+      },
+      {
+        "detail": "The backend suite discovered 174 tests, but 68 server integration tests errored because the review sandbox prohibits loopback socket binding (`PermissionError: [Errno 1] Operation not permitted`).",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Python compilation could not complete because the read-only sandbox prevented creation of __pycache__. Governance validation could not complete because no writable temporary directory was available.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py'); python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "Static sink scanning found no production use of dangerouslySetInnerHTML, innerHTML, outerHTML, insertAdjacentHTML, eval, Function construction, browser storage, or cookies. Fetch calls use relative API/sample paths; the only absolute URL is the Microsoft device-login fallback displayed as a link.",
+        "reference": "frontend/src",
+        "source": "check"
+      },
+      {
+        "detail": "The committed issue/status records claim the required checks passed, but contain no commit-bound raw check artifact. The issue record still identifies the candidate as `Not created` and its review/check row as pending.",
+        "reference": "project/issues/ISSUE-0012.md:14",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected behavior: leaving a pending device-code flow for sample mode, app-only mode, or signed-out state must permanently cancel that device-code flow so it cannot later change the active mode or load tenant data.",
+          "Observed behavior: pollOnce awaits authPoll and then unconditionally schedules another timer on `pending`, or sets mode to `live` and loads tenant data on `success` (frontend/src/state/appState.tsx:122-140). stopPolling only clears a currently registered timeout; it cannot invalidate an authPoll request whose timer has already fired.",
+          "viewSampleData neither calls stopPolling nor invalidates the polling operation (frontend/src/state/appState.tsx:185-201). Switching to app-only calls stopPolling, but an already in-flight device poll can still settle afterward. signOut has the same in-flight gap.",
+          "No frontend test exercises cancellation or stale completion of device-code polling; SignIn.test.tsx covers only app-only secret handling and tenant validation."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 122,
+            "path": "frontend/src/state/appState.tsx"
+          },
+          {
+            "line": 185,
+            "path": "frontend/src/state/appState.tsx"
+          }
+        ],
+        "remediation": "Give each device-code attempt a cancellation/generation token. Invalidate it before starting a replacement attempt and whenever entering sample mode, app-only mode, or signed-out state. After every awaited authPoll, verify that the attempt remains current before scheduling another timer or mutating state. Add tests using deferred poll responses and fake timers for pending and success responses that settle after cancellation.",
+        "severity": "high",
+        "title": "A stale device-code poll can overwrite sample, app-only, or signed-out state",
+        "verification": "Run frontend tests that start device-code polling, cancel it via each competing transition, then resolve the old poll as both pending and success; assert no new timer is scheduled, mode does not become live, and no policy/analysis fetch occurs. Then rerun `cd frontend && npm test` and `cd frontend && npm run build`."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Acceptance criterion 5 requires both backend and frontend suites to pass, and the required-check table additionally requires Python compilation, governance validation, and typecheck/build.",
+          "Independent frontend execution failed because node_modules is absent; backend integration execution failed because socket binding is prohibited; compilation and governance execution failed because the checkout/environment is read-only.",
+          "Repository prose reports successful author-side counts, but no committed handoff or raw commit-bound check artifact supports those claims, and the review rules require real independently verifiable evidence rather than author claims."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 91,
+            "path": "project/issues/ISSUE-0012.md"
+          },
+          {
+            "line": 94,
+            "path": "project/issues/ISSUE-0012.md"
+          }
+        ],
+        "remediation": "Provide durable, commit-bound output for all required checks against 4cb61161be32b43506bb0e2c1b6921635561054d, or rerun a fresh review in an environment with the locked frontend dependencies installed, writable temporary/cache locations, and loopback socket binding enabled. Any source repair requires a new candidate SHA and fresh review.",
+        "severity": "medium",
+        "title": "Required candidate execution evidence is unavailable",
+        "verification": "Confirm exit 0 and complete output for backend tests, frontend tests, Python compilation, governance validation, typecheck/build, generated fixed filenames, unchanged sample data, and the documented browser walkthrough, all tied to the exact reviewed candidate."
+      }
+    ],
+    "limitations": [
+      "The review sandbox is read-only, preventing Python bytecode/cache creation and temporary-directory use.",
+      "Loopback socket binding is prohibited, so 68 of 174 backend tests could not execute.",
+      "frontend/node_modules is absent and network installation was neither available nor authorized, so frontend tests, typechecking, and build output could not be reproduced.",
+      "Generated web/index.html, web/index.js, and web/index.css are intentionally uncommitted and absent in this checkout, so static serving and CSP behavior of the actual built artifacts could not be inspected or exercised.",
+      "The claimed manual browser walkthrough has no committed commit-bound output and could not be independently repeated.",
+      "Dependency vulnerability and provenance checks were not run because network access is restricted."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "4cb61161be32b43506bb0e2c1b6921635561054d",
+    "schema_version": "1.0",
+    "summary": "The exact base and target identities were verified, but the review is blocked. Static inspection found a high-severity device-code polling race that can restore live mode and tenant data after the user moves to sample, app-only, or signed-out state. Independently executing the required candidate checks was also impossible in this sandbox, and no durable commit-bound check artifact supplies the missing evidence.",
+    "target_id": "ISSUE-0012"
+  },
+  "test_only": false
+}

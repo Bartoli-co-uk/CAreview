@@ -143,43 +143,52 @@ leave cleanup unacknowledged. F-002 was this file (`CURRENT.md`) itself:
 stale round-0 references (table still said round 0/89 frontend tests)
 after the round-1 commit landed.
 
-**Round 2 (this record): fixes both.** `abandonWithRetry()` now retries
-every 3 seconds for up to ~16 minutes — safely past a device-code
-attempt's own ~15-minute server-side expiry — rather than giving up after
-3 attempts. This call is loopback-only (browser → this machine's own
-CAreview process), so a failed delivery means either a transient local
-hiccup (covered by the extended retry window) or the process itself being
-unreachable, in which case `AuthManager`'s in-memory state (including any
-installed token) is gone anyway. The one residual this cannot cover — the
-browser tab closing before delivery succeeds — is documented as accepted
-in `project/issues/ISSUE-0013.md` and `docs/security-boundaries.md`, not
-claimed to be eliminated. This is the **second and final repair round**
-`AGENTS.md` permits for an issue; if this round's fresh Codex review does
-not return `PASS`/`PASS_WITH_NOTES`, this issue stops here for the human,
-the same way `ISSUE-0012` did.
+**Round 2: fixes both, but review result was `BLOCKED` again.**
+`abandonWithRetry()` now retries every 3 seconds for up to ~16 minutes —
+safely past a device-code attempt's own ~15-minute server-side expiry —
+rather than giving up after 3 attempts, and this file was fully
+resynchronized (F-002). The fresh Codex review
+(`project/reviews/issues/ISSUE-0013-8858858a2090-codex.json`) confirmed
+the server-side `abandon()` primitive is sound and this file is now
+synchronized, but kept **F-001** (high) open in a narrower, procedural
+form: `abandonWithRetry()` still "fails open" silently if every retry
+fails (no observable unresolved-cleanup state exists), and — independent
+of the code — the review correctly noted that a Claude task cannot itself
+write the tab-closure/exhaustion residual into the record as "accepted";
+per `AGENTS.md` only the human can accept a residual risk.
+
+**This was the second and final repair round `AGENTS.md` permits for an
+issue.** Per that bounded-repair rule, this Claude task stopped there
+rather than attempting a third fix, and presented the finding to the
+human, the same way `ISSUE-0012` did. `ISSUE-0013`'s status is `BLOCKED`
+pending a human decision (see `project/issues/ISSUE-0013.md`'s "Human
+decision required" section: accept the documented residual and merge;
+open a new issue to build an observable cleanup-pending state; or drop
+the abandon mechanism and rely on the device-code session's existing
+~15-minute natural expiry instead).
 
 | Field | Current value |
 |---|---|
-| Stage | `ISSUE_REPAIR` — `ISSUE-0012` merged (`DECISION-025`); `ISSUE-0013` round 2 (final permitted repair round) implemented, awaiting its fresh Codex review. M1 and M2 remain complete and accepted with no milestone in progress |
+| Stage | `ISSUE_REPAIR` — `ISSUE-0012` merged (`DECISION-025`); `ISSUE-0013` `BLOCKED` after its repair budget was exhausted (2 of 2 rounds used) with an unresolved finding; awaiting a human decision. M1 and M2 remain complete and accepted with no milestone in progress |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v2; APPROVED (DECISION-013, binds `9ccf835`); open questions resolved (DECISION-014) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (v1, binds `179a023`); `project/decisions/DECISION-013-brief-v2-approval.md` (v2, binds `9ccf835`); `project/decisions/DECISION-014-app-only-secret-retention-and-risk002.md` |
 | Roadmap | `ROADMAP.md` v4; APPROVED (DECISION-015, binds `9e5ba6d`). v3 (`DECISION-003`, `125d74f`) governed the completed M1; v4 has now fully delivered M2 |
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` (v3); `project/decisions/DECISION-015-roadmap-v4-approval.md` (v4) |
 | Active milestone | `M1` — `COMPLETE`, accepted (`DECISION-012`). `M2` — `COMPLETE`, accepted (`DECISION-023`). Neither milestone is currently in progress; no M3 exists yet |
-| Active issue | `ISSUE-0013` — scoped device-code abandonment, `REVIEWING` (round 2 implemented, Codex review pending), out-of-band per `DECISION-026`. `ISSUE-0012` is `COMPLETE` (merged) |
-| Issue repair round | `ISSUE-0013`: round 2 of at most 2 (final permitted round) — round 0 `BLOCKED` (F-001 fire-and-forget abandon), round 1 `BLOCKED` (F-001 narrower: retry window too short; F-002: stale `CURRENT.md`). `ISSUE-0012`: exhausted at 2 of 2, final outcome `CHANGES_REQUIRED`, accepted as tracked residual by `DECISION-025` |
+| Active issue | `ISSUE-0013` — scoped device-code abandonment, `BLOCKED` (repair budget exhausted, human decision required), out-of-band per `DECISION-026`. `ISSUE-0012` is `COMPLETE` (merged) |
+| Issue repair round | `ISSUE-0013`: exhausted at 2 of 2 — round 0 `BLOCKED` (F-001 fire-and-forget abandon), round 1 `BLOCKED` (F-001 narrower: retry window too short; F-002: stale `CURRENT.md`), round 2 `BLOCKED` (F-001 narrower still: fails open after retry exhaustion; residual lacks human acceptance). No further repair by this task; see "Human decision required" in `project/issues/ISSUE-0013.md`. `ISSUE-0012`: exhausted at 2 of 2, final outcome `CHANGES_REQUIRED`, accepted as tracked residual by `DECISION-025` |
 | Reviewed product commit | `6311a11a48a0a7e51e83a14ca4081d431cb46698` — the frozen M1 round-2 candidate. `M2`'s frozen product commit is `98be0bc562de8f7cf52e3019715bc4cff571ad91`; its milestone-review candidate `9c01749b221d6f7f2d8ff9ca6282cf9172477a3d` was accepted by `DECISION-023` |
 | Latest implementation handoff | `project/handoffs/ISSUE-0013-handoff.md` (rounds 0-2, real check output for 188 Python + 91 Vitest tests at round 2). `project/handoffs/ISSUE-0012-handoff.md` (rounds 1-2, complete, merged with tracked residual). `project/handoffs/ISSUE-0011-handoff.md` (M2, rounds 0-1, complete) |
 | Latest milestone reviews | `M2` round 1 (accepted): Claude general `CHANGES_REQUIRED` (`project/reviews/milestones/M2-9c01749b221d-claude-general.md`); Codex general `BLOCKED` (`project/reviews/milestones/M2-9c01749b221d-codex-general.json`); Claude security `PASS_WITH_NOTES` (`project/reviews/milestones/M2-9c01749b221d-claude-security.md`); Codex security `BLOCKED`, sandbox residual only (`project/reviews/milestones/M2-9c01749b221d-codex-security.json`). Round 0 (superseded, candidate `b55bf97`) retained for the record. M1 round 2 remains accepted (`DECISION-012`) |
-| Latest Codex issue review | `ISSUE-0013` round 1 (most recent completed): `project/reviews/issues/ISSUE-0013-8c273e194622-codex.json` — `BLOCKED`, F-001 (high: retry window too short) + F-002 (medium: stale `CURRENT.md`). Round 0: `project/reviews/issues/ISSUE-0013-d3866851c7d6-codex.json` — `BLOCKED`, F-001 (fire-and-forget abandon). Round 2 review pending. `ISSUE-0012` round 2 (final, repair budget exhausted): `project/reviews/issues/ISSUE-0012-195bd8e74688-codex.json` — `CHANGES_REQUIRED`, F-001 (high: unawaited/unscoped compensating logout). `ISSUE-0011` round 1 (final, unrelated M2 work): `project/reviews/issues/ISSUE-0011-e878cdcd979b-codex.json` — `BLOCKED`, zero findings, sole blocker the accepted sandbox execution-evidence residual |
+| Latest Codex issue review | `ISSUE-0013` round 2 (final, repair budget exhausted): `project/reviews/issues/ISSUE-0013-8858858a2090-codex.json` — `BLOCKED`, F-001 (high: fails open after retry exhaustion; residual lacks human acceptance). Round 1: `project/reviews/issues/ISSUE-0013-8c273e194622-codex.json` — `BLOCKED`, F-001 (retry window too short) + F-002 (stale `CURRENT.md`). Round 0: `project/reviews/issues/ISSUE-0013-d3866851c7d6-codex.json` — `BLOCKED`, F-001 (fire-and-forget abandon). `ISSUE-0012` round 2 (final, repair budget exhausted): `project/reviews/issues/ISSUE-0012-195bd8e74688-codex.json` — `CHANGES_REQUIRED`, F-001 (high: unawaited/unscoped compensating logout). `ISSUE-0011` round 1 (final, unrelated M2 work): `project/reviews/issues/ISSUE-0011-e878cdcd979b-codex.json` — `BLOCKED`, zero findings, sole blocker the accepted sandbox execution-evidence residual |
 | Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e`; `ISSUE-0004` `9f3885b`; `ISSUE-0005` `3dc059f`; `ISSUE-0006` `d15f47c`; `ISSUE-0007` `b314d82` (merged `0c35851`, `DECISION-016`); `ISSUE-0008` `2051254` (merged `04e68ee`, `DECISION-017`); `ISSUE-0009` `7b0600f0831f68f8933b68ca0bba34f58a00b0cc` (merged `8253c1d7a754a3a967c2687c5ccc45e71794391a`, `DECISION-019`); `ISSUE-0010` `2a2d0b73e94d2635a645728e5b78f7f500c0a6b2` (merged `9d346f64422bf9bd5f89b43837a5f62f3e64d09b`, `DECISION-020`); `ISSUE-0011` `e878cdcd979b7be87ff20cc986cb16d0d457dfe0` (merged `b50cbc2fb67e8066f22ab06a03f61425dbf1a9d1`, `DECISION-022`); `ISSUE-0012` `195bd8e746884c23b4774162667ee5905f2680e1` (merged `5189959392ec2331c799199f5d70457ff361a3ba`, `DECISION-025`, out-of-band, tracked residual → `ISSUE-0013`) |
 | Last human decision | `DECISION-026` (ISSUE-0013 start authorization); `DECISION-025` (ISSUE-0012 advance and merge, tracked residual); `DECISION-024` (React/Vite frontend, direct-override, out-of-band); `DECISION-023` (M2 milestone acceptance); `DECISION-022` (ISSUE-0011 advance and merge); `DECISION-021` (ISSUE-0011 start authorization); `DECISION-020` (ISSUE-0010 advance and merge); `DECISION-019` (ISSUE-0009 advance and merge); `DECISION-018` (ISSUE-0009 start authorization); `DECISION-017` (ISSUE-0008 advance and merge); `DECISION-016` (ISSUE-0007 advance and merge); `DECISION-015` (roadmap v4 approval); `DECISION-014` (secret retention, RISK-002-as-widened, tenant validation); `DECISION-013` (brief v2 approval); also `DECISION-012`..`001` |
 | Open blockers | None. M2 is accepted; no roadmap work is currently authorized or in progress |
 | Tracked follow-up | Live-tenant sign-in verification (M1 and M2, both auth modes) — deferred pending the human's access restrictions (`DECISION-012`), remains a protected action, not a completion gate for either milestone. `DECISION-023`'s SEC-001 (silent-renewal-after-revocation replay) and SEC-003 (unauthenticated credential-validation oracle, undocumented in `RISK-002`) are tracked, non-blocking follow-ups — see `project/milestones/M2.md` and `DECISION-023`. CI not yet updated for `npm` commands; whether to open an M3 for this frontend work is undecided |
-| Next required actor | Claude (this task) — invoke the fresh Codex issue review for `ISSUE-0013` round 2 (final permitted round) against this candidate SHA |
-| Next permitted action | Run `./scripts/run-codex-review.sh issue ISSUE-0013 959fbcfc1f127289eb1a1798374fae1c96d7cbc2 <round-2-candidate-SHA>`. On `PASS`/`PASS_WITH_NOTES`, present for a human advance/merge decision. On `CHANGES_REQUIRED`/`BLOCKED`, this is the last permitted repair round — stop and present the unresolved finding to the human rather than attempting a third repair |
-| Actions not yet permitted | A third repair round for `ISSUE-0013` without fresh human authorization; merging `ISSUE-0013` to `main` without a human advance/merge decision; any new issue or milestone work beyond `ISSUE-0013` without explicit human authorization; publication, deployment, live tenant auth/fetch (either mode), or any other protected action |
+| Next required actor | **The human** — `ISSUE-0013`'s repair budget is exhausted with an unresolved finding. Choose one of the three options in `project/issues/ISSUE-0013.md`'s "Human decision required" section (accept the documented residual and merge; open a new issue to build an observable cleanup-pending state; or drop the abandon mechanism and rely on natural device-code expiry) |
+| Next permitted action | **Wait** for the human's decision on `ISSUE-0013`. A new task should read this file, `AGENTS.md`, and `ROADMAP.md` fresh before proposing any other next step — do not attempt a third repair round for this issue without a fresh human authorization to do so |
+| Actions not yet permitted | Any further repair of `ISSUE-0013` without a new human authorization; merging `ai/ISSUE-0013-scoped-device-code-abandon` to `main` without a human decision; any new issue or milestone work without an explicit human decision to start it; publication, deployment, live tenant auth/fetch (either mode), or any other protected action |
 
 ## Verification evidence at the reviewed commit
 

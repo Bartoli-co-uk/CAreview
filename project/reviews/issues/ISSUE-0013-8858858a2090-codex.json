@@ -1,0 +1,115 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-28T22:28:08Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faad6-68e0-7b63-925c-d8cd5197327a"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "959fbcfc1f127289eb1a1798374fae1c96d7cbc2",
+    "evidence": [
+      {
+        "detail": "HEAD exactly matched the launcher target and the detached working tree was clean.",
+        "reference": "git rev-parse HEAD; git status --short --branch",
+        "source": "command"
+      },
+      {
+        "detail": "Reviewed the exact base-to-target diff. Changed paths are the ISSUE-0013 implementation, tests, documentation, governance records, authorization decision, handoff, and prior review reports.",
+        "reference": "git diff --name-status 959fbcfc1f127289eb1a1798374fae1c96d7cbc2..8858858a2090aa72d8d0b14a6de64a17a447c120",
+        "source": "diff"
+      },
+      {
+        "detail": "The server-side implementation associates installed delegated tokens with their originating opaque handle and clears pending or installed state only when that handle matches. Unknown and superseded handles are no-ops.",
+        "reference": "auth.py:231; auth.py:299; auth.py:360",
+        "source": "file"
+      },
+      {
+        "detail": "The new endpoint applies the common Host, Origin, JSON-body-size, and object-body checks, validates a non-empty string handle, invokes scoped abandonment, and returns an acknowledgement.",
+        "reference": "server.py:294; server.py:322; server.py:355",
+        "source": "file"
+      },
+      {
+        "detail": "The committed round-2 handoff records 188 backend tests, 91 frontend tests, typecheck/build, compile, and governance checks passing at the target commit.",
+        "reference": "project/handoffs/ISSUE-0013-handoff.md",
+        "source": "file"
+      },
+      {
+        "detail": "Independent backend execution discovered all 188 tests but ended with 76 errors because sandbox policy denied loopback socket binding.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "command"
+      },
+      {
+        "detail": "Independent frontend execution could not start because the isolated checkout lacks installed frontend dependencies and vitest was not found.",
+        "reference": "cd frontend && npm test -- --run",
+        "source": "command"
+      },
+      {
+        "detail": "Independent governance validation could not complete because the read-only environment provides no usable writable temporary directory.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "command"
+      },
+      {
+        "detail": "The exact diff has no whitespace errors.",
+        "reference": "git diff --check 959fbcfc1f127289eb1a1798374fae1c96d7cbc2..8858858a2090aa72d8d0b14a6de64a17a447c120",
+        "source": "check"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: failed abandonment delivery must not be silently treated as completed, per the prior round-1 finding and the issue's purpose of preventing an abandoned poll from leaving an installed token.",
+          "Observed: abandonWithRetry retries only until a wall-clock deadline, makes one final unobserved request, and then returns even if every request failed. cancelDeviceCodeAttempt immediately discards pendingHandle and exposes no unresolved-cleanup state.",
+          "The new test proves requests continue for 60 seconds; it does not verify the deadline/exhaustion path, the final request's result, background timer throttling, browser navigation/unmount, or any safe state after all delivery attempts fail.",
+          "The issue and security documentation now call tab closure and eventual delivery failure an accepted residual, but AGENTS.md reserves risk acceptance to the human. DECISION-026 authorized the issue; it does not accept this round-2 residual or narrow the reliability requirement.",
+          "Because this is repair round 2 of 2, repository rules prohibit another repair without an exact human decision."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 38,
+            "path": "frontend/src/state/appState.tsx"
+          },
+          {
+            "line": 44,
+            "path": "frontend/src/state/appState.tsx"
+          },
+          {
+            "line": 128,
+            "path": "frontend/src/state/appState.tsx"
+          },
+          {
+            "line": 146,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Stop the repair loop and present the unresolved delivery guarantee to the human. The human must either explicitly accept the precisely documented residual risk or authorize a new approach/repair. If implementation is authorized, retain an observable unresolved-cleanup state and handle until acknowledgement, cover retry exhaustion and lifecycle interruption in tests, and obtain a fresh commit-bound review.",
+        "severity": "high",
+        "title": "Cleanup still fails open after retry exhaustion, and its residual risk lacks human acceptance",
+        "verification": "Force every /api/auth/abandon request, including the final deadline request, to fail. Verify the application does not lose the handle or represent cleanup as complete. Then restore delivery and verify acknowledgement clears only that handle. Alternatively, verify a committed human decision explicitly accepts the exact exhaustion/tab-lifecycle residual and authorizes advancement."
+      }
+    ],
+    "limitations": [
+      "Required checks could not be independently completed in this read-only review environment. Backend tests were blocked by denied loopback binds; frontend dependencies were absent; governance validation lacked writable temporary storage.",
+      "The compile and frontend typecheck/build commands were not run because they can write bytecode, incremental files, or build output in the mandated read-only checkout.",
+      "The committed handoff is durable evidence of successful author-run checks, but those results could not be independently reproduced here.",
+      "No live Microsoft authentication or tenant verification was attempted; it remains a protected action outside this issue's offline checks."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "8858858a2090aa72d8d0b14a6de64a17a447c120",
+    "schema_version": "1.0",
+    "summary": "BLOCKED: commit and diff identities are correct, the scoped server-side abandon primitive is structurally sound, and current-state records are synchronized. However, the client still silently loses cleanup after bounded retry exhaustion, the newly declared residual has no human risk-acceptance decision, the two-round repair budget is exhausted, and required checks could not be independently completed in this sandbox.",
+    "target_id": "ISSUE-0013"
+  },
+  "test_only": false
+}

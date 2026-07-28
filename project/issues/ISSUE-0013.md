@@ -1,6 +1,8 @@
 # ISSUE-0013: Scoped, server-side device-code session abandonment
 
-**Status:** `REVIEWING`
+**Status:** `BLOCKED` — repair-round budget exhausted (2 of 2 used, `AGENTS.md`);
+unresolved `CHANGES_REQUIRED`-class finding presented to the human, not
+implemented further by this task.
 **Milestone:** `None` — out-of-band, remediating a residual from `ISSUE-0012`
 (itself out-of-band per `DECISION-024`). Not governed by `ROADMAP.md` v4.
 **Approved roadmap:** `N/A` — see `ISSUE-0012.md`'s equivalent note.
@@ -173,16 +175,55 @@ unscoped (it can clear a different, newer session if one is racing it).
 |---:|---|---|---|---|---|
 | 0 | `project/handoffs/ISSUE-0013-handoff.md` (rounds 0-2) | `d3866851c7d65c5e237e6e9f46ae94adc153a166` | Real command output recorded in the handoff (188 Python tests, 89 Vitest tests, `py_compile`, `validate_repo.py`, `tsc`/`vite build`, all passing) | `project/reviews/issues/ISSUE-0013-d3866851c7d6-codex.json` | `BLOCKED` — F-001 (high): `authAbandon` was fire-and-forget with no retry; a failed delivery could silently leave the abandoned token installed |
 | 1 | `project/handoffs/ISSUE-0013-handoff.md` (round 1 section) | `8c273e19462203c9ba8c2f29a693b47c984eb52b` | Real command output recorded in the handoff (188 Python, 90 Vitest tests, all passing) | `project/reviews/issues/ISSUE-0013-8c273e194622-codex.json` | `BLOCKED` — F-001 (high, narrower): 3-attempt/~6s retry window still too short; F-002 (medium): `CURRENT.md` stale after round 1 landed |
-| 2 | `project/handoffs/ISSUE-0013-handoff.md` (round 2 section) | this commit | Real command output recorded in the handoff (188 Python, 91 Vitest tests, all passing) | *pending* | *pending* |
+| 2 | `project/handoffs/ISSUE-0013-handoff.md` (round 2 section) | `8858858a2090aa72d8d0b14a6de64a17a447c120` | Real command output recorded in the handoff (188 Python, 91 Vitest tests, all passing) | `project/reviews/issues/ISSUE-0013-8858858a2090-codex.json` | `BLOCKED` — F-001 (high): cleanup still fails open after retry exhaustion; the documented residual has no human risk-acceptance decision; repair budget exhausted |
 
 Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
 No workflow loop may exceed five total iterations; the tighter two-round issue
 limit applies first, and exhaustion blocks for the human.
 
+**Repair-round budget exhausted at round 2 with an unresolved `BLOCKED`
+outcome.** Per `AGENTS.md`, this Claude task stops here rather than
+attempting a third fix; the finding below is presented for a human
+decision.
+
+## Human decision required
+
+Round 2's remaining **F-001** (high, blocking): `abandonWithRetry()` retries
+delivery for ~16 minutes but still "fails open" if every attempt fails —
+`cancelDeviceCodeAttempt()` discards the handle regardless of outcome, and
+nothing observable records that cleanup never got acknowledged. The
+review's second point is procedural and independently valid: the round-2
+handoff/docs *declared* the tab-closure/exhaustion case an accepted
+residual, but per `AGENTS.md` only the human can accept a residual risk —
+a Claude task cannot write its own risk acceptance into the record and
+call it settled.
+
+**Options for the human:**
+1. **Accept the documented residual risk exactly as written** in
+   `project/issues/ISSUE-0013.md`'s security-impact section and
+   `docs/security-boundaries.md` (loopback-only delivery, ~16-minute retry
+   window, tab-closure/permanent-failure as the sole uncovered case), and
+   authorize merging `ai/ISSUE-0013-scoped-device-code-abandon` to `main`
+   as-is. This would be the human decision the round-2 finding says is
+   missing, not a further code change.
+2. **Authorize a new issue** (its own fresh repair budget) to build an
+   observable unresolved-cleanup state — e.g. surface a visible "cleanup
+   pending" indicator, or a server-side reconciliation path independent of
+   client delivery — closing the "fails open silently" gap the reviewer
+   identified, rather than only bounding its time window.
+3. **Direct a different mitigation** — e.g. rely on the device-code
+   session's own ~15-minute server-side expiry as the sole safety net
+   (already true today regardless of `abandon()`) and drop the
+   client-driven abandon/retry mechanism entirely, accepting the simpler,
+   already-existing "wait for natural expiry" behavior instead of adding
+   this endpoint.
+
 ## Completion
 
-- Final reviewed product SHA: *pending*
+- Final reviewed product SHA: `8858858a2090aa72d8d0b14a6de64a17a447c120` —
+  blocked pending the human decision above
 - Human advance/merge decision: *pending*
 - Merge/result SHA: *pending*
-- Residual risks or follow-up: *pending*
-- Status record updated: *pending*
+- Residual risks or follow-up: the round-2 F-001 residual above, awaiting
+  explicit human risk acceptance or further authorized work
+- Status record updated: `project/status/CURRENT.md`, this commit

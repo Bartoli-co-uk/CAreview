@@ -1,9 +1,9 @@
 # ISSUE-0011: M2 documentation finalization and dual-mode walkthrough
 
-**Status:** `REVIEWING`
+**Status:** `REPAIRING`
 **Milestone:** `M2`
 **Approved roadmap:** `ROADMAP.md` version `4` at `9e5ba6d2f6c2b7f7efa81dcfc415e1f787aaa458` (approved by `DECISION-015`)
-**Dependencies:** `ISSUE-0007..0010` (all COMPLETE)
+**Dependencies:** `ISSUE-0007..0010` (all COMPLETE); `DECISION-021` (start authorization)
 **Branch:** `ai/ISSUE-0011-m2-docs`
 **Starting SHA:** `4f35275d004265ee152348e7e3d1f7b9f6a62cc6`
 **Candidate SHA:** this commit (branch HEAD); the launcher records the full SHA
@@ -98,7 +98,8 @@ This issue *is* the documentation change: `README.md` and
 
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
-| 0 | `project/handoffs/ISSUE-0011-handoff.md` | this commit | tests pass; compile clean; validator passed (incl. link/anchor check); documentation walkthrough smoke-checked | pending | pending |
+| 0 | `project/handoffs/ISSUE-0011-handoff.md` | `b0b91742ec6cdd8925b69fcdc45ae533a5d3b9f2` | 173 tests pass; compile clean; validator passed (incl. link/anchor check); documentation walkthrough smoke-checked | `project/reviews/issues/ISSUE-0011-b0b91742ec6c-codex.json` | `BLOCKED` — F-001 (inaccurate secret-transmission wording) + F-002 (missing durable start-authorization record) |
+| 1 | `project/handoffs/ISSUE-0011-handoff.md` (Repair round 1 section) | this commit | 173 tests pass; compile clean; validator passed | pending | pending |
 
 Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
 No workflow loop may exceed five total iterations; the tighter two-round issue

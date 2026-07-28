@@ -150,3 +150,35 @@ This issue *is* the documentation change — see Outcome above.
 
 - Base SHA: `4f35275d004265ee152348e7e3d1f7b9f6a62cc6`
 - Head SHA: (this commit; recorded by the launcher)
+
+## Repair round 1
+
+Round-0 Codex review
+(`project/reviews/issues/ISSUE-0011-b0b91742ec6c-codex.json`, candidate
+`b0b91742ec6cdd8925b69fcdc45ae533a5d3b9f2`) returned `BLOCKED` with two
+findings:
+
+- **F-001 fix (medium):** the "App-only mode (advanced)" section said the
+  secret is sent to CAreview's local server "never anywhere else," which
+  is materially inaccurate — the local server necessarily forwards it to
+  Microsoft's tenant token endpoint (`login.microsoftonline.com`) for the
+  initial client-credentials request and again on every silent renewal;
+  that *is* the mechanism, not an extra leak, but the original wording
+  read as claiming no second hop existed at all. Rewrote the "What happens
+  to the secret" list to describe both hops precisely: browser → local
+  server (once, never to any other page/host/process), then local server →
+  Microsoft's token endpoint only (on acquisition and every renewal),
+  never returned to the browser and never sent to any other host.
+- **F-002 fix (high):** no durable repository record authorized starting
+  `ISSUE-0011` — `DECISION-020` explicitly scopes itself to `ISSUE-0010`
+  only, and the human's actual "begin ISSUE-0011" instruction existed only
+  in chat at the time of the round-0 candidate. Fixed by recording
+  `project/decisions/DECISION-021-issue-0011-start-authorization.md`,
+  which quotes the exact instruction, mirroring the
+  `DECISION-018`/`ISSUE-0009` precedent for the same gap.
+- Rechecked after both fixes: `python3 -m unittest discover -s tests` →
+  173 passed, exit 0 (no product/test source changed, so the count is
+  unchanged); `python3 -m py_compile $(git ls-files '*.py')` → exit 0;
+  `python3 scripts/validate_repo.py` → "Repository validation passed (67
+  required files checked)."
+- This is round 1 of at most two permitted issue repair rounds.

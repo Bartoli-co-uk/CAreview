@@ -129,13 +129,18 @@ client secret.
 
 **What happens to the secret:**
 
-- It is sent once, over the loopback POST body, to CAreview's own local
-  server — never anywhere else.
+- Your browser sends it once, over the loopback POST body, to CAreview's
+  own local server — never to any other page, host, or process.
+- The local server then sends it on to Microsoft's tenant token endpoint
+  (`login.microsoftonline.com`) to request the token, and again on every
+  silent renewal — this is the client-credentials grant itself, not an
+  extra exposure. It is never sent to, or returned by, any host other than
+  that Microsoft endpoint, and it is never sent back to the browser.
 - If sign-in succeeds, the server process **retains it in memory for the
-  session** (not discarded after the first request) so it can silently
-  request a fresh token when the current one expires, without asking you to
-  re-enter it. This is a deliberate trade-off, documented as `RISK-002`
-  (widened) — see [Security model](#security-model).
+  session** (not discarded after the first request) so it can repeat that
+  renewal request silently when the current token expires, without asking
+  you to re-enter it. This is a deliberate trade-off, documented as
+  `RISK-002` (widened) — see [Security model](#security-model).
 - It is **never written to disk, logs, or any tracked file**, in either the
   server process or the browser page (`type="password"`, `autocomplete="off"`,
   no `console`/`localStorage`/`sessionStorage`/cookie/URL writes, cleared

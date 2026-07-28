@@ -1,0 +1,79 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-28T06:32:17Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa76b-5de7-7bd3-b2e7-1c444d78dc00"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "4f35275d004265ee152348e7e3d1f7b9f6a62cc6",
+    "evidence": [
+      {
+        "detail": "HEAD exactly matched the launcher-supplied target commit; the supplied base commit resolved; the working tree was clean.",
+        "reference": "git rev-parse HEAD; git rev-parse 4f35275d004265ee152348e7e3d1f7b9f6a62cc6; git status --short",
+        "source": "command"
+      },
+      {
+        "detail": "All changed paths are within the issue's allowed scope: README.md, docs/security-boundaries.md, and project/ records. No product source or tests changed.",
+        "reference": "git diff --name-status 4f35275d004265ee152348e7e3d1f7b9f6a62cc6..e878cdcd979b7be87ff20cc986cb16d0d457dfe0",
+        "source": "diff"
+      },
+      {
+        "detail": "The README documents both authentication modes, the exact application-permission prerequisite, lack of automatic app-registration creation, session retention and silent renewal, both secret-transmission hops, rotation/revocation, certificate deferral, and separate protected live steps for both walkthroughs.",
+        "reference": "README.md:100",
+        "source": "file"
+      },
+      {
+        "detail": "The security-boundary documentation records the app-only trust-boundary delta, widened RISK-002, browser exposure, RISK-006, certificate deferral, least-privilege limitations, and Microsoft-only egress.",
+        "reference": "docs/security-boundaries.md:80",
+        "source": "file"
+      },
+      {
+        "detail": "DECISION-021 durably records the human's exact instruction to begin ISSUE-0011 and binds it to the issue branch, base commit, scope, and exclusion of advance/merge or protected-action approval.",
+        "reference": "project/decisions/DECISION-021-issue-0011-start-authorization.md:1",
+        "source": "file"
+      },
+      {
+        "detail": "The exact test command ran 173 tests but exited nonzero with 68 errors because the read-only review sandbox denied loopback socket binding; failures were environmental PermissionError exceptions during server setup rather than observed assertions.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "The exact compile command could not create __pycache__ in the read-only checkout and exited nonzero with '[Errno 1] Operation not permitted'.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "The governance validator could not create its required temporary directory in this read-only environment and exited nonzero with FileNotFoundError.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The committed handoff reports successful author-side execution at this candidate: 173 tests passed, compilation exited 0, and repository validation passed. Under the review rules these author claims cannot replace independent execution.",
+        "reference": "project/handoffs/ISSUE-0011-handoff.md",
+        "source": "file"
+      }
+    ],
+    "findings": [],
+    "limitations": [
+      "Independent required-check evidence is incomplete: the review sandbox prohibits loopback socket binding, writes to __pycache__, and creation of temporary directories. The issue-review rules require BLOCKED whenever execution evidence is missing or failed, even when the failures appear environmental.",
+      "The non-live server walkthrough could not be independently repeated because the sandbox prohibits binding a loopback listening socket.",
+      "The checkout has grafted history, so the intermediate round-0 candidate was unavailable for a direct round-0-to-round-1 diff. The complete supplied base-to-target diff and committed round-0 report were still inspectable.",
+      "No live tenant sign-in was performed. This is intentionally excluded by the approved issue and remains a documented residual verification gap for both authentication modes."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "e878cdcd979b7be87ff20cc986cb16d0d457dfe0",
+    "schema_version": "1.0",
+    "summary": "BLOCKED solely because the required checks and non-live server walkthrough could not be independently completed in the read-only sandbox. No actionable correctness, scope, security, documentation, or maintainability defect was found in the candidate diff. The two round-0 findings appear resolved: the README now accurately documents browser-to-local-server and local-server-to-Microsoft secret transmission, and DECISION-021 durably records the human's issue-start authorization. Residual risks remain the documented live-tenant verification gap and accepted app-only credential/scope risks.",
+    "target_id": "ISSUE-0011"
+  },
+  "test_only": false
+}

@@ -1,0 +1,113 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-27T23:03:09Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa5d0-144e-7652-82a3-29784ebbd91e"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "4f35275d004265ee152348e7e3d1f7b9f6a62cc6",
+    "evidence": [
+      {
+        "detail": "HEAD exactly matched the supplied target SHA; the working tree was clean and detached. The supplied base SHA resolved. The base-to-target diff changed only README.md, docs/security-boundaries.md, and project records; product source and tests were unchanged.",
+        "reference": "git status --short --branch; git rev-parse; git diff --name-status 4f35275d004265ee152348e7e3d1f7b9f6a62cc6 b0b91742ec6cdd8925b69fcdc45ae533a5d3b9f2",
+        "source": "command"
+      },
+      {
+        "detail": "The documentation otherwise covers both authentication modes, the exact app-only prerequisite, certificate deferral, session retention and renewal, rotation/revocation, the widened trust boundary, RISK-006, and walkthroughs identifying live actions.",
+        "reference": "README.md; docs/security-boundaries.md; project/issues/ISSUE-0011.md",
+        "source": "file"
+      },
+      {
+        "detail": "Independent test execution ran 173 tests but exited 1 with 68 errors because the review sandbox denied loopback socket binding; unaffected tests completed successfully.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "The compile check exited 1 because the read-only sandbox denied creation of __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation exited 1 because no writable temporary directory was available to its launcher smoke checks.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The committed handoff records author-observed results of 173 tests passing, compile exit 0, governance validation passing, and a non-live walkthrough. These are relevant but cannot replace independent execution evidence under the repository review rules.",
+        "reference": "project/handoffs/ISSUE-0011-handoff.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: secret-lifecycle documentation should state every destination and transmission of the client secret accurately.",
+          "Observed: README.md says the secret is sent over the loopback POST body to the local server and then “never anywhere else.” The implemented client-credentials flow necessarily sends that secret from the server to Microsoft's token endpoint initially and again during silent renewal.",
+          "This wording can cause users to misunderstand the external exposure and lifecycle of a high-value credential."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 132,
+            "path": "README.md"
+          }
+        ],
+        "remediation": "Replace “never anywhere else” with precise wording: the browser sends the secret only to the loopback server; the server transmits it directly to Microsoft's tenant token endpoint for initial token acquisition and renewal, while never returning it to the browser or sending it to any non-Microsoft destination. Align docs/security-boundaries.md if necessary.",
+        "severity": "medium",
+        "title": "Client-secret transmission documentation is materially inaccurate",
+        "verification": "Review the revised lifecycle text against auth.py's client-credentials request construction and renewal path, then rerun Markdown/governance validation."
+      },
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Expected: the default manual workflow requires a recorded human issue-advance/start decision before beginning ISSUE-0011.",
+          "Observed: DECISION-020 explicitly says it “does not authorize starting ISSUE-0011” and that ISSUE-0011 does not start as part of that decision.",
+          "No later decision authorizing ISSUE-0011 was found. CURRENT.md instead asserts that the issue started because no deferral was recorded, which infers authorization contrary to the default-manual rule and the explicit exclusion."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 18,
+            "path": "project/decisions/DECISION-020-issue-0010-advance-and-merge.md"
+          },
+          {
+            "line": 24,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Stop progression and obtain an exact human decision on whether to authorize/ratify ISSUE-0011 and this candidate. Record that decision and reconcile CURRENT.md and the issue record without implying that absence of deferral grants approval. Any resulting relevant documentation change requires a fresh review.",
+        "severity": "high",
+        "title": "ISSUE-0011 lacks the required human start authorization",
+        "verification": "Confirm a committed human-authored decision explicitly binds ISSUE-0011's start and intended scope/candidate, and verify CURRENT.md links to it consistently."
+      }
+    ],
+    "limitations": [
+      "The required test suite could not independently pass: 68 server tests were blocked by sandbox loopback restrictions.",
+      "The required py_compile check could not complete because the read-only checkout prevented bytecode output.",
+      "The required governance validator could not complete because the sandbox provided no writable temporary directory.",
+      "The documented non-live server walkthrough could not be independently repeated because the sandbox denies loopback socket binding.",
+      "The target commit is represented as a root commit in this isolated checkout, so ancestry to the supplied base could not be established; exact endpoint identities and their direct diff were verified.",
+      "No live tenant authentication was performed, as explicitly excluded by the approved issue."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "b0b91742ec6cdd8925b69fcdc45ae533a5d3b9f2",
+    "schema_version": "1.0",
+    "summary": "BLOCKED. The candidate has one material documentation defect: it incorrectly says the app-only secret is never sent anywhere beyond the local server, omitting transmission to Microsoft's token endpoint. More fundamentally, repository evidence contains no human authorization to start ISSUE-0011 and the latest decision explicitly excludes it. Independent required checks also could not complete in the read-only, no-loopback sandbox.",
+    "target_id": "ISSUE-0011"
+  },
+  "test_only": false
+}

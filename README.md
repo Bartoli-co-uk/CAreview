@@ -9,9 +9,10 @@ step.
 It is inspired by [`Jhope188/ca-policy-analyzer`](https://github.com/Jhope188/ca-policy-analyzer),
 re-scoped to run entirely locally.
 
-> **Status: MVP complete.** Sign-in, policy fetch, scoring, findings and the UI
-> are all implemented and unit-tested offline.
-> **One tracked gap:** the device-code sign-in and Graph fetch have only been
+> **Status: MVP complete, dual-mode auth complete.** Sign-in (device-code, the
+> default, and an optional app-only mode), policy fetch, scoring, findings and
+> the UI are all implemented and unit-tested offline.
+> **One tracked gap:** in both modes, sign-in and Graph fetch have only been
 > exercised against mocked transports — a live sign-in against a real tenant has
 > not yet been performed. See [Known limitations](#known-limitations).
 
@@ -21,6 +22,8 @@ re-scoped to run entirely locally.
 
 - [What it does](#what-it-does)
 - [Quick start](#quick-start)
+- [App-only mode (advanced)](#app-only-mode-advanced)
+- [End-to-end walkthrough](#end-to-end-walkthrough)
 - [Step-by-step setup for beginners (Windows)](#step-by-step-setup-for-beginners-windows)
 - [What it checks](#what-it-checks)
 - [How the score works](#how-the-score-works)
@@ -39,8 +42,11 @@ re-scoped to run entirely locally.
 ## What it does
 
 1. **Sign in** — OAuth 2.0 device-code flow against a Microsoft first-party
-   public client. You click *Sign in*, get a code, approve it at
-   `microsoft.com/devicelogin`. No app registration, no client secret.
+   public client (the default). You click *Sign in*, get a code, approve it at
+   `microsoft.com/devicelogin`. No app registration, no client secret. An
+   optional **app-only mode** is also available for a user who already owns
+   an Entra app registration — see
+   [App-only mode (advanced)](#app-only-mode-advanced).
 2. **Fetch** — reads your tenant's Conditional Access policies from Microsoft
    Graph (read-only, paged) and normalizes them into a stable internal shape.
 3. **Score** — runs a declarative rule set and produces a **0–100 heuristic
@@ -90,6 +96,110 @@ To use a different port: `CAREVIEW_PORT=8888 python3 server.py`.
 
 Reading Conditional Access policies requires delegated consent to
 `Policy.Read.All`; a **Security Reader** directory role is sufficient.
+
+## App-only mode (advanced)
+
+Device-code sign-in (above) is the default and works for most users with no
+setup. App-only mode is an **opt-in alternative** for someone who already
+manages an Entra app registration and would rather authenticate as that
+application than as themselves.
+
+**Prerequisite — CAreview never creates this for you.** You need an Entra
+app registration you already own, with:
+
+- the **application** (not delegated) Graph permission `Policy.Read.All`,
+  already admin-consented in the target tenant;
+- its **Application (client) ID**;
+- a **client secret** you have generated for it (Entra portal → your app
+  registration → *Certificates & secrets* → *New client secret*).
+
+CAreview only ever reads whatever the app registration already holds — it
+does not create, register, or modify an app registration, and it cannot
+request a narrower set of permissions than the app already has (Microsoft's
+`.default` scope returns everything the app is consented for). **Recommend
+a dedicated app registration holding only application `Policy.Read.All`** so
+the token CAreview receives can't do more than read policies (`RISK-006`).
+
+**How to use it:** on the Sign in card, click **"Use app-only sign-in
+(advanced)"**, then enter the tenant (a GUID or a verified domain like
+`contoso.onmicrosoft.com` — the multi-tenant aliases `organizations`,
+`common`, and `consumers` are rejected, since they don't identify one tenant
+for a client-credentials grant), the Application (client) ID, and the
+client secret.
+
+**What happens to the secret:**
+
+- Your browser sends it once, over the loopback POST body, to CAreview's
+  own local server — never to any other page, host, or process.
+- The local server then sends it on to Microsoft's tenant token endpoint
+  (`login.microsoftonline.com`) to request the token, and again on every
+  silent renewal — this is the client-credentials grant itself, not an
+  extra exposure. It is never sent to, or returned by, any host other than
+  that Microsoft endpoint, and it is never sent back to the browser.
+- If sign-in succeeds, the server process **retains it in memory for the
+  session** (not discarded after the first request) so it can repeat that
+  renewal request silently when the current token expires, without asking
+  you to re-enter it. This is a deliberate trade-off, documented as
+  `RISK-002` (widened) — see [Security model](#security-model).
+- It is **never written to disk, logs, or any tracked file**, in either the
+  server process or the browser page (`type="password"`, `autocomplete="off"`,
+  no `console`/`localStorage`/`sessionStorage`/cookie/URL writes, cleared
+  from the page the instant you submit, switch modes, or sign out).
+- **Sign out** clears the retained secret from server memory immediately.
+  Closing the CAreview process also discards it — nothing persists between
+  runs.
+
+**To rotate or revoke access:** manage this entirely in the Entra portal,
+not in CAreview. Deleting or rotating the app registration's client secret,
+or removing its `Policy.Read.All` permission, takes effect the next time
+CAreview would need to renew its token — sign out first so CAreview drops
+the old secret, then sign in again with a new one if you rotated rather than
+revoked.
+
+**Certificate-based authentication is not supported in this release.**
+Only a client secret is accepted. Certificate/JWT-based client assertions
+are recorded as a **deferred future enhancement** — they would need a
+third-party cryptography dependency, which breaks CAreview's
+standard-library-only constraint, so adding them would need its own,
+separate dependency-approval decision.
+
+## End-to-end walkthrough
+
+Both walkthroughs below are entirely local until the one clearly marked
+**live step**. That step is a **protected action** — CAreview's own
+[`AGENTS.md`](AGENTS.md) never lets an agent perform a live sign-in; it's
+something you, the reader, do yourself in your own browser with your own
+credentials.
+
+**Device-code (default):**
+
+1. `python3 server.py`, then open <http://127.0.0.1:8765/>.
+2. Click **Sign in** (optionally change the tenant from `organizations`).
+3. **Live step:** open the displayed `microsoft.com/devicelogin` link and
+   enter the code shown on the page, using your own Microsoft account.
+4. Once approved, the page automatically fetches your policies and renders
+   the score, findings, and policy cards.
+5. Click **Sign out** to clear the in-memory token and the analysis.
+
+**App-only (advanced):**
+
+1. `python3 server.py`, then open <http://127.0.0.1:8765/>.
+2. Click **"Use app-only sign-in (advanced)"** and enter your tenant,
+   Application (client) ID, and client secret — see
+   [App-only mode (advanced)](#app-only-mode-advanced) for the prerequisite.
+3. **Live step:** click **"Sign in with app-only credentials."** This sends
+   your real client secret to CAreview's local server and, on success,
+   CAreview requests a real token from Microsoft on the app registration's
+   behalf.
+4. On success, the page fetches your policies and renders the score,
+   findings, and policy cards, the same as device-code mode.
+5. Click **Sign out** to clear the in-memory token, session, and the
+   retained client secret.
+
+Either walkthrough can be tried without the live step: click **"View a
+sample analysis"** on the Server status card instead of signing in, which
+exercises the identical scoring/rendering path against the committed,
+sanitized [`web/sample-data.json`](web/sample-data.json).
 
 ## Step-by-step setup for beginners (Windows)
 
@@ -222,12 +332,12 @@ documented at the bottom of [`rules.py`](rules.py).
 | Path | What it does |
 |---|---|
 | [`server.py`](server.py) | Standard-library HTTP server. Binds loopback only (refuses any other bind address), serves an explicit static-file allowlist and the JSON API, enforces the Host/Origin allowlists, and sets CSP + `nosniff` headers. |
-| [`auth.py`](auth.py) | OAuth 2.0 device-code flow against the Microsoft Graph PowerShell first-party public client. In-memory token store, full poll state machine, opaque bounded session handle, logout. Transport- and clock-injectable so it is testable without a network. |
+| [`auth.py`](auth.py) | Two sign-in modes: OAuth 2.0 device-code against the Microsoft Graph PowerShell first-party public client (default), and an opt-in client-credentials (app-only) flow for a user-owned app registration, with session-retained secret and silent renewal. In-memory token store only, opaque bounded session handle, logout. Transport- and clock-injectable so it is testable without a network. |
 | [`graph.py`](graph.py) | Read-only Microsoft Graph client. Fetches `identity/conditionalAccess/policies`, follows paging, and normalizes each policy into the internal data contract the analyzer and UI consume. Refuses to attach the bearer token to any non-Graph host. |
 | [`rules.py`](rules.py) | The declarative rule set: ten rules with severity, weight, rationale, remediation and required fields, plus the evaluability model. |
 | [`analyzer.py`](analyzer.py) | Runs the rules over normalized policies, computes the weighted score, and returns severity-sorted findings. |
 | [`web/`](web/) | The UI — `index.html`, `app.js`, `style.css`, and the sanitized `sample-data.json`. No frameworks, no external assets. Untrusted tenant strings are inserted as text, never HTML. |
-| [`tests/`](tests/) | 85 unit tests plus sanitized fixtures (`strong`, `weak`, `incomplete` tenants). Fully offline — no sign-in, no network. |
+| [`tests/`](tests/) | 173 unit tests plus sanitized fixtures (`strong`, `weak`, `incomplete` tenants). Fully offline — no sign-in, no network. |
 
 The remaining top-level directories (`docs/`, `project/`, `prompts/`,
 `scripts/`, `.claude/`, `.codex/`) belong to the build process rather than the
@@ -255,7 +365,7 @@ Static routes: `/`, `/index.html`, `/app.js`, `/style.css`, `/sample-data.json`.
 ## Verify it offline
 
 ```sh
-python3 -m unittest discover -s tests            # 85 tests; no sign-in, no network
+python3 -m unittest discover -s tests            # 173 tests; no sign-in, no network
 python3 -m py_compile $(git ls-files '*.py')     # compile check
 python3 scripts/validate_repo.py                 # governance/docs validator
 ```
@@ -274,8 +384,11 @@ locally are the checks that gate the repository — see
 
 - **Local only.** One Python process on `http://127.0.0.1:8765`. Your policies
   and tokens stay on your machine; the only network egress is to Microsoft.
-- **Zero registration, zero build.** No Azure app registration, no client
-  secret, no Node.js toolchain.
+- **Zero registration, zero build by default.** The default device-code path
+  needs no Azure app registration and no client secret; there's no Node.js
+  toolchain either way. App-only mode is an explicit opt-in for a user who
+  already has their own app registration — see
+  [App-only mode (advanced)](#app-only-mode-advanced).
 - **Standard library only.** No third-party Python dependencies.
 - **Read-only, least privilege.** Delegated Graph scope limited to
   `Policy.Read.All` — the only Graph call CAreview makes is to
@@ -288,13 +401,26 @@ the MVP, not part of it. They would need a new brief and roadmap cycle.
 
 ## Security model
 
-- **Tokens never leave memory.** Access tokens obtained by the device-code flow
-  live only in the running process — never on disk, in logs, in tracked files,
-  or in agent prompts. Request logging is disabled so request contents cannot
-  leak to stderr.
-- **No secrets in the repository.** The first-party `client_id` is public by
-  design and there is no client secret. Never commit a tenant ID, a policy
-  export, or any account data.
+- **Tokens never leave memory, in either mode.** Access tokens — device-code
+  or app-only — live only in the running process, never on disk, in logs, in
+  tracked files, or in agent prompts. Request logging is disabled so request
+  contents cannot leak to stderr.
+- **App-only mode's client secret is session-memory-only, and widens the
+  trust boundary.** Unlike device-code mode (no secret at all — the
+  first-party `client_id` is public by design), a user-supplied client
+  secret is retained by the server process for the whole app-only session,
+  not just the one request, so it can silently renew the token on expiry.
+  This is a deliberate, documented trade-off (`RISK-002`, widened) — the
+  local API's existing no-authentication-beyond-loopback boundary now also
+  covers a live client secret, not just a delegated user token, for as long
+  as an app-only session is active. It is never written to disk, logs, or
+  any tracked file. See [App-only mode (advanced)](#app-only-mode-advanced)
+  for the browser-side handling and [`docs/security-boundaries.md`](docs/security-boundaries.md)
+  for the full delta.
+- **No secrets in the repository.** Never commit a tenant ID, a policy
+  export, a real client secret, or any other account data. The only
+  secret-shaped string in this repository is a synthetic, clearly-fake
+  literal used in tests.
 - **Loopback-bound, with DNS-rebinding defence.** The server factory refuses any
   non-loopback bind address. Every request's `Host` header must be on a loopback
   allowlist, which stops a remote page rebinding DNS to `127.0.0.1` and reading
@@ -318,10 +444,12 @@ These are the recorded, accepted residual risks (tracked in
 
 | ID | Limitation |
 |---|---|
-| **Live sign-in unverified** | Auth and Graph access have only been exercised against mocked transports. Whether the chosen first-party client can obtain `Policy.Read.All` by device code in a given real tenant is not yet confirmed. |
-| **RISK-001** | A tenant may block first-party device-code sign-in or withhold `Policy.Read.All` consent. The app-registration fallback is deferred, not part of the MVP. |
-| **RISK-002** | The local API has no authentication beyond loopback binding plus the Host/Origin allowlists. Another process running as the same user on the same machine could reach it while a token is in memory. Acceptable for a single-user local tool — **do not run it on a shared or multi-user host.** |
+| **Live sign-in unverified** | Auth and Graph access, in **both** modes, have only been exercised against mocked transports. Whether the chosen first-party client can obtain `Policy.Read.All` by device code, or a given app registration's client-credentials grant succeeds, in a real tenant is not yet confirmed. |
+| **RISK-001** | A tenant may block first-party device-code sign-in or withhold `Policy.Read.All` consent. App-only mode is an available alternative for a user who already has a suitable app registration, not a fallback CAreview arranges for you. |
+| **RISK-002** | The local API has no authentication beyond loopback binding plus the Host/Origin allowlists. Another process running as the same user on the same machine could reach it while a token — or, in an app-only session, the retained client secret — is in memory. Acceptable for a single-user local tool — **do not run it on a shared or multi-user host.** |
 | **RISK-004** | The 0–100 score is a documented heuristic across a starter rule set. It is not a compliance certification and not a substitute for professional assessment. |
+| **RISK-005** | The app-only client secret passes through the browser page once, at entry. Mitigated (`type="password"`, no console/storage/URL writes, cleared on submit/mode-switch/logout) but not eliminated: a compromised browser, extension, or someone reading over your shoulder while you type it remains a residual risk the device-code path doesn't have. |
+| **RISK-006** | App-only mode's token carries **every** application permission the app registration holds, not just `Policy.Read.All` — Microsoft's `.default` scope can't be narrowed by the client. Use a dedicated app registration with only `Policy.Read.All` to limit this. |
 | **Browser rendering** | The UI has been verified by fetching and asserting on server responses and by static checks, not by an automated in-browser test. |
 
 CAreview has not been independently security tested. Two AI reviews passing is

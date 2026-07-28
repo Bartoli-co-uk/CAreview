@@ -1,0 +1,107 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-28T21:27:30Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faa9f-0c6e-7273-84e6-5380edba25d4"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "8648f2ba11907ac32016c724d8ae49a08bdb6b2d",
+    "evidence": [
+      {
+        "detail": "HEAD exactly matches the launcher-bound target commit. The working tree is clean.",
+        "reference": "git rev-parse HEAD; git status --short",
+        "source": "command"
+      },
+      {
+        "detail": "The launcher-bound base-to-target diff contains 67 changed paths, principally replacing the vanilla frontend with React/Vite and adding associated tests and documentation.",
+        "reference": "git diff --stat 8648f2ba11907ac32016c724d8ae49a08bdb6b2d..195bd8e746884c23b4774162667ee5905f2680e1",
+        "source": "diff"
+      },
+      {
+        "detail": "Round-2 evidence records 174 Python tests passing, successful Python compilation and governance validation, successful TypeScript/Vite builds, and 88 Vitest tests passing against the candidate tree.",
+        "reference": "project/handoffs/ISSUE-0012-handoff.md",
+        "source": "file"
+      },
+      {
+        "detail": "Independent Python execution ran 174 tests but 68 server tests could not bind loopback sockets under the read-only review sandbox. The remaining tests completed without reported failures.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Independent governance validation could not create a temporary directory because the review sandbox has no writable location.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "Independent frontend tests could not start because the isolated checkout has no frontend/node_modules directory and installing dependencies is neither authorized nor possible in this review.",
+        "reference": "cd frontend && npm test -- --run",
+        "source": "check"
+      },
+      {
+        "detail": "AuthManager.poll installs a token only while its original session remains current; logout clears every current authentication mode and retained app-only credential rather than conditionally clearing the abandoned handle.",
+        "reference": "auth.py:290",
+        "source": "file"
+      },
+      {
+        "detail": "The new regression test verifies that a logout request is issued, but its mock always succeeds and it does not verify cleanup completion, cleanup failure, or interaction with a newer authentication transition.",
+        "reference": "frontend/src/test/deviceCodeRace.test.tsx:37",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: abandoning a device-code attempt must reliably remove only that attempt's server-side authentication state without disrupting a newer authentication transition.",
+          "Observed: after detecting a stale successful poll, pollOnce invokes `void authLogout()` without awaiting or checking it. A network/server failure silently leaves the orphaned token installed—the same high-impact condition this repair is intended to eliminate.",
+          "Observed: `/api/auth/logout` is unconditional and AuthManager.logout clears the current device session, access token, and retained app-only credentials. If an app-only or newer authentication transition completes after the stale poll installed its token but before the fire-and-forget logout is processed, this cleanup can erase the newer valid session.",
+          "The regression test only counts a mocked logout request whose response always succeeds; it cannot detect either failure mode."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 151,
+            "path": "frontend/src/state/appState.tsx"
+          },
+          {
+            "line": 101,
+            "path": "frontend/src/api/client.ts"
+          },
+          {
+            "line": 82,
+            "path": "frontend/src/test/deviceCodeRace.test.tsx"
+          }
+        ],
+        "remediation": "Make cancellation/cleanup ordered and attempt-specific. Prefer invalidating the server-side device session when the user abandons it, before beginning a competing authentication transition, with an awaited operation and explicit failure handling. Alternatively add a server API that conditionally clears only the named device attempt/generation. Do not use an unconditional fire-and-forget logout after another session may have become current.",
+        "severity": "high",
+        "title": "Stale-success cleanup is neither reliable nor scoped to the abandoned attempt",
+        "verification": "Add race/error tests showing: (1) cleanup failure cannot silently leave an unreachable authenticated server session; (2) switching to app-only authentication cannot be logged out by delayed cleanup from the abandoned device attempt; (3) starting a newer device attempt cannot be cleared by old cleanup; and (4) sample/sign-out transitions leave AuthManager unauthenticated. Run frontend and backend integration suites against the repaired commit."
+      }
+    ],
+    "limitations": [
+      "The checkout is read-only and provides no writable temporary directory, so governance validation could not complete independently.",
+      "The sandbox prohibits loopback socket binding, preventing 68 of 174 Python tests from executing independently.",
+      "Frontend dependencies are absent, and this review was not authorized to install them; TypeScript build and Vitest results therefore rely on the commit-bound handoff evidence.",
+      "The manual browser walkthrough has no durable recording and was not independently reproducible.",
+      "Live Microsoft tenant authentication remains untested and is explicitly deferred as a protected action.",
+      "The repository is a shallow/grafted isolated checkout; target and base objects and their exact diff were available, but ordinary parent-range inspection was limited by the graft boundary."
+    ],
+    "mode": "issue",
+    "outcome": "CHANGES_REQUIRED",
+    "reviewed_sha": "195bd8e746884c23b4774162667ee5905f2680e1",
+    "schema_version": "1.0",
+    "summary": "CHANGES_REQUIRED. The round-2 repair issues an unconditional, fire-and-forget logout after a stale successful poll. Cleanup failure can preserve the orphaned server token, while delayed cleanup can erase a newer valid session. The existing regression test proves only that a logout request was attempted. Commit-bound check evidence is present, but several checks could not be independently reproduced because of sandbox restrictions.",
+    "target_id": "ISSUE-0012"
+  },
+  "test_only": false
+}

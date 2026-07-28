@@ -82,36 +82,52 @@ already installed a live token in `AuthManager` for an attempt the user
 believes they abandoned, and the UI has no reachable "Sign out" control for
 a session it never considers itself signed into (`Settings` only shows one
 while `mode === "live"`) — that orphaned server-side session could only
-ever be cleared by restarting the whole process. Round 2 fixes this by
+ever be cleared by restarting the whole process. Round 2 fixed this by
 making the stale-success branch of `pollOnce()` call `authLogout()` as a
 compensating cleanup, with a regression test asserting that call happens
-exactly once. **This is the second and final repair round `AGENTS.md`
-permits for an issue** — a fresh Codex review of round 2 is pending as of
-this record; if it does not return `PASS`/`PASS_WITH_NOTES`, this issue
-stops here for the human rather than attempting a third repair.
+exactly once.
+
+**Round 2 result: `CHANGES_REQUIRED`** — no longer `BLOCKED`, but still a
+real, narrower finding, same F-001 id. The fresh review against candidate
+`195bd8e746884c23b4774162667ee5905f2680e1`
+(`project/reviews/issues/ISSUE-0012-195bd8e74688-codex.json`) found the
+round-2 compensating `authLogout()` call is fire-and-forget (a failed
+logout request silently leaves the orphaned token installed) and
+unconditional/unscoped (server-side `AuthManager.logout()` clears *all*
+current auth state, so a delayed logout racing a newer, legitimately
+completed sign-in could sign that newer session out too).
+
+**This was the second and final repair round `AGENTS.md` permits for an
+issue.** Per that bounded-repair rule, this Claude task stops here rather
+than attempting a third fix. The unresolved finding is presented in
+`project/issues/ISSUE-0012.md`'s "Human decision required" section
+(three options: accept as a documented residual risk and merge; open a new
+issue with its own repair budget to fix the server-side scoping gap
+properly, likely touching `auth.py`; or direct a different mitigation).
+`ISSUE-0012`'s status is `BLOCKED` pending that human decision.
 
 | Field | Current value |
 |---|---|
-| Stage | `ISSUE_REPAIR` — `ISSUE-0012` round 2 of 2 (final permitted repair round; retroactive React/Vite frontend review, out-of-band per `DECISION-024`); M1 and M2 remain complete and accepted with no milestone in progress |
+| Stage | `ISSUE_REPAIR` — `ISSUE-0012` `BLOCKED` after its repair budget was exhausted (2 of 2 rounds used) with an unresolved `CHANGES_REQUIRED` finding; awaiting a human decision. M1 and M2 remain complete and accepted with no milestone in progress |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v2; APPROVED (DECISION-013, binds `9ccf835`); open questions resolved (DECISION-014) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (v1, binds `179a023`); `project/decisions/DECISION-013-brief-v2-approval.md` (v2, binds `9ccf835`); `project/decisions/DECISION-014-app-only-secret-retention-and-risk002.md` |
 | Roadmap | `ROADMAP.md` v4; APPROVED (DECISION-015, binds `9e5ba6d`). v3 (`DECISION-003`, `125d74f`) governed the completed M1; v4 has now fully delivered M2 |
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` (v3); `project/decisions/DECISION-015-roadmap-v4-approval.md` (v4) |
 | Active milestone | `M1` — `COMPLETE`, accepted (`DECISION-012`). `M2` — `COMPLETE`, accepted (`DECISION-023`). Neither milestone is currently in progress; no M3 exists yet |
-| Active issue | `ISSUE-0012` — React/Vite frontend, `REPAIRING`, out-of-band (not under the M1/M2 roadmap; see `DECISION-024`). No further issues are planned under the current roadmap |
-| Issue repair round | Round 2 of at most 2 (final permitted round) — round 0 `BLOCKED` (F-001 client race, F-002 missing evidence); round 1 `BLOCKED` (F-001 deeper form: orphaned server session) |
+| Active issue | `ISSUE-0012` — React/Vite frontend, `BLOCKED` (repair budget exhausted, human decision required), out-of-band (not under the M1/M2 roadmap; see `DECISION-024`). No further issues are planned under the current roadmap |
+| Issue repair round | Exhausted: 2 of at most 2 used — round 0 `BLOCKED` (F-001 client race, F-002 missing evidence); round 1 `BLOCKED` (F-001 deeper form: orphaned server session); round 2 `CHANGES_REQUIRED` (F-001 narrower form: unawaited/unscoped compensating logout). No further repair by this task; see "Human decision required" in `project/issues/ISSUE-0012.md` |
 | Reviewed product commit | `6311a11a48a0a7e51e83a14ca4081d431cb46698` — the frozen M1 round-2 candidate. `M2`'s frozen product commit is `98be0bc562de8f7cf52e3019715bc4cff571ad91`; its milestone-review candidate `9c01749b221d6f7f2d8ff9ca6282cf9172477a3d` was accepted by `DECISION-023` |
 | Latest implementation handoff | `project/handoffs/ISSUE-0011-handoff.md` (M2, rounds 0-1, complete) |
 | Latest milestone reviews | `M2` round 1 (accepted): Claude general `CHANGES_REQUIRED` (`project/reviews/milestones/M2-9c01749b221d-claude-general.md`); Codex general `BLOCKED` (`project/reviews/milestones/M2-9c01749b221d-codex-general.json`); Claude security `PASS_WITH_NOTES` (`project/reviews/milestones/M2-9c01749b221d-claude-security.md`); Codex security `BLOCKED`, sandbox residual only (`project/reviews/milestones/M2-9c01749b221d-codex-security.json`). Round 0 (superseded, candidate `b55bf97`) retained for the record. M1 round 2 remains accepted (`DECISION-012`) |
-| Latest Codex issue review | `ISSUE-0012` round 1 (most recent completed): `project/reviews/issues/ISSUE-0012-3748ff133182-codex.json` — `BLOCKED`, F-001 (high, orphaned server-side session after a stale successful poll, fixed round 2). Round 0: `project/reviews/issues/ISSUE-0012-4cb61161be32-codex.json` — `BLOCKED`, F-001 (client-side race, fixed round 1) + F-002 (missing check evidence, addressed round 1). Round 2 review pending. `ISSUE-0011` round 1 (final, unrelated M2 work): `project/reviews/issues/ISSUE-0011-e878cdcd979b-codex.json` — `BLOCKED`, zero findings, sole blocker the accepted sandbox execution-evidence residual |
+| Latest Codex issue review | `ISSUE-0012` round 2 (final, repair budget exhausted): `project/reviews/issues/ISSUE-0012-195bd8e74688-codex.json` — `CHANGES_REQUIRED`, F-001 (high: unawaited/unscoped compensating logout). Round 1: `project/reviews/issues/ISSUE-0012-3748ff133182-codex.json` — `BLOCKED`, F-001 (orphaned server session). Round 0: `project/reviews/issues/ISSUE-0012-4cb61161be32-codex.json` — `BLOCKED`, F-001 (client-side race) + F-002 (missing check evidence). `ISSUE-0011` round 1 (final, unrelated M2 work): `project/reviews/issues/ISSUE-0011-e878cdcd979b-codex.json` — `BLOCKED`, zero findings, sole blocker the accepted sandbox execution-evidence residual |
 | Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e`; `ISSUE-0004` `9f3885b`; `ISSUE-0005` `3dc059f`; `ISSUE-0006` `d15f47c`; `ISSUE-0007` `b314d82` (merged `0c35851`, `DECISION-016`); `ISSUE-0008` `2051254` (merged `04e68ee`, `DECISION-017`); `ISSUE-0009` `7b0600f0831f68f8933b68ca0bba34f58a00b0cc` (merged `8253c1d7a754a3a967c2687c5ccc45e71794391a`, `DECISION-019`); `ISSUE-0010` `2a2d0b73e94d2635a645728e5b78f7f500c0a6b2` (merged `9d346f64422bf9bd5f89b43837a5f62f3e64d09b`, `DECISION-020`); `ISSUE-0011` `e878cdcd979b7be87ff20cc986cb16d0d457dfe0` (merged `b50cbc2fb67e8066f22ab06a03f61425dbf1a9d1`, `DECISION-022`) |
 | Last human decision | `DECISION-024` (React/Vite frontend, direct-override, out-of-band); `DECISION-023` (M2 milestone acceptance); `DECISION-022` (ISSUE-0011 advance and merge); `DECISION-021` (ISSUE-0011 start authorization); `DECISION-020` (ISSUE-0010 advance and merge); `DECISION-019` (ISSUE-0009 advance and merge); `DECISION-018` (ISSUE-0009 start authorization); `DECISION-017` (ISSUE-0008 advance and merge); `DECISION-016` (ISSUE-0007 advance and merge); `DECISION-015` (roadmap v4 approval); `DECISION-014` (secret retention, RISK-002-as-widened, tenant validation); `DECISION-013` (brief v2 approval); also `DECISION-012`..`001` |
 | Open blockers | None. M2 is accepted; no roadmap work is currently authorized or in progress |
-| Tracked follow-up | Live-tenant sign-in verification (M1 and M2, both auth modes) — deferred pending the human's access restrictions (`DECISION-012`), remains a protected action, not a completion gate for either milestone. `DECISION-023`'s SEC-001 (silent-renewal-after-revocation replay) and SEC-003 (unauthenticated credential-validation oracle, undocumented in `RISK-002`) are tracked, non-blocking follow-ups — see `project/milestones/M2.md` and `DECISION-023`. `ISSUE-0012`: CI not yet updated for `npm` commands, and whether to open an M3 for this frontend work is undecided |
-| Next required actor | Claude (this task) — run the fresh Codex issue review for `ISSUE-0012` round 2 against the round-2 candidate SHA once committed. This is the last permitted repair round: if the outcome is anything other than `PASS`/`PASS_WITH_NOTES`, stop and present the unresolved findings to the human rather than attempting a third repair |
-| Next permitted action | Invoke `./scripts/run-codex-review.sh issue ISSUE-0012 8648f2ba11907ac32016c724d8ae49a08bdb6b2d <round-2-candidate-SHA>` against the round-2 commit. A new task should read this file, `AGENTS.md`, and `ROADMAP.md` fresh before proposing any other next step |
-| Actions not yet permitted | Any new issue or milestone work without an explicit human decision to start it; publication, deployment, live tenant auth/fetch (either mode), or any other protected action |
+| Tracked follow-up | Live-tenant sign-in verification (M1 and M2, both auth modes) — deferred pending the human's access restrictions (`DECISION-012`), remains a protected action, not a completion gate for either milestone. `DECISION-023`'s SEC-001 (silent-renewal-after-revocation replay) and SEC-003 (unauthenticated credential-validation oracle, undocumented in `RISK-002`) are tracked, non-blocking follow-ups — see `project/milestones/M2.md` and `DECISION-023`. `ISSUE-0012`'s round-2 F-001 residual (unawaited/unscoped compensating logout — see "Human decision required" in the issue record) is the immediate open item; CI not yet updated for `npm` commands; whether to open an M3 for this frontend work is undecided |
+| Next required actor | **The human** — `ISSUE-0012`'s repair budget is exhausted with an unresolved `CHANGES_REQUIRED` finding. Choose one of the three options in `project/issues/ISSUE-0012.md`'s "Human decision required" section (accept as residual risk and merge; open a new issue with its own repair budget to fix the server-side scoping gap; or direct a different mitigation) |
+| Next permitted action | **Wait** for the human's decision on `ISSUE-0012`. A new task should read this file, `AGENTS.md`, and `ROADMAP.md` fresh before proposing any other next step — do not attempt a third repair round for this issue without a fresh human authorization to do so |
+| Actions not yet permitted | Any further repair of `ISSUE-0012` without a new human authorization; merging `ai/react-dashboard-frontend` to `main` without a human decision; any new issue or milestone work without an explicit human decision to start it; publication, deployment, live tenant auth/fetch (either mode), or any other protected action |
 
 ## Verification evidence at the reviewed commit
 

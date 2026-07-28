@@ -282,3 +282,26 @@ This is the second of the two repair rounds `AGENTS.md` permits for an
 issue. If this round's fresh Codex review does not return `PASS` or
 `PASS_WITH_NOTES`, this issue stops here and the unresolved findings are
 presented to the human rather than attempting a third repair.
+
+---
+
+## Round 2 review result: `CHANGES_REQUIRED` — repair budget exhausted, stopping here
+
+Round 2's fresh Codex issue review against candidate
+`195bd8e746884c23b4774162667ee5905f2680e1`
+(`project/reviews/issues/ISSUE-0012-195bd8e74688-codex.json`) returned
+`CHANGES_REQUIRED` (not `BLOCKED` — a real, narrower finding than the prior
+two rounds, but still blocking): the round-2 compensating `authLogout()`
+call is **fire-and-forget** (a failed logout silently leaves the orphaned
+token installed) and **unconditional/unscoped** (server-side
+`AuthManager.logout()` clears all current auth state, so a delayed logout
+racing a newer, legitimately-completed sign-in could sign that newer
+session out too).
+
+Per `AGENTS.md`'s bounded-repair rule, this was the second and final
+repair round permitted for this issue. This Claude task stops here rather
+than attempting a third fix, and the finding is presented to the human in
+`project/issues/ISSUE-0012.md`'s "Human decision required" section. Closing
+this properly likely needs a server-side change (`auth.py`/`server.py`) to
+scope cleanup to the specific abandoned attempt rather than "whatever is
+currently live" — out of scope for a same-day frontend repair round.

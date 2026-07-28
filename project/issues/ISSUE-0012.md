@@ -1,6 +1,8 @@
 # ISSUE-0012: React/Vite frontend dashboard (retroactive issue record)
 
-**Status:** `REPAIRING`
+**Status:** `BLOCKED` — repair-round budget exhausted (2 of 2 used, `AGENTS.md`);
+unresolved `CHANGES_REQUIRED` finding presented to the human, not
+implemented further by this task.
 **Milestone:** `None` — no M3 exists; this work is out-of-band relative to the
 approved M1/M2 roadmap, authorized directly by the human rather than through
 the normal brief/roadmap cycle (see `DECISION-024`).
@@ -150,17 +152,59 @@ cycle.
 |---:|---|---|---|---|---|
 | 0 | This issue record (retroactive) | `4cb61161be32b43506bb0e2c1b6921635561054d` | Claimed in the issue record only at this round; no commit-bound artifact (Codex flagged this as F-002) | `project/reviews/issues/ISSUE-0012-4cb61161be32-codex.json` | `BLOCKED` — F-001 (high): device-code polling race could overwrite sample/app-only/signed-out state; F-002 (medium): no durable check evidence |
 | 1 | `project/handoffs/ISSUE-0012-handoff.md` (rounds 1-2) | `3748ff13318241e8cbe2bc38debc55e3d3042ecb` | Real command output for all required checks recorded in the handoff, bound to this SHA | `project/reviews/issues/ISSUE-0012-3748ff133182-codex.json` | `BLOCKED` — F-001 (high, deeper form): client-side race fixed, but a stale successful poll left an orphaned authenticated session on the server with no client-reachable way to clear it |
-| 2 | `project/handoffs/ISSUE-0012-handoff.md` (round 2 section) | *this commit* | Real command output for all required checks recorded in the handoff, bound to this SHA | *pending* | *pending* |
+| 2 | `project/handoffs/ISSUE-0012-handoff.md` (round 2 section) | `195bd8e746884c23b4774162667ee5905f2680e1` | Real command output for all required checks recorded in the handoff, bound to this SHA | `project/reviews/issues/ISSUE-0012-195bd8e74688-codex.json` | `CHANGES_REQUIRED` — F-001 (high): the round-2 compensating `authLogout()` is unawaited (a failed logout silently leaves the orphaned token) and unconditional/unscoped (a delayed logout can clear a newer, legitimately-current session, since server-side `AuthManager.logout()` clears all current auth state, not just the abandoned attempt) |
 
 Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
 No workflow loop may exceed five total iterations; the tighter two-round issue
 limit applies first, and exhaustion blocks for the human.
 
+**Repair-round budget exhausted at round 2 with an unresolved
+`CHANGES_REQUIRED` outcome.** Per `AGENTS.md`, this Claude task stops here
+rather than attempting a third fix; the finding below is presented for a
+human decision.
+
+## Human decision required
+
+Round 2's remaining **F-001** (high, blocking): the compensating
+`authLogout()` call added to handle a stale-successful device-code poll
+(round 2) is (a) fire-and-forget — `void authLogout()` — so a failed
+logout request silently leaves the orphaned server-side token installed,
+and (b) unconditional/unscoped — `POST /api/auth/logout` clears *all*
+current `AuthManager` state (device session, access token, retained
+app-only credential), not just the specific abandoned attempt, so if a
+newer legitimate sign-in (app-only, or a fresh device-code attempt)
+completes between the stale poll's detection and this delayed logout
+actually reaching the server, that logout call can sign the user back out
+of their newer, valid session.
+
+This is a real, narrow race (requires an abandoned-then-approved device
+code, in a tight window, overlapping a second successful sign-in) rather
+than a routine defect — closing it properly likely needs either a
+server-side change (e.g. a poll/session identifier so `/api/auth/logout`
+or a new endpoint can clear only the abandoned attempt's token, not
+whatever is currently live) or an awaited, ordered client-side cleanup
+that checks the session is still the stale one before clearing it. Both
+options touch `auth.py`/`server.py` behavior, which is beyond what this
+already-out-of-band frontend issue's allowed paths cover, and beyond what
+another same-day repair round can safely attempt.
+
+**Options for the human:**
+1. Accept this as a documented, narrow residual risk (similar in spirit to
+   `DECISION-023`'s SEC-001/SEC-003) and proceed to merge, tracking a
+   proper fix as separate future work.
+2. Authorize a new issue (with its own fresh repair budget) scoped to fix
+   this server-session-scoping gap, potentially touching `auth.py`.
+3. Direct a different mitigation (e.g., remove the compensating logout
+   entirely and instead document that an abandoned-then-approved
+   device-code sign-in requires the user to manually sign out, accepting
+   the smaller original F-001 window as-is).
+
 ## Completion
 
-- Final reviewed product SHA: *pending*
+- Final reviewed product SHA: not yet — blocked pending the human decision above
 - Human advance/merge decision: *pending*
 - Merge/result SHA: *pending*
-- Residual risks or follow-up: CI not yet updated for `npm` commands; no M3
-  milestone opened; device-code regression tracked separately.
-- Status record updated: *pending*
+- Residual risks or follow-up: the round-2 F-001 residual above; CI not yet
+  updated for `npm` commands; no M3 milestone opened; device-code sign-in
+  regression (separately reported, believed tenant-side) tracked separately.
+- Status record updated: `project/status/CURRENT.md`, this commit

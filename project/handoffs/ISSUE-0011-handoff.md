@@ -182,3 +182,31 @@ findings:
   `python3 scripts/validate_repo.py` → "Repository validation passed (67
   required files checked)."
 - This is round 1 of at most two permitted issue repair rounds.
+
+## Round-1 review result and stop point
+
+The round-1 Codex re-review
+(`project/reviews/issues/ISSUE-0011-e878cdcd979b-codex.json`, candidate
+`e878cdcd979b7be87ff20cc986cb16d0d457dfe0`) returned `BLOCKED` with
+`findings: []` — zero actionable defects. Its evidence explicitly confirms
+both round-0 findings were addressed: the README now accurately describes
+both secret-transmission hops, and `DECISION-021` durably records the
+start authorization. The sole blocker is the same sandbox
+execution-evidence limitation present in round 0: the read-only checkout
+cannot bind loopback sockets, write `__pycache__`, or create a writable
+temp directory, so the three required repository-wide checks — and the
+non-live server walkthrough — cannot complete independently inside the
+review process itself, even though they pass locally and their real
+output is recorded above. Only 1 of 2 permitted repair rounds was needed.
+
+Per `AGENTS.md`'s completion standard ("the human has made any required
+advance or merge decision") and the `DECISION-010`/`DECISION-016`/
+`DECISION-017`/`DECISION-019`/`DECISION-020` precedent — the same
+sandbox-only-blocker pattern on every prior M2 issue, all of which
+required an explicit human closeout decision despite zero product
+findings — this Claude task stops here and presents the clean round-1
+result to the human rather than unilaterally marking `ISSUE-0011`
+complete or merging it. `ISSUE-0011` is the final planned M2 issue;
+merging it completes M2's issue set, though M2 acceptance itself is a
+separate milestone gate (four fresh reviews against one frozen candidate)
+that this task does not initiate.

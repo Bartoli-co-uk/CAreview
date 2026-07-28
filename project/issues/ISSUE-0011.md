@@ -1,6 +1,6 @@
 # ISSUE-0011: M2 documentation finalization and dual-mode walkthrough
 
-**Status:** `REPAIRING`
+**Status:** `AWAITING_HUMAN_DECISION`
 **Milestone:** `M2`
 **Approved roadmap:** `ROADMAP.md` version `4` at `9e5ba6d2f6c2b7f7efa81dcfc415e1f787aaa458` (approved by `DECISION-015`)
 **Dependencies:** `ISSUE-0007..0010` (all COMPLETE); `DECISION-021` (start authorization)
@@ -99,7 +99,9 @@ This issue *is* the documentation change: `README.md` and
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
 | 0 | `project/handoffs/ISSUE-0011-handoff.md` | `b0b91742ec6cdd8925b69fcdc45ae533a5d3b9f2` | 173 tests pass; compile clean; validator passed (incl. link/anchor check); documentation walkthrough smoke-checked | `project/reviews/issues/ISSUE-0011-b0b91742ec6c-codex.json` | `BLOCKED` — F-001 (inaccurate secret-transmission wording) + F-002 (missing durable start-authorization record) |
-| 1 | `project/handoffs/ISSUE-0011-handoff.md` (Repair round 1 section) | this commit | 173 tests pass; compile clean; validator passed | pending | pending |
+| 1 | `project/handoffs/ISSUE-0011-handoff.md` (Repair round 1 section) | `e878cdcd979b7be87ff20cc986cb16d0d457dfe0` | 173 tests pass; compile clean; validator passed | `project/reviews/issues/ISSUE-0011-e878cdcd979b-codex.json` | `BLOCKED` — zero findings; sole blocker is the accepted sandbox execution-evidence residual (same pattern as `DECISION-010`/`DECISION-015`/`DECISION-016`/`DECISION-017`/`DECISION-019`/`DECISION-020`) |
+
+Only 1 of 2 permitted issue repair rounds was needed.
 
 Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
 No workflow loop may exceed five total iterations; the tighter two-round issue
@@ -107,5 +109,21 @@ limit applies first, and exhaustion blocks for the human.
 
 ## Completion
 
-- Not yet complete. Awaiting the fresh Codex issue review and, per the
-  workflow, a human advance/merge decision.
+- Final reviewed product SHA: `e878cdcd979b7be87ff20cc986cb16d0d457dfe0` —
+  `findings: []`; `BLOCKED` solely on the accepted sandbox
+  execution-evidence residual (loopback sockets, `__pycache__` writes, and
+  a writable temp directory are all unavailable inside the read-only
+  review sandbox).
+- Human advance/merge decision: **pending** — not yet requested/recorded.
+- Residual risks or follow-up: none identified beyond the pre-existing,
+  already-accepted `RISK-002` (widened), `RISK-005`, and `RISK-006` — this
+  issue only documents them, introducing nothing new.
+- Status record: this commit updates `project/status/CURRENT.md` and stops
+  this Claude task here, per the completion standard and the
+  `DECISION-010`/`DECISION-016`/`DECISION-017`/`DECISION-019`/`DECISION-020`
+  precedent for the same sandbox-only-blocker pattern — presenting the
+  clean round-1 result to the human rather than unilaterally marking
+  `ISSUE-0011` complete or merging it. This is also the final M2 issue;
+  merging it completes M2's issue set (a milestone gate, not automatic,
+  still requires its own separate four-review process before M2 can be
+  accepted).

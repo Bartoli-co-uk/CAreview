@@ -1,0 +1,117 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-28T06:49:39Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa77b-22db-7da2-933a-6e01fd38a8fe"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "The launcher target exactly matches the checked-out HEAD: b55bf97ff4a4f850a21390443581e26e22f3179a. The working tree was clean.",
+        "reference": "git rev-parse HEAD; git status --short",
+        "source": "command"
+      },
+      {
+        "detail": "M2 traceability covers all five approved work items: delegated-scope reduction, app-only token acquisition, server endpoint integration, UI integration, and documentation finalization.",
+        "reference": "project/milestones/M2.md:16",
+        "source": "file"
+      },
+      {
+        "detail": "The milestone record reports 173 passing tests, successful compilation, and successful governance validation, but binds those results to product SHA 98be0bc rather than the launcher target.",
+        "reference": "project/milestones/M2.md:24",
+        "source": "file"
+      },
+      {
+        "detail": "Independent execution of the full test suite failed because the read-only sandbox prohibits loopback socket binding and provides no writable temporary directory. The failure was environmental rather than an observed assertion failure.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "command"
+      },
+      {
+        "detail": "The independently runnable non-socket suites completed successfully: 100 tests across auth, analyzer, graph, and UI safety passed.",
+        "reference": "python3 -m unittest tests.test_auth tests.test_analyzer tests.test_graph tests.test_ui_safety",
+        "source": "command"
+      },
+      {
+        "detail": "Independent compilation could not run because py_compile requires cache-file writes prohibited by the sandbox.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "command"
+      },
+      {
+        "detail": "Independent governance validation could not complete because its launcher smoke tests require a writable temporary directory.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "command"
+      },
+      {
+        "detail": "Source inspection confirms app-only session supersession, stable provider-error mapping, retained-secret renewal, logout clearing, and stale-response generation guards, with corresponding focused tests.",
+        "reference": "auth.py:350",
+        "source": "file"
+      },
+      {
+        "detail": "Source inspection confirms the browser clears the secret after validation failures, settled or rejected requests, mode changes, and logout, and uses text-only rendering for untrusted policy data.",
+        "reference": "web/app.js:145",
+        "source": "file"
+      },
+      {
+        "detail": "The release documentation describes prerequisites, session-only secret retention, rotation/revocation, certificate-auth deferral, both walkthroughs, and the applicable residual risks.",
+        "reference": "README.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "The launcher requires review of b55bf97ff4a4f850a21390443581e26e22f3179a, while the milestone's recorded test, compile, governance, and smoke evidence is explicitly bound to 98be0bc.",
+          "The target record still contains the unresolved placeholder <FREEZE-SHA>.",
+          "This shallow/grafted checkout does not contain 98be0bc, so the claimed byte identity between that commit and the reviewed target cannot be independently established.",
+          "Repository rules require real checks against the exact candidate and prohibit PASS when target identity or evidence is stale or unverifiable."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 5,
+            "path": "project/milestones/M2.md"
+          },
+          {
+            "line": 28,
+            "path": "project/milestones/M2.md"
+          },
+          {
+            "line": 36,
+            "path": "project/milestones/M2.md"
+          }
+        ],
+        "remediation": "Replace <FREEZE-SHA> with b55bf97ff4a4f850a21390443581e26e22f3179a and record successful test, compile, governance, and applicable smoke evidence against that exact commit, or provide independently verifiable tree-identity evidence that the governed workflow explicitly accepts as commit-bound evidence.",
+        "severity": "medium",
+        "title": "Milestone package lacks exact-target verification evidence",
+        "verification": "From a clean checkout of b55bf97ff4a4f850a21390443581e26e22f3179a in an environment permitting loopback sockets, bytecode/temp writes, run python3 -m unittest discover -s tests, python3 -m py_compile $(git ls-files '*.py'), and python3 scripts/validate_repo.py; record commands, exit statuses, relevant output, and the exact SHA in project/milestones/M2.md."
+      }
+    ],
+    "limitations": [
+      "The checkout is shallow/grafted and contains only the target commit, so ancestry, issue merge history, diffs from the approved roadmap commit, and the claimed product-tree identity with 98be0bc562de8f7cf52e3019715bc4cff571ad91 could not be independently verified.",
+      "The full 173-test suite could not complete because 73 socket-dependent server tests and temporary-directory-dependent tests were blocked by sandbox restrictions; 100 independently runnable tests passed.",
+      "py_compile and governance validation could not complete because the read-only environment prohibits required cache and temporary-directory writes.",
+      "No live tenant authentication or Microsoft Graph fetch was performed. The roadmap identifies this as a protected action and accepted residual evidence gap, not an M2 completion criterion.",
+      "No browser automation was available; runtime UI evidence therefore remains dependent on the recorded human walkthrough and static tests.",
+      "Base commit was supplied as empty, so no base-to-target diff could be reviewed."
+    ],
+    "mode": "milestone-general",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "b55bf97ff4a4f850a21390443581e26e22f3179a",
+    "schema_version": "1.0",
+    "summary": "M2 appears requirement-complete and the independently runnable 100-test subset passes, with no additional product defect identified by source inspection. The review is BLOCKED because the milestone record remains bound to a different verification SHA, retains an unresolved freeze placeholder, and the sandbox prevented independent execution of all required checks against the launcher target.",
+    "target_id": "M2"
+  },
+  "test_only": false
+}

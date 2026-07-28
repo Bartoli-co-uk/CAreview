@@ -22,6 +22,7 @@ re-scoped to run entirely locally.
 ## Contents
 
 - [What it does](#what-it-does)
+- [The dashboard](#the-dashboard)
 - [Quick start](#quick-start)
 - [App-only mode (advanced)](#app-only-mode-advanced)
 - [End-to-end walkthrough](#end-to-end-walkthrough)
@@ -54,11 +55,34 @@ re-scoped to run entirely locally.
    score**.
 4. **Explain** — a severity-sorted findings list, each with a rationale and a
    remediation step.
-5. **Visualize** — one flow card per policy: Users → Conditions → Apps →
-   Controls.
+5. **Visualize** — a multi-page dashboard (see [The dashboard](#the-dashboard)
+   below) with a Users → Conditions → Apps → Controls flow view per policy.
 
 Nothing is persisted. Tokens and policy data live in process memory only;
 closing the process discards everything.
+
+## The dashboard
+
+The UI (`frontend/`, a React + TypeScript app — see
+[DECISION-024](project/decisions/DECISION-024-react-frontend-build-step.md))
+is built to work for both **technicians** who need full findings/policy
+detail and **senior management** who want an at-a-glance summary, in one
+sidebar-navigated dashboard:
+
+| Page | What it shows |
+|---|---|
+| **Overview** | The management-glance page: a security score gauge, recommendation counts by priority, a policy-status donut (enabled/report-only/disabled), the top open recommendations, a "policies at a glance" breakdown, and a recent-policies table. |
+| **Recommendations** | Every finding from the current analysis, filterable by severity, with rationale, remediation, and affected policies — plus the full pass/fail rule-coverage table (not just failures). |
+| **Policies** | A searchable table of every Conditional Access policy in the tenant, with drill-down into a policy's full Users → Conditions → Apps → Controls detail. |
+| **Policy Explorer** | Faceted search over the same policies — filter by state, control type (MFA/block/device-compliance/session control), or admin-role targeting — for technician-depth investigation. |
+| **Insights** | Extra breakdowns computed entirely in your browser from the same data shown elsewhere (severity mix, client-app-type spread, MFA/device-compliance coverage, rule pass/fail ratio) — no additional tenant data is read. |
+| **Reports**, **Audit Log** | Honest "not available yet" placeholders — CAreview doesn't generate exports or keep a persisted activity log today, and the dashboard says so rather than showing fake data. |
+| **Settings** | Real session info (signed-in state, tenant as entered, sign-out) and a break-glass account ID input, wired to the existing `/api/breakglass` endpoint. No preferences persist between runs, by design. |
+| **About** | What the heuristic score does and doesn't mean, plus a short glossary (report-only, legacy authentication, grant/session controls, break-glass accounts) for readers who aren't Conditional Access specialists. |
+
+A **sample data** mode (no sign-in required) exercises the entire dashboard
+against the committed, sanitized `web/sample-data.json` fixture, so you can
+explore every page before ever connecting to a real tenant.
 
 ## Quick start
 
@@ -85,9 +109,10 @@ Open <http://127.0.0.1:8765/> (`localhost` works too). Then either:
   data) through exactly the same code path as a live analysis.
 - **Analyse your own tenant** — click **Sign in**, optionally change the tenant
   (`organizations` by default), and enter the displayed code at
-  `microsoft.com/devicelogin`. Once approved, the page automatically fetches
-  your policies and renders the score, findings and policy cards. **Sign out**
-  clears the in-memory token and the analysis.
+  `microsoft.com/devicelogin`. Once approved, the dashboard automatically
+  fetches your policies and populates every page (see
+  [The dashboard](#the-dashboard)). **Sign out** clears the in-memory token
+  and the analysis.
 - **App-only sign-in (advanced)** — if you'd rather authenticate with an
   Entra app registration's client credentials instead of your own account,
   click **"Use app-only sign-in (advanced)"** on the Sign in card and enter
@@ -481,7 +506,7 @@ Wider operating boundaries are in
 ## Known limitations
 
 These are the recorded, accepted residual risks (tracked in
-[`ROADMAP.md`](ROADMAP.md)) and the one open follow-up:
+[`ROADMAP.md`](ROADMAP.md)) plus the currently open follow-ups:
 
 | ID | Limitation |
 |---|---|
@@ -491,7 +516,8 @@ These are the recorded, accepted residual risks (tracked in
 | **RISK-004** | The 0–100 score is a documented heuristic across a starter rule set. It is not a compliance certification and not a substitute for professional assessment. |
 | **RISK-005** | The app-only client secret passes through the browser page once, at entry. Mitigated (`type="password"`, no console/storage/URL writes, cleared on submit/mode-switch/logout) but not eliminated: a compromised browser, extension, or someone reading over your shoulder while you type it remains a residual risk the device-code path doesn't have. |
 | **RISK-006** | App-only mode's token carries **every** application permission the app registration holds, not just `Policy.Read.All` — Microsoft's `.default` scope can't be narrowed by the client. Use a dedicated app registration with only `Policy.Read.All` to limit this. |
-| **Browser rendering** | The UI has been verified by fetching and asserting on server responses and by static checks, not by an automated in-browser test. |
+| **Browser rendering** | The frontend has its own automated test suite (`frontend/src/test/`, Vitest + React Testing Library — jsdom, not a real browser engine) and has been manually verified in an actual browser, but there is no automated real-browser (e.g. Playwright) test in CI. |
+| **Device-code abandon delivery (`ISSUE-0013`)** | `POST /api/auth/abandon` retries a failed delivery for ~16 minutes, but can still "fail open" if every attempt fails before the abandoned device-code attempt's own server-side expiry. Blocked pending a human decision — see `project/issues/ISSUE-0013.md`. |
 
 CAreview has not been independently security tested. Two AI reviews passing is
 not a certification.

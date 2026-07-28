@@ -1,12 +1,13 @@
 # ISSUE-0011: M2 documentation finalization and dual-mode walkthrough
 
-**Status:** `AWAITING_HUMAN_DECISION`
+**Status:** `COMPLETE`
 **Milestone:** `M2`
 **Approved roadmap:** `ROADMAP.md` version `4` at `9e5ba6d2f6c2b7f7efa81dcfc415e1f787aaa458` (approved by `DECISION-015`)
 **Dependencies:** `ISSUE-0007..0010` (all COMPLETE); `DECISION-021` (start authorization)
-**Branch:** `ai/ISSUE-0011-m2-docs`
+**Branch:** `ai/ISSUE-0011-m2-docs` (merged into `main`)
 **Starting SHA:** `4f35275d004265ee152348e7e3d1f7b9f6a62cc6`
-**Candidate SHA:** this commit (branch HEAD); the launcher records the full SHA
+**Candidate SHA:** `e878cdcd979b7be87ff20cc986cb16d0d457dfe0` (round 1, final reviewed candidate)
+**Merge SHA:** `b50cbc2fb67e8066f22ab06a03f61425dbf1a9d1` (merge commit on `main`)
 
 ## Objective
 
@@ -114,16 +115,12 @@ limit applies first, and exhaustion blocks for the human.
   execution-evidence residual (loopback sockets, `__pycache__` writes, and
   a writable temp directory are all unavailable inside the read-only
   review sandbox).
-- Human advance/merge decision: **pending** — not yet requested/recorded.
+- Human advance/merge decision: `APPROVE` — `project/decisions/DECISION-022-issue-0011-advance-and-merge.md`.
+- Merge/result SHA: `b50cbc2fb67e8066f22ab06a03f61425dbf1a9d1` (merge commit on `main`). Required checks re-run on the merged tree: 173 tests passed, `py_compile` clean, `validate_repo.py` clean.
 - Residual risks or follow-up: none identified beyond the pre-existing,
   already-accepted `RISK-002` (widened), `RISK-005`, and `RISK-006` — this
   issue only documents them, introducing nothing new.
-- Status record: this commit updates `project/status/CURRENT.md` and stops
-  this Claude task here, per the completion standard and the
-  `DECISION-010`/`DECISION-016`/`DECISION-017`/`DECISION-019`/`DECISION-020`
-  precedent for the same sandbox-only-blocker pattern — presenting the
-  clean round-1 result to the human rather than unilaterally marking
-  `ISSUE-0011` complete or merging it. This is also the final M2 issue;
-  merging it completes M2's issue set (a milestone gate, not automatic,
-  still requires its own separate four-review process before M2 can be
-  accepted).
+- Status record updated: this commit. This was the final planned M2 issue;
+  the M2 milestone acceptance gate (four fresh reviews against one frozen
+  candidate) is a separate, later human-initiated step not started by
+  this record.

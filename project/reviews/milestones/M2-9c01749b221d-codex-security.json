@@ -1,0 +1,108 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-28T07:22:30Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa799-25e7-7302-8778-05d7cea34e34"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "The detached checkout HEAD exactly matched the launcher target, and the working tree was clean.",
+        "reference": "git rev-parse HEAD; git status --short --branch",
+        "source": "command"
+      },
+      {
+        "detail": "The milestone record binds review evidence to the milestone-record commit and states that its product files are byte-identical to the frozen product commit 98be0bc562de8f7cf52e3019715bc4cff571ad91.",
+        "reference": "project/milestones/M2.md:24",
+        "source": "file"
+      },
+      {
+        "detail": "Static inspection found fixed Microsoft identity and Graph destinations, strict tenant validation, Graph redirect refusal, exact-host validation before bearer-token use, in-memory credential state, stable app-only error labels, loopback Host/Origin enforcement, bounded request bodies, static-file allowlisting, CSP, no-store tenant-data responses, and text-only UI rendering.",
+        "reference": "auth.py:55; auth.py:117; graph.py:47; graph.py:75; server.py:56; server.py:136; web/app.js:3",
+        "source": "file"
+      },
+      {
+        "detail": "The GitHub Actions workflow uses read-only repository permission, disables persisted checkout credentials, pins actions/checkout to a commit, and declares no secrets or write-capable token permissions.",
+        "reference": ".github/workflows/validate.yml:7",
+        "source": "file"
+      },
+      {
+        "detail": "The independently run non-socket suites completed successfully: 100 tests passed across authentication, Graph, analyzer, and UI-safety modules.",
+        "reference": "python3 -m unittest tests.test_auth tests.test_graph tests.test_analyzer tests.test_ui_safety",
+        "source": "check"
+      },
+      {
+        "detail": "The full required suite did not complete successfully: all 68 server integration cases failed during setup because the review sandbox denied loopback socket binding; total result was 173 run, 68 errors, exit 1.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not complete because the read-only environment provided no writable temporary directory; it exited with FileNotFoundError before producing a validation result.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "Live device-code and app-only authentication, token renewal, and Graph policy retrieval were not exercised because they require separately approved tenant access and network use.",
+        "reference": "project/milestones/M2.md:38",
+        "source": "limitation"
+      }
+    ],
+    "findings": [
+      {
+        "attack_preconditions": "No attack precondition is required; this is a mandatory security-evidence gate failure caused by the review environment.",
+        "blocking": true,
+        "category": "security-verification-evidence",
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "disposition": "open",
+        "evidence": [
+          "The required full test command exited 1 with 68 server-test setup errors caused by PermissionError when binding 127.0.0.1.",
+          "The governance validator exited before completion because no writable temporary directory was available.",
+          "AGENTS.md requires BLOCKED when evidence cannot be verified, and the launcher binding prohibits PASS when execution fails or evidence is missing."
+        ],
+        "exploitability": "Not directly exploitable as a defect, but the failed checks leave loopback HTTP controls and governance invariants without fresh executable confirmation at the reviewed SHA.",
+        "fingerprint": "m2-security-evidence-required-checks-unexecutable",
+        "id": "M2-SEC-001",
+        "impact": "The milestone security gate cannot rely on fresh, independently reproduced evidence for Host/Origin enforcement, app-only HTTP secret handling, response protections, and repository governance at 9c01749b221d6f7f2d8ff9ca6282cf9172477a3d.",
+        "locations": [
+          {
+            "line": 32,
+            "path": "project/milestones/M2.md"
+          },
+          {
+            "line": 55,
+            "path": "project/milestones/M2.md"
+          }
+        ],
+        "remediation": "Rerun this fresh security review in a read-only environment that permits ephemeral loopback socket binding and a writable external temporary directory, while keeping the candidate tree immutable. Execute the full tests and governance validator against the exact same SHA. If the candidate changes, rerun all four milestone reviews against the new SHA.",
+        "severity": "medium",
+        "title": "Mandatory security checks could not be independently reproduced",
+        "verification": "At the exact reviewed SHA, confirm exit 0 from `python3 -m unittest discover -s tests` with all 173 tests passing and exit 0 from `python3 scripts/validate_repo.py`; retain concrete output as commit-bound evidence."
+      }
+    ],
+    "limitations": [
+      "The launcher supplied no base commit, and this isolated checkout contains no parent history, so base-to-head diff inspection was unavailable; the complete target snapshot was reviewed instead.",
+      "The sandbox prohibited loopback socket binding, preventing all 68 server integration tests and a runtime server smoke test.",
+      "The sandbox offered no writable temporary directory, preventing governance-validator completion and making py_compile unsuitable as an independent read-only check because it writes bytecode.",
+      "No live browser automation was available; prior manual browser evidence was inspected but not independently reproduced.",
+      "No approved live tenant credentials or network access were available, so real Microsoft identity, token-renewal, consent, and Graph behavior remain unverified.",
+      "No repository-native dependency vulnerability scanner or secret scanner evidence was supplied. The application has no third-party runtime dependencies, and manual source/repository inspection found only the documented public client ID and synthetic test values, but this is not equivalent to dedicated scanner evidence."
+    ],
+    "mode": "milestone-security",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "9c01749b221d6f7f2d8ff9ca6282cf9172477a3d",
+    "schema_version": "1.0",
+    "summary": "Static review found no concrete critical or high-severity vulnerability in the documented M2 scope, and 100 non-socket tests passed. The milestone security review is nevertheless BLOCKED because the required full test suite and governance validation could not complete in the read-only sandbox, leaving mandatory security evidence missing at the exact candidate SHA. This is not a security certification.",
+    "target_id": "M2"
+  },
+  "test_only": false
+}

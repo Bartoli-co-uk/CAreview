@@ -1,0 +1,131 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-28T06:53:41Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fa77e-7dff-7283-9d5e-870209944840"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "HEAD exactly matched the launcher target and the working tree was clean: 9c01749b221d6f7f2d8ff9ca6282cf9172477a3d.",
+        "reference": "9c01749b221d6f7f2d8ff9ca6282cf9172477a3d",
+        "source": "command"
+      },
+      {
+        "detail": "M2 traceability maps all five approved roadmap work items (ISSUE-0007 through ISSUE-0011) to implementation, tests, handoffs, and issue reviews.",
+        "reference": "project/milestones/M2.md",
+        "source": "file"
+      },
+      {
+        "detail": "Independent full-suite execution could not complete: socket-based tests failed because the read-only review environment denied loopback binding. The recorded repository evidence reports 173 passing tests at the candidate.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Independent governance validation could not complete because the read-only environment provided no writable temporary directory.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "Python compilation completed successfully at the reviewed SHA.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "The implementation contains dual-mode authentication, strict app-only tenant/client/secret validation, fixed error mapping, session renewal, logout/supersession cleanup, loopback Host/Origin controls, and UI secret clearing; focused auth, graph, and UI tests executed successfully before one incorrectly named test module caused the focused command to exit nonzero.",
+        "reference": "auth.py; server.py; web/app.js; tests/test_auth.py; tests/test_server.py; tests/test_ui_safety.py",
+        "source": "file"
+      },
+      {
+        "detail": "README and security-boundary documentation describe both modes, app-registration prerequisites, secret retention and transmission, rotation/revocation, least privilege limitations, and the absence of live-tenant verification.",
+        "reference": "README.md; docs/security-boundaries.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "CURRENT.md says the milestone candidate is frozen at 98be0bc562de8f7cf52e3019715bc4cff571ad91 and that all four reviews have not yet run, while the launcher-bound candidate is 9c01749b221d6f7f2d8ff9ca6282cf9172477a3d and M2.md records a completed, superseded Codex general review against b55bf97ff4a4f850a21390443581e26e22f3179a.",
+          "AGENTS.md requires CURRENT.md to be the authoritative current-state index, to link current-gate evidence, and to name the exact reviewed candidate and next permitted action. It expressly requires stale or contradictory records to block rather than be inferred around."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 24,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 37,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 46,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 48,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Update CURRENT.md so the exact milestone review candidate, review history, iteration state, evidence limitations, and next permitted action agree with M2.md and the launcher-bound SHA. Because the permitted general-remediation budget appears exhausted, obtain the exact human workflow decision required by the repository rules before creating another candidate.",
+        "severity": "medium",
+        "title": "Authoritative current-state record is stale and contradicts the review candidate",
+        "verification": "At the resulting exact commit, compare CURRENT.md, M2.md, git HEAD, all four report identities, and launcher binding; then rerun the governance validator and all required milestone reviews if a new candidate is authorized."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "M2.md records that a Codex general review found a REQUIRED defect against b55bf97ff4a4f850a21390443581e26e22f3179a, that the defect was repaired in the present candidate, and that the earlier review was invalidated.",
+          "The same record nevertheless reports zero general-remediation cycles used and calls the repair an in-flight correction. AGENTS.md states that any relevant documentation change invalidates a review, permits at most one milestone general-remediation cycle, and says a remaining required change after that cycle blocks for a human decision. It provides no metadata-only or incomplete-four-report exception."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 57,
+            "path": "project/milestones/M2.md"
+          },
+          {
+            "line": 74,
+            "path": "project/milestones/M2.md"
+          },
+          {
+            "line": 79,
+            "path": "project/milestones/M2.md"
+          }
+        ],
+        "remediation": "Record the b55bf97ff4a4-to-9c01749 repair as the one permitted general-remediation cycle and correct the loop iteration accounting. Since F-001 remains on the repaired candidate, stop and request the exact human decision mandated by the exhausted general-remediation limit; do not silently create another candidate or waive the finding.",
+        "severity": "high",
+        "title": "Milestone record incorrectly resets the consumed general-remediation budget",
+        "verification": "Confirm the milestone record counts the initial review and repair consistently with AGENTS.md and docs/workflow.md, identifies the exhausted general-remediation budget, and records the human's explicit decision before any further candidate or review run."
+      }
+    ],
+    "limitations": [
+      "The launcher supplied no base commit, and the isolated target commit has no available parent, so a base-to-target milestone diff could not be inspected; review used the complete target tree, roadmap traceability, issue records, handoffs, and retained reports.",
+      "The full 173-test suite could not be independently completed because the review sandbox forbids loopback socket binding; failures occurred during HTTP-test setup rather than assertions.",
+      "Governance validation could not be independently completed because no writable temporary directory was available.",
+      "Live device-code and app-only tenant sign-in were not performed; repository records classify them as protected actions and known residual evidence gaps.",
+      "No browser-automation tool was available; UI behavior was assessed from source, static tests, and recorded manual walkthrough evidence."
+    ],
+    "mode": "milestone-general",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "9c01749b221d6f7f2d8ff9ca6282cf9172477a3d",
+    "schema_version": "1.0",
+    "summary": "M2 is blocked. Product implementation and documentation are substantially traceable, compilation succeeded, and no new product defect was established, but the authoritative status record is stale and the milestone record incorrectly treats a finding-driven candidate repair as consuming no general-remediation cycle. Under the repository's bounded workflow, that cycle is already used and the remaining required governance correction now requires an explicit human decision. Independent full-suite and governance checks were also unavailable in the read-only sandbox.",
+    "target_id": "M2"
+  },
+  "test_only": false
+}

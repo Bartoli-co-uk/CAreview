@@ -6,7 +6,7 @@
 **Approved roadmap:** `N/A` — see `ISSUE-0012.md`'s equivalent note.
 **Dependencies:** `ISSUE-0012` (`COMPLETE`, merged with this tracked residual)
 **Branch:** `ai/ISSUE-0013-scoped-device-code-abandon`
-**Starting SHA:** `959fbcf` (`main` tip after the `ISSUE-0012` merge)
+**Starting SHA:** `959fbcfc1f127289eb1a1798374fae1c96d7cbc2` (`main` tip after the `ISSUE-0012` merge)
 **Candidate SHA:** this commit (branch HEAD); the launcher records the full HEAD SHA.
 
 ## Objective

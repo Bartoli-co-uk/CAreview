@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import {
+  authAbandon,
   authAppOnly,
   authLogout,
   authPoll,
@@ -77,6 +78,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   // so it can never schedule another timer or flip mode back to "live" after
   // the user has moved to sample mode, app-only mode, or signed out.
   const authAttempt = useRef(0);
+  // The current device-code attempt's server-issued handle, if one is
+  // outstanding (set once authStart() returns one; cleared on any terminal
+  // outcome or cancellation). Lets cancellation tell the server exactly
+  // which attempt to abandon (ISSUE-0013) — scoped by handle, so it can
+  // never clear a different, newer session the way an unconditional
+  // authLogout() call could.
+  const pendingHandle = useRef<string | null>(null);
 
   const stopPolling = useCallback(() => {
     if (pollTimer.current !== null) {
@@ -88,6 +96,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const cancelDeviceCodeAttempt = useCallback(() => {
     authAttempt.current += 1;
     stopPolling();
+    if (pendingHandle.current) {
+      void authAbandon(pendingHandle.current);
+      pendingHandle.current = null;
+    }
   }, [stopPolling]);
 
   const loadLive = useCallback(async () => {
@@ -137,21 +149,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       const result = await authPoll(handle);
       // The awaited request may settle after a competing transition (sample
       // mode, app-only mode, sign-out, or a fresh device-code attempt) has
-      // already moved authAttempt on — in that case this result is stale and
-      // must not schedule another timer or mutate client mode/state at all.
-      if (myAttempt !== authAttempt.current) {
-        // A stale "success" means the server has already installed a live
-        // token for an attempt the client has abandoned — the client never
-        // reaches a mode where a "Sign out" control exists for it (Settings
-        // only shows one while mode === "live"), so left alone the backend
-        // would retain an authenticated session with no way for the user to
-        // ever clear it. Compensate by logging it out server-side; every
-        // other stale outcome (pending/expired/error) never installed a
-        // token, so no cleanup is needed for those.
-        if (result.state === "success") void authLogout();
-        return;
-      }
+      // already moved authAttempt on. That transition's cancelDeviceCodeAttempt()
+      // already called authAbandon(handle) for this exact attempt (ISSUE-0013),
+      // so the server itself will never have installed/kept a token for it —
+      // no reactive cleanup is needed here; just don't mutate client state.
+      if (myAttempt !== authAttempt.current) return;
       if (result.state === "success") {
+        pendingHandle.current = null;
         stopPolling();
         setDeviceCode({ phase: "idle" });
         setMode("live");
@@ -162,6 +166,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         pollTimer.current = setTimeout(() => void pollOnce(handle, intervalMs, myAttempt), intervalMs);
         return;
       }
+      pendingHandle.current = null;
       stopPolling();
       setDeviceCode({
         phase: "error",
@@ -186,6 +191,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       }
       setTenant(tenantValue);
       const data = result.data;
+      pendingHandle.current = data.handle;
       setDeviceCode({
         phase: "pending",
         userCode: data.user_code,

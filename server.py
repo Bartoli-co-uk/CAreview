@@ -319,6 +319,9 @@ class CAReviewHandler(BaseHTTPRequestHandler):
                 AUTH.logout()
                 self._send_json(HTTPStatus.OK, {"state": "signed_out"})
                 return
+            if path == "/api/auth/abandon":
+                self._auth_abandon(body)
+                return
             if path == "/api/breakglass":
                 # Optional local input: sanitized GUIDs, in memory only. An empty
                 # or missing list clears it.
@@ -348,6 +351,20 @@ class CAReviewHandler(BaseHTTPRequestHandler):
             self._reject(HTTPStatus.BAD_REQUEST, "missing handle")
             return
         self._send_json(HTTPStatus.OK, AUTH.poll(handle))
+
+    def _auth_abandon(self, body: dict) -> None:
+        # Lets a client tell the server "I've given up on this device-code
+        # attempt" (ISSUE-0013) so a poll that later succeeds anyway does not
+        # leave an orphaned authenticated session with no reachable sign-out
+        # control. Scoped to the named handle only — an unknown, already-
+        # superseded, or already-cleared handle is a safe no-op, and this can
+        # never clear a different, newer session (see AuthManager.abandon()).
+        handle = body.get("handle")
+        if not isinstance(handle, str) or not handle:
+            self._reject(HTTPStatus.BAD_REQUEST, "missing handle")
+            return
+        AUTH.abandon(handle)
+        self._send_json(HTTPStatus.OK, {"state": "ok"})
 
     def _auth_app_only(self, body: dict) -> None:
         tenant = body.get("tenant")

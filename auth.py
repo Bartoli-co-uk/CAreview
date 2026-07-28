@@ -228,6 +228,13 @@ class AuthManager:
         self._session: _Session | None = None
         self._access_token: str | None = None
         self._token_expires_at: float = 0.0
+        # The device-code handle that produced the currently installed access
+        # token, if any (ISSUE-0013). None for an app-only token, or once no
+        # device-code-derived token is installed. Lets abandon() clear exactly
+        # the attempt named by its handle without disturbing a different,
+        # newer session — unlike logout(), which clears whatever is current
+        # unconditionally.
+        self._token_handle: str | None = None
         # App-only (client-credentials) state, retained for the session per
         # DECISION-014 so get_token() can silently renew on expiry. None outside
         # an active app-only session.
@@ -249,6 +256,7 @@ class AuthManager:
             self._session = None
             self._access_token = None
             self._token_expires_at = 0.0
+            self._token_handle = None
             self._app_only_tenant = None
             self._app_only_client_id = None
             self._app_only_secret = None
@@ -279,6 +287,7 @@ class AuthManager:
             self._session = session
             self._access_token = None
             self._token_expires_at = 0.0
+            self._token_handle = None
             return {
                 "handle": session.handle,
                 "user_code": session.user_code,
@@ -322,6 +331,7 @@ class AuthManager:
                     expires_in = 3600
                 self._access_token = payload["access_token"]
                 self._token_expires_at = self._clock() + expires_in
+                self._token_handle = session.handle
                 self._session = None
                 return {"state": "success"}
             error = payload.get("error")
@@ -342,9 +352,30 @@ class AuthManager:
             self._session = None
             self._access_token = None
             self._token_expires_at = 0.0
+            self._token_handle = None
             self._app_only_tenant = None
             self._app_only_client_id = None
             self._app_only_secret = None
+
+    def abandon(self, handle: str) -> None:
+        """Clear only the device-code attempt named by ``handle`` (ISSUE-0013).
+
+        Unlike ``logout()``, this never touches ``_generation`` or app-only
+        state, and only clears the pending session or installed token if
+        either is still the one ``handle`` produced. A handle that no longer
+        matches anything current — because a newer sign-in, or an earlier
+        ``abandon()``/``logout()``, has already superseded it — is a safe
+        no-op: this is what lets a client tell the server "I've given up on
+        this attempt" without any risk of clearing a different, newer,
+        legitimately-current session, regardless of network timing.
+        """
+        with self._lock:
+            if self._session is not None and self._session.handle == handle:
+                self._session = None
+            if self._token_handle == handle:
+                self._access_token = None
+                self._token_expires_at = 0.0
+                self._token_handle = None
 
     # -- app-only (client-credentials) lifecycle (ISSUE-0008) --------------
     def start_app_only(self, tenant: str, client_id: str, client_secret: str) -> dict:
@@ -365,6 +396,7 @@ class AuthManager:
             self._session = None
             self._access_token = None
             self._token_expires_at = 0.0
+            self._token_handle = None
             self._app_only_tenant = None
             self._app_only_client_id = None
             self._app_only_secret = None

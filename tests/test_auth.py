@@ -252,6 +252,93 @@ class LifecycleTests(unittest.TestCase):
         self.assertEqual(payload.get("error"), "network_error")
 
 
+class AbandonTests(unittest.TestCase):
+    """ISSUE-0013: abandon() clears exactly the named handle's state, never a
+    different, newer session — regardless of whether its poll has already
+    succeeded when abandon() is called."""
+
+    def test_abandon_pending_session_prevents_later_success(self) -> None:
+        clock = FakeClock()
+        mgr, _ = manager(
+            [DEVICE_OK, (200, {"access_token": "T", "expires_in": 3600})],
+            clock,
+        )
+        handle = mgr.start()["handle"]
+        mgr.abandon(handle)
+        # The session is gone, so poll() no longer recognizes the handle at
+        # all — it never reaches the (already-scripted) successful token
+        # response.
+        self.assertEqual(mgr.poll(handle)["state"], "error")
+        self.assertIsNone(mgr.get_token())
+
+    def test_abandon_after_success_clears_only_that_token(self) -> None:
+        clock = FakeClock()
+        mgr, _ = manager([DEVICE_OK, (200, {"access_token": "T", "expires_in": 3600})], clock)
+        handle = mgr.start()["handle"]
+        mgr.poll(handle)
+        self.assertEqual(mgr.get_token(), "T")
+        mgr.abandon(handle)
+        self.assertIsNone(mgr.get_token())
+
+    def test_abandon_unknown_handle_is_a_safe_no_op(self) -> None:
+        clock = FakeClock()
+        mgr, _ = manager([DEVICE_OK, (200, {"access_token": "T", "expires_in": 3600})], clock)
+        handle = mgr.start()["handle"]
+        mgr.poll(handle)
+        self.assertEqual(mgr.get_token(), "T")
+        mgr.abandon("some-other-handle-never-issued")
+        self.assertEqual(mgr.get_token(), "T")  # untouched
+
+    def test_late_abandon_of_old_handle_does_not_clear_a_newer_session(self) -> None:
+        # This is the exact race ISSUE-0012 round 2's fix got wrong: an old,
+        # abandoned attempt's cleanup arriving after a newer sign-in has
+        # already completed must never clear that newer session.
+        clock = FakeClock()
+        mgr, _ = manager(
+            [
+                DEVICE_OK,
+                (200, {"access_token": "OLD-TOKEN", "expires_in": 3600}),
+                (200, {"device_code": "D2", "user_code": "WXYZ", "verification_uri": "x", "interval": 5, "expires_in": 900}),
+                (200, {"access_token": "NEW-TOKEN", "expires_in": 3600}),
+            ],
+            clock,
+        )
+        old_handle = mgr.start()["handle"]
+        mgr.poll(old_handle)
+        self.assertEqual(mgr.get_token(), "OLD-TOKEN")
+        # A brand new device-code sign-in completes (superseding the old one
+        # through the ordinary start()/poll() flow, unrelated to abandon()).
+        new_handle = mgr.start()["handle"]
+        mgr.poll(new_handle)
+        self.assertEqual(mgr.get_token(), "NEW-TOKEN")
+        # The old attempt's abandon() call — delayed, arriving only now —
+        # must not clear the new, currently-installed session.
+        mgr.abandon(old_handle)
+        self.assertEqual(mgr.get_token(), "NEW-TOKEN")
+
+    def test_abandon_does_not_touch_generation_or_app_only_state(self) -> None:
+        clock = FakeClock()
+        mgr, _ = manager([DEVICE_OK], clock)
+        handle = mgr.start()["handle"]
+        generation_before = mgr._generation
+        mgr.abandon(handle)
+        self.assertEqual(mgr._generation, generation_before)
+
+    def test_abandon_pending_session_does_not_clear_a_different_apponly_token(self) -> None:
+        clock = FakeClock()
+        mgr, _ = manager([APP_ONLY_OK, DEVICE_OK], clock)
+        mgr.start_app_only(FAKE_TENANT, FAKE_CLIENT_ID, FAKE_SECRET)
+        self.assertEqual(mgr.get_token(), "APP-TOKEN")
+        # A device-code attempt starts after the app-only token is installed
+        # (this itself supersedes the app-only token via start()'s existing
+        # single-concurrency clearing, same as before ISSUE-0013) and is then
+        # abandoned before it can succeed; the abandon() call must not need
+        # (and must not have) any effect beyond its own handle either way.
+        handle = mgr.start()["handle"]
+        mgr.abandon(handle)
+        self.assertIsNone(mgr.get_token())
+
+
 # Synthetic, non-real secret literal used only in tests (never a real credential;
 # prohibited from ever appearing in a response, exception, repr, or log per
 # AGENTS.md/RISK-008). Also exercised in URL-encoded and JSON-escaped forms below

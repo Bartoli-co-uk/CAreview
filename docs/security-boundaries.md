@@ -116,6 +116,19 @@ policies, so these project-specific rules apply on top of the general boundaries
   This widened retention is an accepted, re-checked residual — see
   `DECISION-014` and `RISK-002`/`RISK-005`/`RISK-006` in `ROADMAP.md`, not
   something this document claims is eliminated.
+- **Scoped device-code abandonment (`ISSUE-0013`).** The React frontend's
+  `POST /api/auth/abandon` endpoint lets the client tell the server "give
+  up on this specific device-code attempt" — e.g. when the user navigates
+  to the sample-data view mid sign-in, without an explicit sign-out.
+  `AuthManager.abandon(handle)` clears only the pending session or
+  installed token produced by that exact handle; an unknown or
+  already-superseded handle is a safe no-op. This exists specifically so
+  cleanup can never widen its own effect: unlike `POST /api/auth/logout`
+  (which clears whatever session/token is currently current, by design,
+  for an explicit user sign-out), `abandon()` cannot clear a different,
+  newer, legitimately-current session even if its request arrives late
+  relative to a subsequent successful sign-in — it does not touch
+  `_generation` or app-only state at all, only the one handle named.
 - **App-only mode cannot narrow its own scope (`RISK-006`).** Client-
   credentials requests always use Microsoft's `.default` scope, which
   returns every application permission the target app registration already

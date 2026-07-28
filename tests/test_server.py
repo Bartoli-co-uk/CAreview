@@ -188,6 +188,92 @@ class ServerIntegrationTests(unittest.TestCase):
         self.assertEqual(resp.status, 200)
         self.assertEqual(json.loads(resp.read()), {"state": "signed_out"})
 
+    def test_abandon_missing_handle_rejected(self) -> None:
+        origin = f"http://127.0.0.1:{self.port}"
+        resp = self._post("/api/auth/abandon", f"127.0.0.1:{self.port}", origin, b"{}")
+        self.assertEqual(resp.status, 400)
+
+    def test_abandon_requires_origin(self) -> None:
+        resp = self._post("/api/auth/abandon", f"127.0.0.1:{self.port}", None, b'{"handle": "x"}')
+        self.assertEqual(resp.status, 403)
+
+    def test_abandon_unknown_handle_is_ok_and_does_not_clear_a_newer_session(self) -> None:
+        # ISSUE-0013 (F-001 from the round-2 Codex review): a device-code
+        # attempt abandoned via this endpoint must never clear a different,
+        # newer session installed after it. Exercised at the HTTP layer with
+        # a real AuthManager (mocked transport, no network).
+        origin = f"http://127.0.0.1:{self.port}"
+        original_auth = server.AUTH
+        old_device_ok = (200, {
+            "device_code": "OLD", "user_code": "OLD1", "verification_uri": "x",
+            "interval": 0, "expires_in": 900,
+        })
+        old_token_ok = (200, {"access_token": "OLD-TOKEN", "expires_in": 3600})
+        new_device_ok = (200, {
+            "device_code": "NEW", "user_code": "NEW1", "verification_uri": "x",
+            "interval": 0, "expires_in": 900,
+        })
+        new_token_ok = (200, {"access_token": "NEW-TOKEN", "expires_in": 3600})
+        responses = [old_device_ok, old_token_ok, new_device_ok, new_token_ok]
+        server.AUTH = auth.AuthManager(transport=lambda url, data: responses.pop(0))
+        try:
+            old_handle = json.loads(
+                self._post("/api/auth/start", f"127.0.0.1:{self.port}", origin, b"{}").read()
+            )["handle"]
+            self.assertEqual(
+                json.loads(self._post("/api/auth/poll", f"127.0.0.1:{self.port}", origin, json.dumps({"handle": old_handle}).encode()).read())["state"],
+                "success",
+            )
+            self.assertEqual(server.AUTH.get_token(), "OLD-TOKEN")
+
+            # A brand new sign-in completes, superseding the old one.
+            new_handle = json.loads(
+                self._post("/api/auth/start", f"127.0.0.1:{self.port}", origin, b"{}").read()
+            )["handle"]
+            self.assertEqual(
+                json.loads(self._post("/api/auth/poll", f"127.0.0.1:{self.port}", origin, json.dumps({"handle": new_handle}).encode()).read())["state"],
+                "success",
+            )
+            self.assertEqual(server.AUTH.get_token(), "NEW-TOKEN")
+
+            # The old, now-irrelevant handle's abandon request arrives late.
+            abandon_resp = self._post(
+                "/api/auth/abandon", f"127.0.0.1:{self.port}", origin, json.dumps({"handle": old_handle}).encode()
+            )
+            self.assertEqual(abandon_resp.status, 200)
+            self.assertEqual(json.loads(abandon_resp.read()), {"state": "ok"})
+            self.assertEqual(server.AUTH.get_token(), "NEW-TOKEN")  # untouched
+        finally:
+            server.AUTH = original_auth
+
+    def test_abandon_pending_session_prevents_later_success(self) -> None:
+        origin = f"http://127.0.0.1:{self.port}"
+        original_auth = server.AUTH
+        device_ok = (200, {
+            "device_code": "DEV", "user_code": "WXYZ", "verification_uri": "x",
+            "interval": 0, "expires_in": 900,
+        })
+        token_ok = (200, {"access_token": "T", "expires_in": 3600})
+        responses = [device_ok, token_ok]
+        server.AUTH = auth.AuthManager(transport=lambda url, data: responses.pop(0))
+        try:
+            handle = json.loads(
+                self._post("/api/auth/start", f"127.0.0.1:{self.port}", origin, b"{}").read()
+            )["handle"]
+            abandon_resp = self._post(
+                "/api/auth/abandon", f"127.0.0.1:{self.port}", origin, json.dumps({"handle": handle}).encode()
+            )
+            self.assertEqual(abandon_resp.status, 200)
+            # The (already-scripted) successful token response is never
+            # installed: the session was cleared before poll() could use it.
+            poll_resp = self._post(
+                "/api/auth/poll", f"127.0.0.1:{self.port}", origin, json.dumps({"handle": handle}).encode()
+            )
+            self.assertEqual(json.loads(poll_resp.read())["state"], "error")
+            self.assertIsNone(server.AUTH.get_token())
+        finally:
+            server.AUTH = original_auth
+
     def test_poll_unknown_handle_returns_error(self) -> None:
         origin = f"http://127.0.0.1:{self.port}"
         body = json.dumps({"handle": "nope"}).encode()

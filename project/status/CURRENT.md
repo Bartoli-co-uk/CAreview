@@ -1,6 +1,6 @@
 <!-- claudex-state
-stage: IMPLEMENTATION
-active_issue: none
+stage: ISSUE_REVIEW
+active_issue: ISSUE-0013
 active_milestone: none
 -->
 
@@ -112,27 +112,44 @@ immediately open `ISSUE-0013` with its own fresh repair budget to build a
 proper server-side scoped-abandon mechanism. `ISSUE-0012` is now
 `COMPLETE (merged, with tracked residual)`.
 
+**`ISSUE-0013` implemented (round 0), start-authorized by `DECISION-026`.**
+`auth.py`'s `AuthManager` gained a `_token_handle`-tracked, exactly-scoped
+`abandon(handle)` method — under the same lock as every other lifecycle
+transition, it clears only the pending session or installed token
+produced by the named handle, touching neither `_generation` nor app-only
+state, so it can never clear a different, newer session regardless of
+network timing. A new `POST /api/auth/abandon` endpoint exposes it.
+`frontend/src/state/appState.tsx` now calls it at the moment a device-code
+attempt is cancelled (sample mode, app-only mode, sign-out, or a fresh
+attempt), and `pollOnce()`'s round-2 reactive `authLogout()` call is
+removed entirely — superseded and unnecessary. New tests directly exercise
+the round-2 race (a late `abandon()` for an old handle must not clear a
+newer, currently-installed session) in both `tests/test_auth.py` and
+`tests/test_server.py`. Real command output for all required checks is
+recorded in `project/handoffs/ISSUE-0013-handoff.md`. A fresh Codex review
+of this round-0 candidate is the next step.
+
 | Field | Current value |
 |---|---|
-| Stage | `IMPLEMENTATION` — `ISSUE-0012` merged (`DECISION-025`); about to open `ISSUE-0013` for the round-2 residual. M1 and M2 remain complete and accepted with no milestone in progress |
+| Stage | `ISSUE_REVIEW` — `ISSUE-0012` merged (`DECISION-025`); `ISSUE-0013` round 0 implemented, awaiting its fresh Codex review. M1 and M2 remain complete and accepted with no milestone in progress |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v2; APPROVED (DECISION-013, binds `9ccf835`); open questions resolved (DECISION-014) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (v1, binds `179a023`); `project/decisions/DECISION-013-brief-v2-approval.md` (v2, binds `9ccf835`); `project/decisions/DECISION-014-app-only-secret-retention-and-risk002.md` |
 | Roadmap | `ROADMAP.md` v4; APPROVED (DECISION-015, binds `9e5ba6d`). v3 (`DECISION-003`, `125d74f`) governed the completed M1; v4 has now fully delivered M2 |
 | Roadmap approval | `project/decisions/DECISION-003-roadmap-approval.md` (v3); `project/decisions/DECISION-015-roadmap-v4-approval.md` (v4) |
 | Active milestone | `M1` — `COMPLETE`, accepted (`DECISION-012`). `M2` — `COMPLETE`, accepted (`DECISION-023`). Neither milestone is currently in progress; no M3 exists yet |
-| Active issue | None at this instant — `ISSUE-0012` is `COMPLETE` (merged); `ISSUE-0013` is about to be opened for its round-2 residual |
-| Issue repair round | `ISSUE-0012`: exhausted at 2 of 2, final outcome `CHANGES_REQUIRED`, accepted as tracked residual by `DECISION-025` — see `project/issues/ISSUE-0012.md` |
+| Active issue | `ISSUE-0013` — scoped device-code abandonment, `REVIEWING` (round 0 implemented, Codex review pending), out-of-band per `DECISION-026`. `ISSUE-0012` is `COMPLETE` (merged) |
+| Issue repair round | `ISSUE-0013`: round 0, not yet reviewed. `ISSUE-0012`: exhausted at 2 of 2, final outcome `CHANGES_REQUIRED`, accepted as tracked residual by `DECISION-025` — see `project/issues/ISSUE-0012.md` |
 | Reviewed product commit | `6311a11a48a0a7e51e83a14ca4081d431cb46698` — the frozen M1 round-2 candidate. `M2`'s frozen product commit is `98be0bc562de8f7cf52e3019715bc4cff571ad91`; its milestone-review candidate `9c01749b221d6f7f2d8ff9ca6282cf9172477a3d` was accepted by `DECISION-023` |
-| Latest implementation handoff | `project/handoffs/ISSUE-0011-handoff.md` (M2, rounds 0-1, complete) |
+| Latest implementation handoff | `project/handoffs/ISSUE-0013-handoff.md` (round 0, real check output for 188 Python + 89 Vitest tests). `project/handoffs/ISSUE-0012-handoff.md` (rounds 1-2, complete, merged with tracked residual). `project/handoffs/ISSUE-0011-handoff.md` (M2, rounds 0-1, complete) |
 | Latest milestone reviews | `M2` round 1 (accepted): Claude general `CHANGES_REQUIRED` (`project/reviews/milestones/M2-9c01749b221d-claude-general.md`); Codex general `BLOCKED` (`project/reviews/milestones/M2-9c01749b221d-codex-general.json`); Claude security `PASS_WITH_NOTES` (`project/reviews/milestones/M2-9c01749b221d-claude-security.md`); Codex security `BLOCKED`, sandbox residual only (`project/reviews/milestones/M2-9c01749b221d-codex-security.json`). Round 0 (superseded, candidate `b55bf97`) retained for the record. M1 round 2 remains accepted (`DECISION-012`) |
-| Latest Codex issue review | `ISSUE-0012` round 2 (final, repair budget exhausted): `project/reviews/issues/ISSUE-0012-195bd8e74688-codex.json` — `CHANGES_REQUIRED`, F-001 (high: unawaited/unscoped compensating logout). Round 1: `project/reviews/issues/ISSUE-0012-3748ff133182-codex.json` — `BLOCKED`, F-001 (orphaned server session). Round 0: `project/reviews/issues/ISSUE-0012-4cb61161be32-codex.json` — `BLOCKED`, F-001 (client-side race) + F-002 (missing check evidence). `ISSUE-0011` round 1 (final, unrelated M2 work): `project/reviews/issues/ISSUE-0011-e878cdcd979b-codex.json` — `BLOCKED`, zero findings, sole blocker the accepted sandbox execution-evidence residual |
+| Latest Codex issue review | `ISSUE-0013` round 0: pending (not yet run). `ISSUE-0012` round 2 (final, repair budget exhausted): `project/reviews/issues/ISSUE-0012-195bd8e74688-codex.json` — `CHANGES_REQUIRED`, F-001 (high: unawaited/unscoped compensating logout). Round 1: `project/reviews/issues/ISSUE-0012-3748ff133182-codex.json` — `BLOCKED`, F-001 (orphaned server session). Round 0: `project/reviews/issues/ISSUE-0012-4cb61161be32-codex.json` — `BLOCKED`, F-001 (client-side race) + F-002 (missing check evidence). `ISSUE-0011` round 1 (final, unrelated M2 work): `project/reviews/issues/ISSUE-0011-e878cdcd979b-codex.json` — `BLOCKED`, zero findings, sole blocker the accepted sandbox execution-evidence residual |
 | Completed issues | `ISSUE-0001` `23e6633`; `ISSUE-0002` `3c8fb869`; `ISSUE-0003` `065675e`; `ISSUE-0004` `9f3885b`; `ISSUE-0005` `3dc059f`; `ISSUE-0006` `d15f47c`; `ISSUE-0007` `b314d82` (merged `0c35851`, `DECISION-016`); `ISSUE-0008` `2051254` (merged `04e68ee`, `DECISION-017`); `ISSUE-0009` `7b0600f0831f68f8933b68ca0bba34f58a00b0cc` (merged `8253c1d7a754a3a967c2687c5ccc45e71794391a`, `DECISION-019`); `ISSUE-0010` `2a2d0b73e94d2635a645728e5b78f7f500c0a6b2` (merged `9d346f64422bf9bd5f89b43837a5f62f3e64d09b`, `DECISION-020`); `ISSUE-0011` `e878cdcd979b7be87ff20cc986cb16d0d457dfe0` (merged `b50cbc2fb67e8066f22ab06a03f61425dbf1a9d1`, `DECISION-022`); `ISSUE-0012` `195bd8e746884c23b4774162667ee5905f2680e1` (merged `5189959392ec2331c799199f5d70457ff361a3ba`, `DECISION-025`, out-of-band, tracked residual → `ISSUE-0013`) |
-| Last human decision | `DECISION-025` (ISSUE-0012 advance and merge, tracked residual); `DECISION-024` (React/Vite frontend, direct-override, out-of-band); `DECISION-023` (M2 milestone acceptance); `DECISION-022` (ISSUE-0011 advance and merge); `DECISION-021` (ISSUE-0011 start authorization); `DECISION-020` (ISSUE-0010 advance and merge); `DECISION-019` (ISSUE-0009 advance and merge); `DECISION-018` (ISSUE-0009 start authorization); `DECISION-017` (ISSUE-0008 advance and merge); `DECISION-016` (ISSUE-0007 advance and merge); `DECISION-015` (roadmap v4 approval); `DECISION-014` (secret retention, RISK-002-as-widened, tenant validation); `DECISION-013` (brief v2 approval); also `DECISION-012`..`001` |
+| Last human decision | `DECISION-026` (ISSUE-0013 start authorization); `DECISION-025` (ISSUE-0012 advance and merge, tracked residual); `DECISION-024` (React/Vite frontend, direct-override, out-of-band); `DECISION-023` (M2 milestone acceptance); `DECISION-022` (ISSUE-0011 advance and merge); `DECISION-021` (ISSUE-0011 start authorization); `DECISION-020` (ISSUE-0010 advance and merge); `DECISION-019` (ISSUE-0009 advance and merge); `DECISION-018` (ISSUE-0009 start authorization); `DECISION-017` (ISSUE-0008 advance and merge); `DECISION-016` (ISSUE-0007 advance and merge); `DECISION-015` (roadmap v4 approval); `DECISION-014` (secret retention, RISK-002-as-widened, tenant validation); `DECISION-013` (brief v2 approval); also `DECISION-012`..`001` |
 | Open blockers | None. M2 is accepted; no roadmap work is currently authorized or in progress |
-| Tracked follow-up | Live-tenant sign-in verification (M1 and M2, both auth modes) — deferred pending the human's access restrictions (`DECISION-012`), remains a protected action, not a completion gate for either milestone. `DECISION-023`'s SEC-001 (silent-renewal-after-revocation replay) and SEC-003 (unauthenticated credential-validation oracle, undocumented in `RISK-002`) are tracked, non-blocking follow-ups — see `project/milestones/M2.md` and `DECISION-023`. `ISSUE-0012`'s round-2 F-001 residual is now tracked as `ISSUE-0013`; CI not yet updated for `npm` commands; whether to open an M3 for this frontend work is undecided |
-| Next required actor | Claude (this task) — open and implement `ISSUE-0013` per `DECISION-026` |
-| Next permitted action | Author `project/issues/ISSUE-0013.md`, branch `ai/ISSUE-0013-*`, implement the fix, run required checks, and invoke a fresh Codex issue review before presenting the result |
+| Tracked follow-up | Live-tenant sign-in verification (M1 and M2, both auth modes) — deferred pending the human's access restrictions (`DECISION-012`), remains a protected action, not a completion gate for either milestone. `DECISION-023`'s SEC-001 (silent-renewal-after-revocation replay) and SEC-003 (unauthenticated credential-validation oracle, undocumented in `RISK-002`) are tracked, non-blocking follow-ups — see `project/milestones/M2.md` and `DECISION-023`. CI not yet updated for `npm` commands; whether to open an M3 for this frontend work is undecided |
+| Next required actor | Claude (this task) — invoke the fresh Codex issue review for `ISSUE-0013` round 0 against this candidate SHA |
+| Next permitted action | Run `./scripts/run-codex-review.sh issue ISSUE-0013 959fbcf <round-0-candidate-SHA>`; on `PASS`/`PASS_WITH_NOTES` present for a human advance/merge decision, on `CHANGES_REQUIRED`/`BLOCKED` repair within the 2-round budget |
 | Actions not yet permitted | Merging `ISSUE-0013` to `main` without a human advance/merge decision; any new issue or milestone work beyond `ISSUE-0013` without explicit human authorization; publication, deployment, live tenant auth/fetch (either mode), or any other protected action |
 
 ## Verification evidence at the reviewed commit
@@ -142,10 +159,10 @@ full milestone record and the four review reports for complete evidence.
 
 | Check | Command | Result |
 |---|---|---|
-| Tests | `python3 -m unittest discover -s tests` | 173 passed, exit 0, at the M2 milestone candidate. `174 passed` after the `DECISION-024` frontend change (`tests/test_ui_safety.py` rewritten for the React source) |
+| Tests | `python3 -m unittest discover -s tests` | 173 passed at the M2 milestone candidate; 174 after `DECISION-024`'s frontend change; **188 passed** after `ISSUE-0013` (new `AbandonTests` + server abandon-endpoint tests) |
 | Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 |
 | Governance | `python3 scripts/validate_repo.py` | passed |
-| Frontend tests (new, `DECISION-024`) | `cd frontend && npm test` | 88 passed, exit 0 (86 at round 0 + 2 new `deviceCodeRace.test.tsx` regression tests added in round 1) |
+| Frontend tests | `cd frontend && npm test` | **89 passed**, exit 0 (86 at `ISSUE-0012` round 1, +1 at round 2, `deviceCodeRace.test.tsx` rewritten for `ISSUE-0013`'s scoped-abandon design) |
 
 A fresh task must read `AGENTS.md`, this file, and the artifacts linked here,
 then restate the current stage and next permitted action before doing material

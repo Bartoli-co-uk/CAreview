@@ -1,5 +1,5 @@
 <!-- claudex-state
-stage: IMPLEMENTATION
+stage: ROADMAP_REVIEW
 active_issue: none
 active_milestone: none
 -->
@@ -204,7 +204,7 @@ rather than passes.
 
 | Field | Current value |
 |---|---|
-| Stage | `IMPLEMENTATION` — `ISSUE-0012` and `ISSUE-0013` both merged (`DECISION-025`, `DECISION-027`); no active issue or milestone. M1 and M2 remain complete and accepted with no milestone in progress |
+| Stage | `ROADMAP_REVIEW` — roadmap v5 (candidate `ef2ea6d318e5d5ac46bd0953a96daa8cdb782e7c`) merged to `main` as `DRAFT` without its mandatory fresh Codex plan review ever running (the prior environment lacked the `codex` tool); that review is now being run retroactively, the same way `ISSUE-0012`/`ISSUE-0013` got a retroactive per-issue review. `ISSUE-0012` and `ISSUE-0013` remain merged (`DECISION-025`, `DECISION-027`); no active issue or milestone. M1 and M2 remain complete and accepted with no milestone in progress |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v2; APPROVED (DECISION-013, binds `9ccf835`); open questions resolved (DECISION-014) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (v1, binds `179a023`); `project/decisions/DECISION-013-brief-v2-approval.md` (v2, binds `9ccf835`); `project/decisions/DECISION-014-app-only-secret-retention-and-risk002.md` |

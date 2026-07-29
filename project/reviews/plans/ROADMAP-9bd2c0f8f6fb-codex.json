@@ -1,0 +1,125 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-29T17:08:01Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faed7-d3c1-72a0-a9d5-55b609c43330"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "Repository HEAD exactly matches the launcher target commit.",
+        "reference": "git rev-parse HEAD -> 9bd2c0f8f6fb5f4153be0cf5661f63929449ce85",
+        "source": "command"
+      },
+      {
+        "detail": "The target record exists and identifies roadmap v5 as a draft awaiting this round-2 review and exact human approval.",
+        "reference": "ROADMAP.md:6",
+        "source": "file"
+      },
+      {
+        "detail": "Reviewed the approved brief, roadmap, M3 milestone record, ISSUE-0014 work item, current-state record, governing decisions, security boundaries, and current CI workflow.",
+        "reference": "project/brief/PROJECT_BRIEF.md; ROADMAP.md; project/milestones/M3.md; project/issues/ISSUE-0014.md; project/status/CURRENT.md; project/decisions/DECISION-024-react-frontend-build-step.md; project/decisions/DECISION-028-risk-009-acceptance.md; docs/security-boundaries.md; .github/workflows/validate.yml",
+        "source": "file"
+      },
+      {
+        "detail": "Governance validation could not complete because the read-only environment provides no writable temporary directory; it failed before producing a validation result.",
+        "reference": "python3 scripts/validate_repo.py -> exit 1, FileNotFoundError: no usable temporary directory",
+        "source": "check"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Acceptance criterion 2 says a deliberately broken frontend candidate must fail the workflow.",
+          "The fallback permits running only the composed shell command with a red test. That proves Vitest returns non-zero, but does not prove the edited workflow is valid, selects the intended working directory, invokes that command, or propagates its failure.",
+          "The required-check table repeats this weaker fallback as sufficient negative-CI proof."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 52,
+            "path": "project/issues/ISSUE-0014.md"
+          },
+          {
+            "line": 59,
+            "path": "project/issues/ISSUE-0014.md"
+          },
+          {
+            "line": 78,
+            "path": "project/issues/ISSUE-0014.md"
+          },
+          {
+            "line": 312,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Require workflow-level local execution or an equivalent workflow parser/executor that validates the modified YAML and failure propagation. If such tooling is unavailable, make the negative workflow proof an explicit evidence gap requiring human disposition rather than accepting a standalone shell command as proof that the workflow fails.",
+        "severity": "medium",
+        "title": "The negative-CI fallback does not verify the claimed workflow behavior",
+        "verification": "Run the modified workflow locally with a deliberately failing test and record its non-zero job result, or demonstrate with a workflow-aware validator/executor that the frontend step is selected and its non-zero result fails the job. Confirm a plain `npm test` failure alone is not recorded as workflow-level proof."
+      },
+      {
+        "blocking": true,
+        "classification": "QUESTION",
+        "confidence": "high",
+        "evidence": [
+          "The roadmap risk table says RISK-010 was accepted implicitly through DECISION-024.",
+          "The roadmap reconciliation text then says RISK-010 remains new and undecided.",
+          "CURRENT.md likewise lists RISK-010 treatment as an open human decision and prohibits treating it as accepted.",
+          "DECISION-024 records the generated-output onboarding consequence, but does not explicitly accept a named RISK-010 or state its severity/treatment."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 422,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 430,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 223,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 224,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 80,
+            "path": "project/decisions/DECISION-024-react-frontend-build-step.md"
+          }
+        ],
+        "remediation": "Obtain an exact human decision to accept, mitigate, avoid, or defer RISK-010, then make ROADMAP.md, M3.md, and CURRENT.md state that treatment consistently. Alternatively, if the human confirms DECISION-024 already constituted explicit acceptance, record that interpretation in a new binding decision rather than inferring it.",
+        "severity": "medium",
+        "title": "RISK-010 has contradictory treatment and still needs a human decision",
+        "verification": "Confirm one committed human decision names RISK-010 and its treatment, and search all roadmap, milestone, and current-state references to ensure none still describe it inconsistently."
+      }
+    ],
+    "limitations": [
+      "The filesystem is read-only, so the governance validator could not create its temporary smoke-test directory and no successful governance-validation result is available from this review.",
+      "No implementation or CI execution was performed because this is a roadmap review; feasibility conclusions are based on the committed workflow, package scripts, lockfile-backed plan, and work-item records.",
+      "M3 has no approved governing brief section; the roadmap accurately discloses that ISSUE-0012 and ISSUE-0013 were delivered under a direct human override, so this review does not treat v5 as retroactive satisfaction of the skipped planning gate."
+    ],
+    "mode": "plan",
+    "outcome": "CHANGES_REQUIRED",
+    "reviewed_sha": "9bd2c0f8f6fb5f4153be0cf5661f63929449ce85",
+    "schema_version": "1.0",
+    "summary": "Target identity is valid and the round-1 omissions are substantially repaired, but roadmap v5 is not ready for approval. ISSUE-0014's fallback verification cannot prove that the workflow propagates a frontend failure, and RISK-010 is simultaneously described as implicitly accepted and still undecided. Governance validation also could not complete in the read-only environment.",
+    "target_id": ""
+  },
+  "test_only": false
+}

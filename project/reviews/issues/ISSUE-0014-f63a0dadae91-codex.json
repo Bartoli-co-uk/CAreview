@@ -1,0 +1,87 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-29T17:50:00Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faefe-467c-7511-858a-a84ec7f27431"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "8e864a38e03d0df90c79a469c0e1fdf740da7904",
+    "evidence": [
+      {
+        "detail": "HEAD resolves to the launcher-supplied target SHA, and git status reported no working-tree changes.",
+        "reference": "git status --short; git rev-parse HEAD",
+        "source": "command"
+      },
+      {
+        "detail": "The base and target objects resolve exactly to the launcher-supplied SHAs.",
+        "reference": "git rev-parse 8e864a38e03d0df90c79a469c0e1fdf740da7904; git rev-parse f63a0dadae917f35b328b60b1a562aa535d97d10",
+        "source": "command"
+      },
+      {
+        "detail": "The base-to-target diff changes eight allowed files: the CI workflow, README.md, CONTRIBUTING.md, and ISSUE-0014 governance records. No product source or dependency manifest changed.",
+        "reference": "git diff --stat 8e864a38e03d0df90c79a469c0e1fdf740da7904 f63a0dadae917f35b328b60b1a562aa535d97d10",
+        "source": "diff"
+      },
+      {
+        "detail": "The workflow SHA-pins actions/setup-node, selects Node 22, uses frontend/package-lock.json for caching, and runs npm ci, npm run build, and npm test from frontend/ after the existing Python checks.",
+        "reference": ".github/workflows/validate.yml:25",
+        "source": "file"
+      },
+      {
+        "detail": "README.md and CONTRIBUTING.md now state that CI executes the frontend build and tests.",
+        "reference": "README.md:435; CONTRIBUTING.md:71",
+        "source": "file"
+      },
+      {
+        "detail": "The active-gate rows consistently identify ISSUE-0014 as repair round 2, cite both prior blocked reviews, and direct the next actor to launch this exact review.",
+        "reference": "project/status/CURRENT.md:209",
+        "source": "file"
+      },
+      {
+        "detail": "git diff --check completed successfully.",
+        "reference": "git diff --check 8e864a38e03d0df90c79a469c0e1fdf740da7904 f63a0dadae917f35b328b60b1a562aa535d97d10",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not complete because the read-only environment has no writable temporary directory; tempfile.TemporaryDirectory raised FileNotFoundError.",
+        "reference": "python3 -B scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The backend suite discovered and ran 188 tests but ended with 76 errors because sandbox policy prohibits loopback socket binding; the affected tests raised PermissionError from ThreadingHTTPServer.bind().",
+        "reference": "python3 -B -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "frontend/node_modules is absent, Vitest is unavailable, and the read-only network-restricted environment cannot run npm ci or generate build artifacts.",
+        "reference": "test -d frontend/node_modules; npm test -- --run",
+        "source": "limitation"
+      }
+    ],
+    "findings": [],
+    "limitations": [
+      "The mandatory governance check could not complete because no writable temporary directory is available.",
+      "The backend suite could not pass because sandbox policy blocks its loopback socket tests; 76 of 188 tests errored for that environmental reason.",
+      "The frontend build, positive test run, and negative-test proof could not be independently reproduced because dependencies are absent and the environment is read-only and network-restricted.",
+      "The recorded positive and negative frontend results in project/issues/ISSUE-0014.md are summarized command evidence rather than raw command transcripts independently reproducible in this checkout.",
+      "No local or hosted GitHub Actions runner evidence verifies workflow parsing, action resolution, Node setup, npm caching, timeout sufficiency, or step-level failure propagation. DECISION-029 explicitly accepts the narrower negative-proof residual.",
+      "The SHA-pinned actions/setup-node identity and its v7.0.0 annotation could not be independently verified without network access.",
+      "ROADMAP.md, project/milestones/M3.md, and docs/security-boundaries.md retain pre-delivery statements that frontend CI has not landed. Prior review records identify these as intentionally deferred documentation residuals outside the issue's allowed CI-status documentation paths."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "f63a0dadae917f35b328b60b1a562aa535d97d10",
+    "schema_version": "1.0",
+    "summary": "BLOCKED solely because mandatory execution evidence could not be independently completed in the read-only, network-restricted review environment. The inspected workflow and documentation changes are scoped, structurally satisfy the principal acceptance criteria, and the round-2 CURRENT.md repair resolves the prior review's stale active-gate rows. No new correctness or security defect was identified.",
+    "target_id": "ISSUE-0014"
+  },
+  "test_only": false
+}

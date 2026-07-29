@@ -68,11 +68,12 @@ Two things to know before you start:
   `index.css` are generated and gitignored, so a fresh clone serves no UI at
   all until you have run `npm run build`. `python3 server.py` will start
   happily and then 404 its own static routes.
-- **CI does not run either of these yet.** The Python checks above are the
-  whole of CI today, so nothing catches a broken frontend build or a failing
-  Vitest test except you, locally, before you push. Wiring this up is tracked
-  as `ISSUE-0014` in [`ROADMAP.md`](ROADMAP.md); until it lands, please run
-  both and paste the real output into your pull request.
+- **CI now runs both of these too** (`ISSUE-0014`): `.github/workflows/validate.yml`
+  runs `npm ci`, `npm run build`, and `npm test` in `frontend/` on every push
+  and pull request, alongside the Python checks. A broken build or a failing
+  Vitest test now fails the workflow the same way a broken Python check does.
+  Still run them locally before you push — a red CI run is slower feedback
+  than your own terminal.
 
 Do not add a third-party dependency to the Python backend, and do not expand
 the Node toolchain beyond what `DECISION-024` already covers, without a

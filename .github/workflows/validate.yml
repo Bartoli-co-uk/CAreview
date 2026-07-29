@@ -22,6 +22,21 @@ jobs:
         run: python3 -m unittest discover -s tests -v
       - name: Validate files, formats, links, and workflow language
         run: python3 -B scripts/validate_repo.py
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies (from lockfile)
+        working-directory: frontend
+        run: npm ci
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+      - name: Run frontend tests
+        working-directory: frontend
+        run: npm test
       - name: Parse PowerShell launcher
         shell: pwsh
         run: |

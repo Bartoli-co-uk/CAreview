@@ -433,13 +433,10 @@ The analyzer is unit-tested against committed **sanitized** fixtures
 tenant data): the strong tenant scores 100 and the weak tenant scores low,
 deterministically.
 
-GitHub Actions currently runs the three Python commands above on every push and
-pull request (plus a PowerShell syntax check of the review launcher); the two
-new `frontend/` commands are not yet wired into CI — see
-[DECISION-024](project/decisions/DECISION-024-react-frontend-build-step.md) for this
-known gap. So for now, the checks you run
-locally are the checks that gate the repository — see
-[`.github/workflows/validate.yml`](.github/workflows/validate.yml).
+GitHub Actions runs all five commands above — the three Python checks and the
+two `frontend/` commands (`npm ci && npm run build`, `npm test`) — on every
+push and pull request, plus a PowerShell syntax check of the review launcher
+(`ISSUE-0014`). See [`.github/workflows/validate.yml`](.github/workflows/validate.yml).
 
 ## Design goals and scope
 

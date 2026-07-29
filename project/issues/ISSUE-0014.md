@@ -1,12 +1,22 @@
 # ISSUE-0014: Wire the frontend build and test suite into CI
 
-**Status:** `PLANNED`
+**Status:** `COMPLETE` (merged, with an accepted sandbox execution-evidence
+residual) — the human reviewed the exhausted repair budget and the
+zero-finding round-2 `BLOCKED` outcome (see "Human decision required"
+below) and chose option 1: accept the sandbox residual and merge
+(`DECISION-031`)
 **Milestone:** `M3`
-**Approved roadmap:** *None yet.* `ROADMAP.md` version `5` (candidate `441b4da0d3ba0d9d13dcf0d710bdae5a1c0685ab`) defines this issue, but v5 itself is still `DRAFT` — unapproved. This record exists so v5's plan review (`project/reviews/plans/ROADMAP-441b4da0d3ba-codex.json`, F-001) has a reviewable work item to bind to; it does not itself authorize starting the issue.
+**Approved roadmap:** `ROADMAP.md` version `5`, `APPROVED` (`DECISION-029`, binds `8ea41ee`).
 **Dependencies:** `ISSUE-0012` (frontend exists to build/test)
 **Branch:** `ai/ISSUE-0014-frontend-ci`
-**Starting SHA:** *Not started.*
-**Candidate SHA:** `Not created`
+**Starting SHA:** `8e864a38e03d0df90c79a469c0e1fdf740da7904`
+**Candidate SHA:** round 0 `c4cb4d28f9b710e4f24366ec6fbb61e810246d96` (`BLOCKED`,
+F-001: stale `CURRENT.md` rows — repair missed six of nine stale rows);
+round 1 `d72dbd9a5481ec8dc69143fb31aef7a15fc0445b` (`BLOCKED` again, same
+F-001, narrower); round 2 (final) `f63a0dadae917f35b328b60b1a562aa535d97d10`
+— `BLOCKED`, **zero content findings**, blocked solely by the review
+sandbox's own execution-evidence limitations. This was the last repair round `AGENTS.md` permits for
+an issue.
 
 ## Objective
 
@@ -68,14 +78,14 @@ broken Python check already does.
 
 ## Required checks
 
-| Check | Command or method | Expected result |
+| Check | Command or method | Result (round 0) |
 |---|---|---|
-| Backend tests | `python3 -m unittest discover -s tests` | All pass, unchanged |
+| Backend tests | `python3 -m unittest discover -s tests` | 188 passed |
 | Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 |
-| Governance | `python3 scripts/validate_repo.py` | passed |
-| Frontend build | `cd frontend && npm ci && npm run build` | exit 0, produces `web/index.html`/`index.js`/`index.css` |
-| Frontend tests | `cd frontend && npm test` | All 91+ pass |
-| Negative-CI proof | Per acceptance criterion 2 | Real command output showing the modified workflow step fails on a deliberately red test, captured in the handoff |
+| Governance | `python3 scripts/validate_repo.py` | passed (67 required files) |
+| Frontend build | `cd frontend && npm ci && npm run build` | exit 0; produced `web/index.html` (0.54 kB), `index.css` (6.56 kB), `index.js` (237.09 kB) |
+| Frontend tests | `cd frontend && npm test` | 91 passed, 7 test files, exit 0 |
+| Negative-CI proof | Per acceptance criterion 2 — **local fallback used, `act` was not available in this environment** | A temporary `expect(1).toBe(2)` test was added to `src/test/hostileMarkup.test.tsx`, then the exact composed commands the new workflow steps run (`npm ci`; `npm run build`; `npm test`, all from `frontend/`) were run in order: `npm ci` exit 0, `npm run build` exit 0, `npm test` **exit 1** — Vitest reported `1 failed, 91 passed`, the added test failing with `AssertionError: expected 1 to be 2`. The temporary test was then reverted; `npm test` returned to 91 passed, exit 0. This proves the composed command fails non-zero on a red test, which is what fails a GitHub Actions `run:` step — it does not exercise the YAML parser or the actual hosted runner, the residual `DECISION-029` already accepted for this criterion |
 
 ## Documentation
 
@@ -115,16 +125,60 @@ broken Python check already does.
 
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
-| — | *Not started* | — | — | — | — |
+| 0 | This record's Required checks table | `c4cb4d28f9b710e4f24366ec6fbb61e810246d96` | 188 backend tests, py_compile, validate_repo.py, frontend build, 91 frontend tests, negative-CI local fallback — all recorded above | `project/reviews/issues/ISSUE-0014-c4cb4d28f9b7-codex.json` | `BLOCKED` — F-001 (medium): `CURRENT.md` contained stale rows contradicting this candidate |
+| 1 | Round-0 checks unchanged; no product/CI file touched | `d72dbd9a5481ec8dc69143fb31aef7a15fc0445b` | Unchanged from round 0 (backend tests, py_compile, validate_repo.py all re-run and passing) | `project/reviews/issues/ISSUE-0014-d72dbd9a5481-codex.json` | `BLOCKED` again — F-001 (medium, narrower): the round-1 repair fixed 3 of 9 stale `CURRENT.md` rows and missed the other 6 |
+| 2 | Round-0 checks unchanged; no product/CI file touched | `f63a0dadae917f35b328b60b1a562aa535d97d10` | Unchanged from round 0 | `project/reviews/issues/ISSUE-0014-f63a0dadae91-codex.json` | `BLOCKED` — **zero findings.** Blocked solely by the review sandbox's own execution-evidence limitations (no writable temp dir for `validate_repo.py`, no loopback sockets for the affected backend tests, no network for `npm ci`/build/test) — the same class of sandbox residual already recognized in this project (e.g. `ISSUE-0011` round 1). No correctness or security defect identified in the workflow, README, or CONTRIBUTING changes |
 
 Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
 No workflow loop may exceed five total iterations; the tighter two-round issue
 limit applies first, and exhaustion blocks for the human.
 
+**This was the second and final repair round `AGENTS.md` permits.** Per that
+bounded-repair rule, this Claude task stops here and presents the finding to
+the human, the same way `ISSUE-0012` and `ISSUE-0013` did.
+
+## Human decision required
+
+Round 2's outcome is `BLOCKED` with **zero content findings** — every listed
+item is the review sandbox's own inability to execute checks (no writable
+temp directory, no loopback sockets, no network access), not a defect the
+reviewer identified in the workflow, README, or CONTRIBUTING changes. This is
+the same class of blocker `ISSUE-0011` round 1 hit and the human already
+resolved once before (that review: "BLOCKED, zero findings, sole blocker the
+accepted sandbox execution-evidence residual").
+
+The actual checks *were* run outside the review sandbox, on this machine,
+with real results recorded in this file's Required checks table and round
+table above: 188 backend tests passed, `py_compile` exit 0,
+`scripts/validate_repo.py` passed (67 required files), the frontend build
+produced its three output files, and 91 Vitest tests passed. The review
+sandbox's own environment (read-only, no network, no loopback) cannot
+reproduce any of that — it never can, for this class of check, in this
+project's existing review tooling.
+
+**Options for the human:**
+1. **Accept the sandbox execution-evidence gap as an out-of-band residual**
+   — the same "sandbox-only-blocker" pattern this project has already
+   applied repeatedly (`DECISION-010`, `DECISION-016`, `DECISION-017`,
+   `DECISION-019`, `DECISION-020`, `DECISION-022`) — and authorize merging
+   `ai/ISSUE-0014-frontend-ci` to `main` on the strength of the real,
+   out-of-sandbox check evidence already recorded in this file.
+2. **Direct further investigation** into whether the review launcher's
+   sandbox could be given a writable temp dir / loopback access / network
+   access for future reviews, deferring this merge until that's resolved.
+3. **Reject or hold** `ISSUE-0014` for other reasons.
+
 ## Completion
 
-- Final reviewed product SHA: `N/A — not started`
-- Human advance/merge decision: `N/A`
-- Merge/result SHA: `N/A`
-- Residual risks or follow-up: `N/A`
-- Status record updated: `N/A`
+- Final reviewed product SHA: `f63a0dadae917f35b328b60b1a562aa535d97d10`
+  (round-2 review candidate); merge SHA recorded once pushed
+- Human advance/merge decision: `project/decisions/DECISION-031-issue-0014-advance-and-merge.md`
+- Merge/result SHA: *recorded after merge*
+- Residual risks or follow-up: sandbox execution-evidence gap accepted per
+  `DECISION-031` (real checks pass outside the review sandbox; the
+  sandbox itself cannot reproduce them in this environment — same
+  precedent as `ISSUE-0011` and five earlier issues). `docs/security-boundaries.md`
+  still describes CI as not building the frontend (stale, outside this
+  issue's allowed paths) — tracked as separate follow-up, not this
+  issue's scope.
+- Status record updated: `project/status/CURRENT.md`, this commit

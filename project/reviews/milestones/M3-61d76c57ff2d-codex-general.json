@@ -1,0 +1,114 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-29T18:37:34Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faf29-a5d3-7d53-8af3-ea649a508bf1"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "The checkout is clean and detached HEAD exactly matches the launcher target SHA.",
+        "reference": "git status --short --branch; git rev-parse HEAD",
+        "source": "command"
+      },
+      {
+        "detail": "The milestone record identifies 61d76c57ff2d70fe95988497e6eaafd0b1649a41 as the metadata freeze commit and claims its product/CI content is identical to 861f401.",
+        "reference": "project/milestones/M3.md:5",
+        "source": "file"
+      },
+      {
+        "detail": "The committed workflow installs locked frontend dependencies, builds the frontend, runs frontend tests, then runs backend tests and governance validation.",
+        "reference": ".github/workflows/validate.yml:27",
+        "source": "file"
+      },
+      {
+        "detail": "Backend test discovery ran 188 tests but exited 1 with 76 errors because the read-only review sandbox prohibits loopback socket binding.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Python compilation exited 1 because the read-only checkout prohibits creation of __pycache__.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation exited 1 because no writable temporary directory was available.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "Frontend dependencies were absent. npm test and npm run build both exited 127 because vitest and tsc were unavailable; installing them was not permitted in this read-only, network-restricted review.",
+        "reference": "frontend/package.json; npm test -- --run; npm run build",
+        "source": "check"
+      },
+      {
+        "detail": "Earlier committed issue evidence reports 188 backend tests, a successful frontend build, and 91 frontend tests, but binds those results to issue candidates rather than the milestone candidate.",
+        "reference": "project/issues/ISSUE-0014.md:87",
+        "source": "file"
+      },
+      {
+        "detail": "The milestone records accepted residuals for the npm build-time supply chain, onboarding regression, and device-code abandonment delivery failure.",
+        "reference": "project/milestones/M3.md:120",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "The header claims candidate-local checks are clean and CI is green at the frozen tree.",
+          "The verification section immediately says the recorded results are from ISSUE-0013 candidate 8858858a2090, that no milestone candidate was frozen or reverified, and that the frontend build was not reproduced in CI.",
+          "Repository rules require real checks against the exact candidate and require BLOCKED when evidence is stale or contradictory."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 6,
+            "path": "project/milestones/M3.md"
+          },
+          {
+            "line": 40,
+            "path": "project/milestones/M3.md"
+          },
+          {
+            "line": 51,
+            "path": "project/milestones/M3.md"
+          }
+        ],
+        "remediation": "Replace the stale verification table and contradictory narrative with durable output from all required checks run against exact candidate 61d76c57ff2d70fe95988497e6eaafd0b1649a41, including the exact CI run identity and result. Ensure every statement consistently distinguishes candidate-local, CI, and older issue evidence.",
+        "severity": "medium",
+        "title": "Milestone verification record contradicts itself and is not consistently candidate-bound",
+        "verification": "At a new candidate, confirm the milestone record names one SHA throughout, contains exact commands, exit statuses, relevant output and CI run identity for that SHA, then independently rerun the full backend, frontend, compile, and governance checks."
+      }
+    ],
+    "limitations": [
+      "The supplied base SHA is empty, so no base-bound milestone diff could be established.",
+      "The checkout contains only a grafted target commit. Claimed ancestry, merge SHAs, and byte identity with 861f401 could not be independently verified.",
+      "Backend integration tests could not complete because the sandbox denies loopback socket binding; 112 of 188 tests completed without reported failure before 76 socket-related setup errors.",
+      "Python compilation and governance validation could not complete because the checkout and temporary directories are not writable.",
+      "Frontend build and tests could not run because node_modules is absent, network access is restricted, and installing software requires separate approval.",
+      "The claimed GitHub Actions run 30480174... could not be independently queried because network access is restricted.",
+      "No live-tenant end-to-end verification exists; the repository identifies this as a protected action requiring separate approval.",
+      "No automated real-browser test exists; frontend interaction evidence is jsdom-based.",
+      "Residual risks remain for npm build-time supply-chain exposure (RISK-009), the required frontend build onboarding step (RISK-010), and unacknowledged device-code abandonment after retry exhaustion or tab closure (RISK-011)."
+    ],
+    "mode": "milestone-general",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "61d76c57ff2d70fe95988497e6eaafd0b1649a41",
+    "schema_version": "1.0",
+    "summary": "M3 general review is blocked. The target identity matches and no independently verified product defect was established, but required candidate-bound execution evidence could not be reproduced in the read-only sandbox, historical identity could not be verified from the grafted checkout, and the milestone verification record contains material internal contradictions about whether the frozen candidate was reverified.",
+    "target_id": "M3"
+  },
+  "test_only": false
+}

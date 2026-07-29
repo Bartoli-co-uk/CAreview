@@ -1,0 +1,98 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-29T18:37:29Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faf29-a5d3-7e42-9514-6fedc7f745f7"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "HEAD exactly matched the launcher target; the working tree was clean and contained no tracked symlinks.",
+        "reference": "git rev-parse HEAD; git status --short; git ls-files -s",
+        "source": "command"
+      },
+      {
+        "detail": "Independent focused security tests passed: 90 authentication, Graph validation, race-handling, secret-hygiene, and frontend static-safety tests.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_auth tests.test_graph tests.test_ui_safety -v (exit 0)",
+        "source": "check"
+      },
+      {
+        "detail": "The workflow pins GitHub Actions by commit, grants only contents:read, disables persisted checkout credentials, and runs npm ci before frontend build and tests.",
+        "reference": ".github/workflows/validate.yml",
+        "source": "file"
+      },
+      {
+        "detail": "The lockfile records resolved package URLs and integrity hashes, but no committed dependency-vulnerability scan result exists.",
+        "reference": "frontend/package-lock.json; docs/security-boundaries.md",
+        "source": "file"
+      },
+      {
+        "detail": "The milestone record contradicts itself: its header claims current-candidate checks and green CI, while its verification table says results are from 8858858a2090 and were not rerun against a frozen milestone candidate.",
+        "reference": "project/milestones/M3.md",
+        "source": "file"
+      },
+      {
+        "detail": "Frontend dependencies were absent, and installing them was neither authorized nor possible without network access, so frontend tests/build and package scanning could not be independently executed.",
+        "reference": "frontend/node_modules; frontend/package-lock.json",
+        "source": "limitation"
+      }
+    ],
+    "findings": [
+      {
+        "attack_preconditions": "No attacker action is required; this is a mandatory security-gate evidence failure. A dependency or frontend defect would become relevant when a developer or CI installs/builds the npm graph or a user loads the generated dashboard.",
+        "blocking": true,
+        "category": "security-evidence",
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "disposition": "open",
+        "evidence": [
+          "project/milestones/M3.md claims 188 backend tests, 91 frontend tests, a clean build, repository validation, and green CI for the frozen package.",
+          "The same record states that its detailed results came from 8858858a2090 and were not rerun against a frozen M3 candidate.",
+          "No node_modules directory or committed scanner result was available; restricted network/read-only conditions prevented npm installation, frontend build/test execution, or dependency auditing.",
+          "Only the 90 independently runnable focused Python tests could be verified at 61d76c57ff2d70fe95988497e6eaafd0b1649a41."
+        ],
+        "exploitability": "The evidence gap is not itself directly exploitable, but it prevents ruling out malicious or vulnerable dependency behavior, generated-bundle regressions, and browser-facing defects at the exact candidate.",
+        "fingerprint": "M3-security-exact-candidate-evidence-missing",
+        "id": "M3-SEC-001",
+        "impact": "The required commit-bound security evidence is incomplete and internally contradictory. The reviewer cannot establish that the npm dependency graph, generated frontend, full backend suite, CI behavior, or governance checks passed at the reviewed SHA.",
+        "locations": [
+          {
+            "line": 6,
+            "path": "project/milestones/M3.md"
+          },
+          {
+            "line": 50,
+            "path": "project/milestones/M3.md"
+          }
+        ],
+        "remediation": "From a clean checkout of the exact candidate, run and durably record the prescribed backend tests, frontend npm ci/build/tests, compile and governance checks, plus an appropriate dependency-vulnerability scan or an explicit evidence-gap disposition. Reconcile the milestone record so every claim names the same SHA and actual output. Freeze the resulting candidate and rerun all four milestone reviews.",
+        "severity": "medium",
+        "title": "Exact-candidate security evidence is missing and contradictory",
+        "verification": "Confirm the milestone record contains non-contradictory command, exit-status, relevant-output, CI, and dependency-scan evidence bound to one candidate SHA; independently rerun the available checks at that SHA and verify the working tree remains clean."
+      }
+    ],
+    "limitations": [
+      "The launcher supplied no base commit, and this isolated checkout contained only the target commit, so milestone-range diff analysis was unavailable.",
+      "Restricted network access and absent frontend/node_modules prevented independent npm installation, frontend build/test execution, and vulnerability scanning.",
+      "No live Microsoft identity/Graph test was performed; it is a separately protected action and remains an explicit evidence gap.",
+      "No automated real-browser test evidence exists; jsdom and static sink checks do not exercise a browser engine.",
+      "Human acceptance of RISK-009 and RISK-011 records governance disposition but does not supply missing technical evidence or eliminate the underlying risks."
+    ],
+    "mode": "milestone-security",
+    "outcome": "INCONCLUSIVE",
+    "reviewed_sha": "61d76c57ff2d70fe95988497e6eaafd0b1649a41",
+    "schema_version": "1.0",
+    "summary": "Security review is inconclusive. The exact target identity was verified and 90 focused security-relevant tests passed, but mandatory exact-candidate frontend, full-suite, CI, and dependency-scanning evidence was unavailable or internally contradictory. This blocks the M3 gate pending a new evidence-bound candidate and four fresh reviews.",
+    "target_id": "M3"
+  },
+  "test_only": false
+}

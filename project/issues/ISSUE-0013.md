@@ -4,9 +4,14 @@
 reviewed the exhausted repair budget and the unresolved round-2 finding
 (see "Human decision required" below) and chose option 1: accept the
 residual as documented and merge (`DECISION-027`).
-**Milestone:** `None` — out-of-band, remediating a residual from `ISSUE-0012`
-(itself out-of-band per `DECISION-024`). Not governed by `ROADMAP.md` v4.
-**Approved roadmap:** `N/A` — see `ISSUE-0012.md`'s equivalent note.
+**Milestone:** `M3` — **retroactively assigned** (this field read `None` at
+delivery; `ROADMAP.md` v5 created M3 afterwards). Out-of-band, remediating a
+residual from `ISSUE-0012` (itself out-of-band per `DECISION-024`). Not
+governed by `ROADMAP.md` v4. See `project/milestones/M3.md` — its milestone
+gate has **not** been run.
+**Approved roadmap:** `N/A at the time of delivery`; now recorded in
+`ROADMAP.md` v5's M3 issue sequence (a `DRAFT`, unreviewed and unapproved) —
+see `ISSUE-0012.md`'s equivalent note.
 **Dependencies:** `ISSUE-0012` (`COMPLETE`, merged with this tracked residual)
 **Branch:** `ai/ISSUE-0013-scoped-device-code-abandon`
 **Starting SHA:** `959fbcfc1f127289eb1a1798374fae1c96d7cbc2`
@@ -226,7 +231,12 @@ residual exactly as written and merge.
 
 - Final reviewed product SHA: `8858858a2090aa72d8d0b14a6de64a17a447c120`
 - Human advance/merge decision: `project/decisions/DECISION-027-issue-0013-risk-acceptance-and-merge.md`
-- Merge/result SHA: *pending* (fast-forward merge in progress)
+- Merge/result SHA: `80156d32feb6f4b85debc44897d04563bb35998a` — the merge
+  completed as a fast-forward, so there is no merge commit; the branch tip
+  itself became `main`. (`main` has since advanced to
+  `b0c1e8628a4e1b90e3c8f488aa8814a3d183ce4e`, the `DECISION-027` record.)
+  The `ai/ISSUE-0013-scoped-device-code-abandon` branch was deleted after the
+  merge, having zero commits not already on `main`.
 - Residual risks or follow-up: the round-2 F-001 residual is accepted per
   `DECISION-027`, not eliminated — option 2 (an observable cleanup-pending
   state) remains available as future work if ever prioritized

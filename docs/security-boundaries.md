@@ -141,6 +141,42 @@ policies, so these project-specific rules apply on top of the general boundaries
   cover is the browser tab closing before delivery succeeds — no
   client-side code can survive that in any web app, and it is accepted as
   a residual rather than claimed to be eliminated.
+- **Build-time dependency boundary (`M3`/`DECISION-024`, `RISK-009`).** This
+  is a *new kind* of boundary for CAreview, and it deserves saying plainly:
+  the backend is stdlib-only and has no dependency graph at all, but the UI
+  is now built from `frontend/` with npm, which does. Everything in
+  `frontend/package-lock.json` — direct and transitive — runs with the
+  developer's own privileges at `npm install`/`npm run build` time, and its
+  output is exactly the `web/index.js` the server then serves. A compromised
+  or typosquatted package in that graph is therefore a path to the served
+  bundle that no amount of runtime hardening addresses, because it arrives
+  before runtime.
+  What genuinely limits this today: the lockfile is committed, so builds are
+  reproducible and any dependency change shows up in a reviewable diff; the
+  served page keeps `default-src 'self'` and loads nothing from a CDN or any
+  external origin, so this is the *only* path in; and no dependency touches
+  the Python process that handles tokens and secrets.
+  What does not limit it, and should not be assumed to: nothing pins or
+  audits transitive versions beyond the lockfile, `npm audit` is not run
+  anywhere, and **CI does not build the frontend or run its tests at all**
+  (`ISSUE-0014`), so a dependency change reaching `main` is reviewed by
+  humans reading a lockfile diff or not at all. This residual has **not**
+  been accepted by the human — it is recorded as `RISK-009` in `ROADMAP.md`
+  awaiting that decision, and this document does not claim it is mitigated.
+- **Frontend rendering safety (`M3`).** The rule is unchanged from the
+  vanilla UI — untrusted tenant strings (policy and display names) are
+  rendered as text, never as HTML — but the *mechanism* changed and so does
+  what a reviewer should look for. Previously this was hand-written
+  `textContent` assignment in `web/app.js`; now it is JSX escaping, which is
+  the default for every interpolated value in React. The failure mode that
+  matters is therefore no longer "someone forgot `textContent`" but "someone
+  reached for `dangerouslySetInnerHTML`", plus the usual `eval`/`new
+  Function`/inline-`srcdoc` family. `frontend/src/test/noDangerousSinks.test.ts`
+  scans `src/` for exactly those sinks, and
+  `frontend/src/test/hostileMarkup.test.tsx` renders a hostile fixture shared
+  with `tests/test_ui_safety.py`'s Python-side check, so the property is
+  asserted from both sides. Both are Vitest tests, which means — until
+  `ISSUE-0014` lands — they run only when someone runs them locally.
 - **App-only mode cannot narrow its own scope (`RISK-006`).** Client-
   credentials requests always use Microsoft's `.default` scope, which
   returns every application permission the target app registration already

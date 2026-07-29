@@ -1,7 +1,7 @@
 <!-- claudex-state
-stage: IMPLEMENTATION
+stage: MILESTONE_REVIEW
 active_issue: none
-active_milestone: none
+active_milestone: M3
 -->
 
 # Current workflow status
@@ -205,7 +205,7 @@ rather than passes.
 
 | Field | Current value |
 |---|---|
-| Stage | `IMPLEMENTATION` — roadmap v5 is `APPROVED` (`DECISION-029`, binding `8ea41ee`) and all three of its planned M3 issues are now merged. `ISSUE-0014` (wire the frontend build/tests into CI) went through two `BLOCKED` governance-record repair rounds (stale `CURRENT.md` rows, fixed) and a final round-2 `BLOCKED` with zero content findings (sole blocker the review sandbox's own execution-evidence limitations — no writable temp dir, no loopback sockets, no network — the same class `ISSUE-0011` round 1 hit). The human accepted that sandbox residual and approved the merge (`DECISION-031`). CI now runs the frontend build and tests on every push/PR. No active issue or milestone |
+| Stage | `MILESTONE_REVIEW` — all three of `M3`'s planned issues (`ISSUE-0012`, `ISSUE-0013`, `ISSUE-0014`) are merged, roadmap v5 is `APPROVED` (`DECISION-029`), and CI is confirmed green on `main`. The human directed running M3's milestone gate. `project/milestones/M3.md` is frozen at this commit (product/CI-config content byte-identical to `861f401`), opening the four-review window: Claude general, Codex general, Claude security, Codex security, each fresh and blind to its counterpart's conclusion |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v2; APPROVED (DECISION-013, binds `9ccf835`); open questions resolved (DECISION-014) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (v1, binds `179a023`); `project/decisions/DECISION-013-brief-v2-approval.md` (v2, binds `9ccf835`); `project/decisions/DECISION-014-app-only-secret-retention-and-risk002.md` |

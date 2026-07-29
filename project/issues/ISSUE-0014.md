@@ -1,7 +1,10 @@
 # ISSUE-0014: Wire the frontend build and test suite into CI
 
-**Status:** `BLOCKED` — repair budget exhausted, awaiting human decision (see
-"Human decision required" below)
+**Status:** `COMPLETE` (merged, with an accepted sandbox execution-evidence
+residual) — the human reviewed the exhausted repair budget and the
+zero-finding round-2 `BLOCKED` outcome (see "Human decision required"
+below) and chose option 1: accept the sandbox residual and merge
+(`DECISION-031`)
 **Milestone:** `M3`
 **Approved roadmap:** `ROADMAP.md` version `5`, `APPROVED` (`DECISION-029`, binds `8ea41ee`).
 **Dependencies:** `ISSUE-0012` (frontend exists to build/test)
@@ -164,3 +167,18 @@ project's existing review tooling.
    sandbox could be given a writable temp dir / loopback access / network
    access for future reviews, deferring this merge until that's resolved.
 3. **Reject or hold** `ISSUE-0014` for other reasons.
+
+## Completion
+
+- Final reviewed product SHA: `f63a0dadae917f35b328b60b1a562aa535d97d10`
+  (round-2 review candidate); merge SHA recorded once pushed
+- Human advance/merge decision: `project/decisions/DECISION-031-issue-0014-advance-and-merge.md`
+- Merge/result SHA: *recorded after merge*
+- Residual risks or follow-up: sandbox execution-evidence gap accepted per
+  `DECISION-031` (real checks pass outside the review sandbox; the
+  sandbox itself cannot reproduce them in this environment — same
+  precedent as `ISSUE-0011` and five earlier issues). `docs/security-boundaries.md`
+  still describes CI as not building the frontend (stale, outside this
+  issue's allowed paths) — tracked as separate follow-up, not this
+  issue's scope.
+- Status record updated: `project/status/CURRENT.md`, this commit

@@ -1,0 +1,125 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-29T18:48:34Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faf33-fd78-7911-bc26-0e8c86df89c1"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "The checkout is detached at the launcher-supplied target SHA and the working tree is clean.",
+        "reference": "git rev-parse HEAD; git status --short --branch",
+        "source": "command"
+      },
+      {
+        "detail": "The milestone record identifies M3 as REVIEWING, identifies this commit as the repaired round-2 candidate, and requires all four fresh round-2 reviews before human acceptance.",
+        "reference": "project/milestones/M3.md:3",
+        "source": "file"
+      },
+      {
+        "detail": "The milestone record traces the delivered React dashboard, static build integration, rendering-safety controls, scoped device-code abandonment, and CI wiring to ISSUE-0012 through ISSUE-0014.",
+        "reference": "project/milestones/M3.md:27",
+        "source": "file"
+      },
+      {
+        "detail": "The recorded candidate checks report 188 backend tests, 91 frontend tests, clean compilation, repository validation, a successful frontend build, and green CI. These commands were run against the preceding round-1 candidate, with the assertion that the current commit changes governance records only.",
+        "reference": "project/milestones/M3.md:45",
+        "source": "file"
+      },
+      {
+        "detail": "The current checkout is a shallow/grafted single-commit checkout and does not contain the round-1 object, so the claimed product-tree identity and exact repair diff could not be independently compared with 61d76c57ff2d70fe95988497e6eaafd0b1649a41.",
+        "reference": "git cat-file -t 61d76c57ff2d70fe95988497e6eaafd0b1649a41",
+        "source": "limitation"
+      },
+      {
+        "detail": "Repository validation could not complete because the read-only environment provides no writable temporary directory; it failed in tempfile.TemporaryDirectory before producing a validation result.",
+        "reference": "python3 -B scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "Frontend dependencies are absent, so the frontend build and Vitest suite could not be independently executed without an installation, which is both unavailable and a protected action.",
+        "reference": "frontend/node_modules",
+        "source": "limitation"
+      },
+      {
+        "detail": "The CI workflow installs from the lockfile, builds the frontend before backend tests, runs frontend and backend tests, validates governance, and uses SHA-pinned actions with read-only contents permission.",
+        "reference": ".github/workflows/validate.yml",
+        "source": "file"
+      },
+      {
+        "detail": "Human decisions explicitly accept RISK-009, RISK-010, and RISK-011; live-tenant testing remains a protected, unperformed check rather than an M3 exit criterion.",
+        "reference": "project/milestones/M3.md:208",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "CURRENT.md correctly declares MILESTONE_REVIEW near its beginning and describes the fresh round-2 four-review set as the next required action at lines 208 and 214.",
+          "The same current-state index later says whether to run the M3 gate is still an open human question, says no actor is required, instructs the workflow to wait, and says running the gate is not permitted at lines 224-227.",
+          "ROADMAP.md similarly says none of the four reviews has run at line 13 and labels the M3 sequence as 'milestone gate not run' at line 282, despite project/milestones/M3.md recording all four round-1 reports and the active round-2 review.",
+          "AGENTS.md requires CURRENT.md to name the current gate and next permitted action, and requires contradictory current-state evidence to block review."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 224,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 225,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 226,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 227,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 13,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 282,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Synchronize CURRENT.md and ROADMAP.md with the recorded M3 round-2 review state: state that the human directed the gate, round 1 ran and was superseded by this repair, the four fresh round-2 reviews are the current permitted action, and milestone acceptance remains pending. Because the single permitted general-remediation cycle is already exhausted, follow the repository rule requiring an exact human decision before any further repair candidate.",
+        "severity": "medium",
+        "title": "The durable current-state records still contradict the active M3 review gate",
+        "verification": "At a new candidate, confirm CURRENT.md, ROADMAP.md, M3.md, and the claudex-state block consistently identify M3 as REVIEWING, identify the same candidate SHA, summarize round 1 as superseded, and name completion of all four fresh round-2 reviews as the next action; then rerun repository validation and all four milestone reviews against that exact candidate."
+      }
+    ],
+    "limitations": [
+      "The launcher supplied no base commit, and the isolated checkout contains only the grafted target commit; historical diffs and the claimed product identity with 61d76c57ff2d70fe95988497e6eaafd0b1649a41 could not be independently verified.",
+      "Repository validation failed because no writable temporary directory exists in the review sandbox.",
+      "The backend test suite, py_compile check, and server/browser checks require filesystem writes or loopback facilities unavailable in this read-only environment and were not executed.",
+      "Frontend node_modules are absent. Installing dependencies is not authorized, so the frontend build and 91-test Vitest suite were not independently executed.",
+      "Network access is unavailable, so the recorded green GitHub Actions run could not be queried independently.",
+      "No live-tenant sign-in or Graph fetch was performed; the repository correctly records this as a protected-action evidence gap and not an M3 exit criterion.",
+      "Accessibility has unit-level/jsdom coverage but no automated real-browser or assistive-technology run; the milestone record explicitly discloses the lack of a real-browser CI test."
+    ],
+    "mode": "milestone-general",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "e9f574da95679b7701db52042d91429068d54206",
+    "schema_version": "1.0",
+    "summary": "BLOCKED. The target identity matches and the milestone has substantial traceability, integration, test, CI, documentation, and residual-risk evidence, with no product-code defect identified in this review. However, the authoritative current-state records still contradict the active M3 gate, and mandatory checks could not be independently completed in the read-only sandbox. Repository rules require contradictory or unverifiable evidence to block. The sole permitted general-remediation cycle is already recorded as exhausted, so another repair requires an exact human decision.",
+    "target_id": "M3"
+  },
+  "test_only": false
+}

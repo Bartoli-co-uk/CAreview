@@ -1,0 +1,107 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-29T18:48:37Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faf33-fdcd-7972-bfb1-b7b25d0c2f3f"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "HEAD exactly matched the launcher-supplied candidate SHA; the working tree was clean.",
+        "reference": "e9f574da95679b7701db52042d91429068d54206",
+        "source": "command"
+      },
+      {
+        "detail": "Focused authentication, Graph egress, and UI-safety suites completed successfully: 90 tests ran and passed.",
+        "reference": "python3 -m unittest tests.test_auth tests.test_graph tests.test_ui_safety",
+        "source": "check"
+      },
+      {
+        "detail": "The complete backend suite attempted 188 tests, but 76 server integration tests could not bind a loopback socket because the read-only sandbox returned PermissionError.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not complete because the sandbox provided no writable temporary directory.",
+        "reference": "python3 -B scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "Frontend dependencies were unavailable in the isolated checkout, so frontend tests and the build could not be independently executed. Installing them was neither permitted nor attempted.",
+        "reference": "frontend/package-lock.json",
+        "source": "limitation"
+      },
+      {
+        "detail": "The milestone record's successful backend, frontend, build, compile, governance, and CI results are bound to earlier product-equivalent SHAs rather than independently executed at the exact round-2 candidate.",
+        "reference": "project/milestones/M3.md:46",
+        "source": "file"
+      },
+      {
+        "detail": "Static review found loopback Host and Origin allowlists, bounded JSON input, restrictive CSP, scoped device-code abandonment, exact-host Graph paging validation, in-memory secret handling, SHA-pinned GitHub Actions, read-only workflow permissions, JSX rendering-safety tests, and no frontend storage sinks.",
+        "reference": "docs/security-boundaries.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "attack_preconditions": "No direct attacker precondition is established; this is a mandatory security-evidence gap. A latent regression would matter when the local server processes authentication or tenant-controlled data.",
+        "blocking": true,
+        "category": "security-evidence",
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "disposition": "open",
+        "evidence": [
+          "The full backend run ended with 76 PermissionError failures because loopback binding is prohibited in the review sandbox.",
+          "Governance validation failed before completion because no writable temporary directory exists.",
+          "frontend/node_modules is absent, so neither npm test nor npm run build could run without a prohibited installation.",
+          "project/milestones/M3.md:46-63 binds recorded successful checks to round-1 SHA 61d76c57ff2d… or product SHA 861f401, not exact candidate e9f574da95679b7701db52042d91429068d54206.",
+          "The prompt and AGENTS.md require uncertainty or missing candidate-bound security evidence to block."
+        ],
+        "exploitability": "Unknown because the affected server integration, built frontend, and complete candidate-bound behavior could not be exercised. Static inspection and 90 focused tests did not reveal a critical or high-severity product defect.",
+        "fingerprint": "m3-sec-exact-candidate-execution-evidence-unavailable",
+        "id": "M3-SEC-001",
+        "impact": "The reviewer cannot establish that the exact milestone candidate satisfies its complete security-relevant test, build, and governance gates. Passing the milestone would rely on stale or author-run evidence contrary to the mandatory gate.",
+        "locations": [
+          {
+            "line": 46,
+            "path": "project/milestones/M3.md"
+          },
+          {
+            "line": 85,
+            "path": "project/milestones/M3.md"
+          }
+        ],
+        "remediation": "Run all required backend, frontend, build, compile, and governance checks in an environment that permits loopback sockets, temporary files, and use of lockfile-resolved frontend dependencies. Record real output bound to the exact candidate SHA, then launch all four fresh milestone reviews against that same unchanged candidate. If remediation changes the candidate, rerun all four reviews on the new SHA within the documented cycle limits.",
+        "severity": "medium",
+        "title": "Exact-candidate security evidence could not be completed",
+        "verification": "At the exact candidate SHA, verify clean status and successful exits for python3 -m unittest discover -s tests, Python compilation, python3 scripts/validate_repo.py, npm run build, and npm test; verify the corresponding CI run; then perform fresh milestone reviews without changing the candidate."
+      }
+    ],
+    "limitations": [
+      "The launcher supplied no base commit, and the isolated checkout exposes the target as a grafted commit, so an independent base-to-target diff could not be reconstructed.",
+      "Loopback socket creation is prohibited, preventing 76 server integration tests and live local-server verification.",
+      "No writable temporary directory is available, preventing governance validation and ordinary compile-output checks.",
+      "frontend/node_modules is unavailable; network access and dependency installation were not permitted, preventing independent frontend build and test execution.",
+      "GitHub Actions could not be queried because network access is restricted; CI status remains repository-recorded evidence only.",
+      "No live Microsoft tenant authentication or Graph fetch was performed because it is a protected action requiring separate approval.",
+      "No real-browser execution or automated browser-engine test evidence exists; UI evidence is limited to static inspection and jsdom-oriented tests.",
+      "Dependency vulnerability or provenance scanning was not available; the accepted RISK-009 npm supply-chain residual remains."
+    ],
+    "mode": "milestone-security",
+    "outcome": "INCONCLUSIVE",
+    "reviewed_sha": "e9f574da95679b7701db52042d91429068d54206",
+    "schema_version": "1.0",
+    "summary": "The exact candidate identity and clean tree were verified, static security controls were reviewed, and 90 focused security-relevant tests passed. However, mandatory exact-candidate evidence remains incomplete because the sandbox prevented server integration tests and governance validation, frontend dependencies were unavailable, and CI could not be independently queried. No critical or high product finding was identified, but the documented evidence rules require an INCONCLUSIVE blocking outcome.",
+    "target_id": "M3"
+  },
+  "test_only": false
+}

@@ -7,8 +7,11 @@
 **Branch:** `ai/ISSUE-0014-frontend-ci`
 **Starting SHA:** `8e864a38e03d0df90c79a469c0e1fdf740da7904`
 **Candidate SHA:** round 0 `c4cb4d28f9b710e4f24366ec6fbb61e810246d96` (`BLOCKED`,
-F-001: stale `CURRENT.md` rows); round 1 candidate is this commit — the
-launcher records the full HEAD SHA
+F-001: stale `CURRENT.md` rows — repair missed six of nine stale rows);
+round 1 `d72dbd9a5481ec8dc69143fb31aef7a15fc0445b` (`BLOCKED` again, same
+F-001, narrower); round 2 candidate is this commit — the launcher records
+the full HEAD SHA. This is the last repair round `AGENTS.md` permits for
+an issue.
 
 ## Objective
 
@@ -118,6 +121,8 @@ broken Python check already does.
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
 | 0 | This record's Required checks table | `c4cb4d28f9b710e4f24366ec6fbb61e810246d96` | 188 backend tests, py_compile, validate_repo.py, frontend build, 91 frontend tests, negative-CI local fallback — all recorded above | `project/reviews/issues/ISSUE-0014-c4cb4d28f9b7-codex.json` | `BLOCKED` — F-001 (medium): `CURRENT.md` contained stale rows contradicting this candidate |
+| 1 | Round-0 checks unchanged; no product/CI file touched | `d72dbd9a5481ec8dc69143fb31aef7a15fc0445b` | Unchanged from round 0 (backend tests, py_compile, validate_repo.py all re-run and passing) | `project/reviews/issues/ISSUE-0014-d72dbd9a5481-codex.json` | `BLOCKED` again — F-001 (medium, narrower): the round-1 repair fixed 3 of 9 stale `CURRENT.md` rows and missed the other 6 |
+| 2 | Round-0 checks unchanged; no product/CI file touched | *this commit* | Unchanged from round 0 | *pending* | *pending* |
 
 Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
 No workflow loop may exceed five total iterations; the tighter two-round issue

@@ -3,12 +3,12 @@
 This is the canonical project roadmap for CAreview, a locally-hosted Conditional
 Access policy analyzer.
 
-**Current status:** `DRAFT` (roadmap **v5** candidate — awaiting a fresh Codex plan review and an exact human approval). Roadmap **v4** remains the approved artifact and continues to govern the completed M1 and M2 content below; nothing in v5 changes it.
+**Current status:** `DRAFT` (roadmap **v5** candidate — its fresh Codex plan review returned `CHANGES_REQUIRED`; see below. Round 1 fixes are applied at this commit; an exact human approval still has not been recorded). Roadmap **v4** remains the approved artifact and continues to govern the completed M1 and M2 content below; nothing in v5 changes it.
 **Roadmap version:** `5`
 **Approved brief:** `project/brief/PROJECT_BRIEF.md` v1 at `179a02354aecbafa2c9d5aa34f9c9a5a04bbc79a` (DECISION-001) — governs M1
 **Amending brief:** `project/brief/PROJECT_BRIEF.md` v2 at `9ccf835`, approved by `DECISION-013`; open questions resolved by `DECISION-014` — governs M2 below
 **Governing decision for M3:** `project/decisions/DECISION-024-react-frontend-build-step.md`. **(v5)** M3 has **no** governing brief section. It was delivered under a direct human override rather than a brief/roadmap cycle, and this roadmap version records that fact rather than papering over it — see the M3 issue sequence preamble.
-**Codex plan review:** v3 rounds recorded in Planning reconciliation below. v4: four rounds recorded below (`ROADMAP-71f7ba60b045-*`, `ROADMAP-605c282c5c81-*`, `ROADMAP-76a09c46a57d-*`, `ROADMAP-faf5ec70bf00-*`); the review/repair loop's absolute five-iteration cap (`AGENTS.md`) was reached, and the human approved directly from that record. **(v5) Not yet reviewed** — `AGENTS.md` requires a fresh Codex plan review of this new version; it has not run.
+**Codex plan review:** v3 rounds recorded in Planning reconciliation below. v4: four rounds recorded below (`ROADMAP-71f7ba60b045-*`, `ROADMAP-605c282c5c81-*`, `ROADMAP-76a09c46a57d-*`, `ROADMAP-faf5ec70bf00-*`); the review/repair loop's absolute five-iteration cap (`AGENTS.md`) was reached, and the human approved directly from that record. **(v5) Round 1: `CHANGES_REQUIRED`** — `project/reviews/plans/ROADMAP-441b4da0d3ba-codex.json`, reviewed candidate `441b4da0d3ba0d9d13dcf0d710bdae5a1c0685ab`. F-001 (high): `ISSUE-0014` had no work-item record — fixed, `project/issues/ISSUE-0014.md` added. F-002 (medium): `project/status/CURRENT.md` named a stale candidate SHA — fixed. F-003 (medium): `ISSUE-0014`'s negative-CI acceptance criterion depended on an unspecified protected external action — fixed, a local-verification procedure is now specified in that issue record. F-004 (question, unresolved): `RISK-009` still needs an exact human treatment decision before v5 can be approved — this is not something an agent can resolve.
 **Human approval record:** `project/decisions/DECISION-003-roadmap-approval.md` (APPROVE, binds v3 at `125d74f6d4bfe85f1a727293064d0887f2d121c7`); `project/decisions/DECISION-015-roadmap-v4-approval.md` (APPROVE, binds **v4** at `9e5ba6d`). **(v5) None yet** — no decision record binds v5.
 **Delivery status:** `M1` COMPLETE and accepted (`DECISION-012`); all six issues merged. `M2` is `COMPLETE` and accepted (`DECISION-023`); `ISSUE-0007` COMPLETE and merged (`DECISION-016`); `ISSUE-0008` COMPLETE and merged (`DECISION-017`); `ISSUE-0009` COMPLETE and merged (`DECISION-019`); `ISSUE-0010` COMPLETE and merged (`DECISION-020`); `ISSUE-0011` COMPLETE and merged (`DECISION-022`) — all five planned M2 issues are merged and the M2 milestone acceptance gate has passed. **(v5)** `M3` (React/TypeScript dashboard UI) has both of its delivered issues merged — `ISSUE-0012` (`DECISION-025`) and `ISSUE-0013` (`DECISION-027`) — but is **not** complete: `ISSUE-0014` is open and **none of the four blind milestone reviews has been run**. Current state: `project/status/CURRENT.md`.
 
@@ -309,7 +309,7 @@ largest single change to the product had no parent in the roadmap, and
 |---:|---|---|---|---|---|---|
 | 12 | `ISSUE-0012` | Replace the vanilla-JS `web/` UI with a React + TypeScript dashboard built by Vite, against the unchanged API contract | `DECISION-024`; M2 delivered | Retroactive record of work already done. The dashboard builds via `npm run build` into `web/`'s fixed, non-hashed filenames (`server.py` serves an explicit `STATIC_FILES` allowlist, not a directory); `server.py` changes limited to that allowlist; untrusted tenant strings render as text, asserted from both sides (`hostileMarkup.test.tsx`, `tests/test_ui_safety.py`); a `noDangerousSinks.test.ts` scan rejects dangerous DOM/code sinks across `src/`; `unittest`, `py_compile`, `validate_repo.py`, and `npm test` all pass | Medium — largest single product change; no pre-implementation review | `COMPLETE` (`195bd8e746884c23b4774162667ee5905f2680e1`, merged `5189959392ec2331c799199f5d70457ff361a3ba`, `DECISION-025`) — merged with a **tracked residual**, remediated by `ISSUE-0013` |
 | 13 | `ISSUE-0013` | Scoped, server-side device-code session abandonment (`POST /api/auth/abandon`) | `ISSUE-0012` | `AuthManager.abandon(handle)` clears only the pending session or installed token produced by that exact handle, under the same lock as every other lifecycle transition, touching neither `_generation` nor app-only state — so a late abandon can never clear a different, newer, legitimately-current session; an unknown handle is a safe no-op; tests in both `tests/test_auth.py` and `tests/test_server.py` directly exercise that race | Medium — auth-lifecycle change | `COMPLETE` (`8858858a2090aa72d8d0b14a6de64a17a447c120`, fast-forwarded to `main` at `80156d32feb6f4b85debc44897d04563bb35998a`, `DECISION-027`) — merged with an **accepted residual** (see `RISK-011`) |
-| 14 | `ISSUE-0014` | Wire the frontend build and test suite into CI | `ISSUE-0012` | `.github/workflows/validate.yml` gains a Node step running `npm ci` (not `npm install` — CI must build from the committed lockfile), `npm run build`, and `npm test`, with the Node version pinned and the action SHA-pinned like the existing `actions/checkout` step; a red frontend test fails the workflow (verified by observing a deliberate failure, not asserted); the three existing Python steps keep working unchanged; no new dependency beyond the Node toolchain `DECISION-024` already permits | Low | `PLANNED` — not started; requires human approval of this roadmap version **and** a separate decision to start |
+| 14 | `ISSUE-0014` | Wire the frontend build and test suite into CI | `ISSUE-0012` | Full acceptance criteria and a safe local-verification procedure for the negative-CI check are specified in `project/issues/ISSUE-0014.md` (added in v5 round 1, F-001/F-003 repair): `.github/workflows/validate.yml` gains a Node step running `npm ci` (not `npm install` — CI must build from the committed lockfile), `npm run build`, and `npm test`, with the Node version pinned and the action SHA-pinned like the existing `actions/checkout` step; a red frontend test fails the workflow, proven via a local Actions runner or an equivalent documented substitute rather than a live push (pushing a deliberately failing commit is a protected action this issue does not authorize); the three existing Python steps keep working unchanged; no new dependency beyond the Node toolchain `DECISION-024` already permits | Low | `PLANNED` — not started; requires human approval of this roadmap version **and** a separate decision to start |
 
 **Why `ISSUE-0014` is worth its own issue.** The frontend's test suite — 91
 Vitest tests, including the hostile-markup and dangerous-sink checks that are
@@ -547,11 +547,16 @@ over:
    them to a milestone so they are no longer orphaned, and so `ISSUE-0014` has
    a parent. `ISSUE-0014` is the only genuinely forward-looking item, and it is
    `PLANNED`, not started.
-2. **Its own required Codex plan review has not run.** `codex` was not
-   available in the environment where this version was drafted, so the launcher
-   could not be invoked. Per `AGENTS.md` an unavailable Codex tool **blocks**;
-   it is never silently skipped or relabelled. v5 therefore stays `DRAFT` until
-   either that review runs against this exact commit, or the human records an
-   explicit decision to approve directly from the record — the route
-   `DECISION-015` took for v4 when its review loop hit the five-iteration cap.
-   Approving directly is the human's call to make, not an agent's to assume.
+2. **Its required Codex plan review has now run, once.** `codex` was not
+   available in the environment where v5 was drafted, so the launcher could not
+   be invoked there; it was invoked here, retroactively, against candidate
+   `441b4da0d3ba0d9d13dcf0d710bdae5a1c0685ab` (`project/reviews/plans/
+   ROADMAP-441b4da0d3ba-codex.json`). Result: `CHANGES_REQUIRED` — F-001
+   (missing `ISSUE-0014` record), F-002 (stale candidate SHA in `CURRENT.md`),
+   and F-003 (unspecified negative-CI verification) are fixed at this commit.
+   F-004 (`RISK-009` needs an exact human treatment decision) is **not**
+   something this repair round can resolve — only the human can accept or
+   decline that risk. Per `AGENTS.md`'s two-round planning-repair limit, one
+   further fresh review may run after F-004 is decided and any resulting edit
+   is committed; v5 stays `DRAFT` until that review clears and the human
+   separately approves the exact version and commit.

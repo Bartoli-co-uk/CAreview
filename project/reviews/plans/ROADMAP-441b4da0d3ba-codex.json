@@ -1,0 +1,154 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-29T16:53:16Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faeca-58d8-7a22-8e72-cb01793865f6"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "Repository HEAD exactly matches the launcher-supplied target commit.",
+        "reference": "441b4da0d3ba0d9d13dcf0d710bdae5a1c0685ab",
+        "source": "command"
+      },
+      {
+        "detail": "The target record exists and identifies roadmap v5 as DRAFT awaiting Codex review and human approval.",
+        "reference": "ROADMAP.md:6",
+        "source": "file"
+      },
+      {
+        "detail": "Roadmap v5 introduces ISSUE-0014 as its only forward-looking implementation item, but no project/issues/ISSUE-0014.md work-item record exists.",
+        "reference": "ROADMAP.md:312",
+        "source": "file"
+      },
+      {
+        "detail": "The current-state record names an older roadmap candidate SHA rather than the commit under review.",
+        "reference": "project/status/CURRENT.md:207",
+        "source": "file"
+      },
+      {
+        "detail": "Governance validation could not complete because the read-only environment provided no usable temporary directory; it failed before producing validation results.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "command"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "ROADMAP.md:312 marks ISSUE-0014 PLANNED and supplies only a compact table row.",
+          "ROADMAP.md:327 defines path boundaries for ISSUE-0014.",
+          "project/status/CURRENT.md:225 makes approval and a separate start decision prerequisites for ISSUE-0014.",
+          "There is no project/issues/ISSUE-0014.md, although AGENTS.md requires review of all proposed work items and the repository uses individual work-item records for ISSUE-0001 through ISSUE-0013.",
+          "Without the issue record, the plan lacks the normal fields needed to bind implementation: issue status, starting SHA/branch, complete acceptance criteria, verification evidence requirements, risks, documentation obligations, and closeout requirements."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 312,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 225,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Add project/issues/ISSUE-0014.md using the repository work-item template, binding it to M3 and roadmap v5. Carry over the roadmap objective, dependencies, allowed paths, exclusions, checks, documentation, risk treatment, and separate human start gate. Define commit-bound evidence and closeout requirements explicitly.",
+        "severity": "high",
+        "title": "The only proposed implementation item has no reviewable work-item record",
+        "verification": "Confirm project/issues/ISSUE-0014.md exists, is linked from the roadmap/current status as appropriate, passes repository governance validation, and contains enough bounded acceptance and verification detail for a fresh issue task to reconstruct its exact authority and scope."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "The launcher binds this review to HEAD 441b4da0d3ba0d9d13dcf0d710bdae5a1c0685ab.",
+          "project/status/CURRENT.md:207 instead calls ef2ea6d318e5d5ac46bd0953a96daa8cdb782e7c the roadmap-v5 candidate now being reviewed.",
+          "AGENTS.md requires CURRENT.md to link current-gate evidence and identify the reviewed candidate accurately."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 207,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Update the ROADMAP_REVIEW stage record to identify 441b4da0d3ba0d9d13dcf0d710bdae5a1c0685ab as the exact plan-review candidate, or clearly distinguish the earlier drafting commit from the current review-bound commit.",
+        "severity": "medium",
+        "title": "Current-state record binds the active roadmap review to a stale candidate SHA",
+        "verification": "At the next review commit, compare git rev-parse HEAD with the exact candidate SHA named in project/status/CURRENT.md and confirm they match."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "ROADMAP.md:312 requires proving that a deliberately red frontend test fails the GitHub workflow by observation.",
+          "The criterion does not specify the authorized branch/target, how the deliberate failure is introduced without contaminating the candidate, what GitHub Actions evidence must be recorded, or how cleanup is handled.",
+          "AGENTS.md treats external publication and destructive Git/branch cleanup as protected actions requiring exact human approval."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 312,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "In ISSUE-0014's work-item record, define a safe verification procedure for the negative CI test: exact disposable branch or equivalent mechanism, required separate authorization for push/cleanup, expected failing job/step, evidence to retain, restoration procedure, and the final clean candidate checks. If no external run is authorized, replace this criterion with a locally executable workflow-validation test that proves failure propagation without claiming GitHub-hosted execution.",
+        "severity": "medium",
+        "title": "The negative CI acceptance test depends on unspecified protected external actions",
+        "verification": "Execute the documented procedure under exact human authorization and retain the failing run identity/output plus a subsequent clean run for the final candidate, or run the approved local failure-propagation test and record its real output."
+      },
+      {
+        "blocking": true,
+        "classification": "QUESTION",
+        "confidence": "high",
+        "evidence": [
+          "ROADMAP.md:421 records RISK-009 as a new medium build-time supply-chain risk with no human acceptance.",
+          "project/milestones/M3.md:146 explicitly asks whether the risk is accepted or requires pinning/auditing work beyond ISSUE-0014.",
+          "ISSUE-0014 currently adds npm ci/build/test but does not add dependency auditing or broader supply-chain controls."
+        ],
+        "id": "F-004",
+        "locations": [
+          {
+            "line": 421,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 146,
+            "path": "project/milestones/M3.md"
+          }
+        ],
+        "remediation": "The human must choose and record one exact treatment before roadmap approval: accept RISK-009 with owner/review date and its stated gaps, or expand/add a bounded work item for the selected audit/pinning controls and make it a dependency of the M3 gate.",
+        "severity": "medium",
+        "title": "RISK-009 requires an explicit human treatment decision",
+        "verification": "Verify a human-authored decision binds the exact roadmap commit and either records precise residual-risk acceptance or links acceptance criteria for the chosen additional mitigation work."
+      }
+    ],
+    "limitations": [
+      "Repository history is grafted at the reviewed HEAD, so earlier commit relationships and historical tree identity could not be independently traversed in this checkout.",
+      "Governance validation did not complete because no writable temporary directory was available in the read-only review environment; this is missing check evidence, not a product finding by itself.",
+      "No npm install, frontend build, frontend test, or GitHub Actions execution was attempted: dependency installation is protected, the environment is read-only/network-restricted, and this was a roadmap review rather than candidate implementation verification.",
+      "The approved brief predates M3 and explicitly retains the old no-Node/no-build constraint; roadmap v5 candidly states that M3 has no governing brief section and relies on DECISION-024, so this review assessed that exception as recorded rather than treating the brief as retroactively amended."
+    ],
+    "mode": "plan",
+    "outcome": "CHANGES_REQUIRED",
+    "reviewed_sha": "441b4da0d3ba0d9d13dcf0d710bdae5a1c0685ab",
+    "schema_version": "1.0",
+    "summary": "Roadmap v5 is not ready for approval. Target identity is valid, but the only forward-looking issue lacks its required work-item record, CURRENT.md names a stale review candidate, the proposed negative CI verification leaves protected external actions undefined, and the new medium npm supply-chain risk still needs an exact human treatment decision.",
+    "target_id": ""
+  },
+  "test_only": false
+}

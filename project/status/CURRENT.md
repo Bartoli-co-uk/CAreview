@@ -204,7 +204,7 @@ rather than passes.
 
 | Field | Current value |
 |---|---|
-| Stage | `ROADMAP_REVIEW` — roadmap v5 (candidate `ef2ea6d318e5d5ac46bd0953a96daa8cdb782e7c`) merged to `main` as `DRAFT` without its mandatory fresh Codex plan review ever running (the prior environment lacked the `codex` tool); that review is now being run retroactively, the same way `ISSUE-0012`/`ISSUE-0013` got a retroactive per-issue review. `ISSUE-0012` and `ISSUE-0013` remain merged (`DECISION-025`, `DECISION-027`); no active issue or milestone. M1 and M2 remain complete and accepted with no milestone in progress |
+| Stage | `ROADMAP_REVIEW` — roadmap v5's content was drafted at `ef2ea6d318e5d5ac46bd0953a96daa8cdb782e7c` and merged to `main` as `DRAFT` without its mandatory fresh Codex plan review ever running (the prior environment lacked the `codex` tool). The exact plan-review candidate is `441b4da0d3ba0d9d13dcf0d710bdae5a1c0685ab` (`ef2ea6d` plus this stage-state fix), reviewed in `project/reviews/plans/ROADMAP-441b4da0d3ba-codex.json`: **`CHANGES_REQUIRED`** — F-001 (high, missing `ISSUE-0014` work-item record, now added), F-002 (medium, this row named a stale candidate SHA, now corrected), F-003 (medium, `ISSUE-0014`'s negative-CI criterion needed a safe local-verification procedure, now specified in `project/issues/ISSUE-0014.md`), F-004 (question, `RISK-009` needs an exact human treatment decision before v5 can be approved — unresolved). `ISSUE-0012` and `ISSUE-0013` remain merged (`DECISION-025`, `DECISION-027`); no active issue or milestone. M1 and M2 remain complete and accepted with no milestone in progress |
 | Project description | `project/intake/PROJECT_DESCRIPTION.md`; supplied |
 | Project brief | `project/brief/PROJECT_BRIEF.md` v2; APPROVED (DECISION-013, binds `9ccf835`); open questions resolved (DECISION-014) |
 | Brief approval | `project/decisions/DECISION-001-brief-approval.md` (v1, binds `179a023`); `project/decisions/DECISION-013-brief-v2-approval.md` (v2, binds `9ccf835`); `project/decisions/DECISION-014-app-only-secret-retention-and-risk002.md` |
@@ -236,6 +236,26 @@ full milestone record and the four review reports for complete evidence.
 | Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 |
 | Governance | `python3 scripts/validate_repo.py` | passed |
 | Frontend tests | `cd frontend && npm test` | **91 passed**, exit 0, at `ISSUE-0013` round 2 (88 at round 0; +1 round-1 retry test; +1 round-2 retry-window test) |
+
+### Roadmap v5 round-1 repair check evidence
+
+At candidate `441b4da0d3ba0d9d13dcf0d710bdae5a1c0685ab` plus this round's
+documentation-only fixes (`ISSUE-0014.md` added; stale-SHA and negative-CI
+findings corrected): `python3 -m unittest discover -s tests` and
+`cd frontend && npm test` are unchanged from `ISSUE-0013`'s figures above (no
+product source touched). **`python3 scripts/validate_repo.py` could not be
+cleanly re-confirmed from this working tree while `CURRENT.md` itself commits
+the repository to stage `ROADMAP_REVIEW`**: the validator's own internal
+smoke-test suite copies the live working tree to build its "wrong stage"
+negative fixture, and that fixture inherits `ROADMAP_REVIEW` from this file,
+which defeats the fixture's assumption that the plan-review stage is *not*
+already active — a pre-existing self-test limitation in
+`scripts/validate_repo.py`, not a finding about this change. `git stash`
+confirms the validator passes cleanly against the last committed state before
+this stage was set (67 required files checked) and the same required-files
+pass was independently observed by the Codex plan reviewer with a different,
+unrelated failure mode (no writable temp directory in its sandbox). Recorded
+here rather than silently claimed as passing.
 
 A fresh task must read `AGENTS.md`, this file, and the artifacts linked here,
 then restate the current stage and next permitted action before doing material

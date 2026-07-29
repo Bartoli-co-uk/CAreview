@@ -1,12 +1,12 @@
 # ISSUE-0014: Wire the frontend build and test suite into CI
 
-**Status:** `PLANNED`
+**Status:** `REVIEWING`
 **Milestone:** `M3`
-**Approved roadmap:** *None yet.* `ROADMAP.md` version `5` (candidate `441b4da0d3ba0d9d13dcf0d710bdae5a1c0685ab`) defines this issue, but v5 itself is still `DRAFT` — unapproved. This record exists so v5's plan review (`project/reviews/plans/ROADMAP-441b4da0d3ba-codex.json`, F-001) has a reviewable work item to bind to; it does not itself authorize starting the issue.
+**Approved roadmap:** `ROADMAP.md` version `5`, `APPROVED` (`DECISION-029`, binds `8ea41ee`).
 **Dependencies:** `ISSUE-0012` (frontend exists to build/test)
 **Branch:** `ai/ISSUE-0014-frontend-ci`
-**Starting SHA:** *Not started.*
-**Candidate SHA:** `Not created`
+**Starting SHA:** `8e864a38e03d0df90c79a469c0e1fdf740da7904`
+**Candidate SHA:** round 0 is this commit — the launcher records the full HEAD SHA
 
 ## Objective
 
@@ -68,14 +68,14 @@ broken Python check already does.
 
 ## Required checks
 
-| Check | Command or method | Expected result |
+| Check | Command or method | Result (round 0) |
 |---|---|---|
-| Backend tests | `python3 -m unittest discover -s tests` | All pass, unchanged |
+| Backend tests | `python3 -m unittest discover -s tests` | 188 passed |
 | Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 |
-| Governance | `python3 scripts/validate_repo.py` | passed |
-| Frontend build | `cd frontend && npm ci && npm run build` | exit 0, produces `web/index.html`/`index.js`/`index.css` |
-| Frontend tests | `cd frontend && npm test` | All 91+ pass |
-| Negative-CI proof | Per acceptance criterion 2 | Real command output showing the modified workflow step fails on a deliberately red test, captured in the handoff |
+| Governance | `python3 scripts/validate_repo.py` | passed (67 required files) |
+| Frontend build | `cd frontend && npm ci && npm run build` | exit 0; produced `web/index.html` (0.54 kB), `index.css` (6.56 kB), `index.js` (237.09 kB) |
+| Frontend tests | `cd frontend && npm test` | 91 passed, 7 test files, exit 0 |
+| Negative-CI proof | Per acceptance criterion 2 — **local fallback used, `act` was not available in this environment** | A temporary `expect(1).toBe(2)` test was added to `src/test/hostileMarkup.test.tsx`, then the exact composed commands the new workflow steps run (`npm ci`; `npm run build`; `npm test`, all from `frontend/`) were run in order: `npm ci` exit 0, `npm run build` exit 0, `npm test` **exit 1** — Vitest reported `1 failed, 91 passed`, the added test failing with `AssertionError: expected 1 to be 2`. The temporary test was then reverted; `npm test` returned to 91 passed, exit 0. This proves the composed command fails non-zero on a red test, which is what fails a GitHub Actions `run:` step — it does not exercise the YAML parser or the actual hosted runner, the residual `DECISION-029` already accepted for this criterion |
 
 ## Documentation
 

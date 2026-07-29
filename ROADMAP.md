@@ -3,22 +3,22 @@
 This is the canonical project roadmap for CAreview, a locally-hosted Conditional
 Access policy analyzer.
 
-**Current status:** `DRAFT` (roadmap **v5** candidate — its fresh Codex plan review returned `CHANGES_REQUIRED`; see below. Round 1's four findings are all now addressed, including `RISK-009`'s human acceptance (`DECISION-028`), but a round-2 review of that commit and an exact human roadmap approval have not yet been recorded). Roadmap **v4** remains the approved artifact and continues to govern the completed M1 and M2 content below; nothing in v5 changes it.
+**Current status:** `APPROVED` (roadmap **v5**, approved `DECISION-029` directly from the round-2 review record — see below. v4 remains separately approved and continues to govern the completed M1 and M2 content below; nothing in v5 changes it).
 **Roadmap version:** `5`
 **Approved brief:** `project/brief/PROJECT_BRIEF.md` v1 at `179a02354aecbafa2c9d5aa34f9c9a5a04bbc79a` (DECISION-001) — governs M1
 **Amending brief:** `project/brief/PROJECT_BRIEF.md` v2 at `9ccf835`, approved by `DECISION-013`; open questions resolved by `DECISION-014` — governs M2 below
 **Governing decision for M3:** `project/decisions/DECISION-024-react-frontend-build-step.md`. **(v5)** M3 has **no** governing brief section. It was delivered under a direct human override rather than a brief/roadmap cycle, and this roadmap version records that fact rather than papering over it — see the M3 issue sequence preamble.
-**Codex plan review:** v3 rounds recorded in Planning reconciliation below. v4: four rounds recorded below (`ROADMAP-71f7ba60b045-*`, `ROADMAP-605c282c5c81-*`, `ROADMAP-76a09c46a57d-*`, `ROADMAP-faf5ec70bf00-*`); the review/repair loop's absolute five-iteration cap (`AGENTS.md`) was reached, and the human approved directly from that record. **(v5) Round 1: `CHANGES_REQUIRED`** — `project/reviews/plans/ROADMAP-441b4da0d3ba-codex.json`, reviewed candidate `441b4da0d3ba0d9d13dcf0d710bdae5a1c0685ab`. F-001 (high): `ISSUE-0014` had no work-item record — fixed, `project/issues/ISSUE-0014.md` added. F-002 (medium): `project/status/CURRENT.md` named a stale candidate SHA — fixed. F-003 (medium): `ISSUE-0014`'s negative-CI acceptance criterion depended on an unspecified protected external action — fixed, a local-verification procedure is now specified in that issue record. F-004 (question): `RISK-009` needed an exact human treatment decision before v5 could be approved — **resolved**, accepted as residual per `DECISION-028`. All four round-1 findings are now addressed; a round-2 Codex plan review against the commit recording this has not yet been run.
-**Human approval record:** `project/decisions/DECISION-003-roadmap-approval.md` (APPROVE, binds v3 at `125d74f6d4bfe85f1a727293064d0887f2d121c7`); `project/decisions/DECISION-015-roadmap-v4-approval.md` (APPROVE, binds **v4** at `9e5ba6d`). **(v5) None yet** — no decision record binds v5.
+**Codex plan review:** v3 rounds recorded in Planning reconciliation below. v4: four rounds recorded below (`ROADMAP-71f7ba60b045-*`, `ROADMAP-605c282c5c81-*`, `ROADMAP-76a09c46a57d-*`, `ROADMAP-faf5ec70bf00-*`); the review/repair loop's absolute five-iteration cap (`AGENTS.md`) was reached, and the human approved directly from that record. **(v5) Round 1: `CHANGES_REQUIRED`** — `project/reviews/plans/ROADMAP-441b4da0d3ba-codex.json`, reviewed candidate `441b4da0d3ba0d9d13dcf0d710bdae5a1c0685ab`. F-001 (high): `ISSUE-0014` had no work-item record — fixed, `project/issues/ISSUE-0014.md` added. F-002 (medium): `project/status/CURRENT.md` named a stale candidate SHA — fixed. F-003 (medium): `ISSUE-0014`'s negative-CI acceptance criterion depended on an unspecified protected external action — fixed, a local-verification procedure is now specified in that issue record. F-004 (question): `RISK-009` needed an exact human treatment decision before v5 could be approved — **resolved**, accepted as residual per `DECISION-028`. **Round 2: `CHANGES_REQUIRED`** — `project/reviews/plans/ROADMAP-9bd2c0f8f6fb-codex.json`, reviewed candidate `9bd2c0f8f6fb5f4153be0cf5661f63929449ce85`. F-001 (medium): `ISSUE-0014`'s negative-CI fallback proof doesn't verify workflow-level failure propagation, only that Vitest itself can fail. F-002 (medium): `RISK-010` was described inconsistently (accepted vs. undecided) across this file and `CURRENT.md`. This was the second and final permitted planning-repair round (`AGENTS.md`); per `DECISION-029`, the human approved v5 directly from this record, accepting both round-2 findings as documented residuals rather than authorizing a third repair round — the same disposition `DECISION-015` used for v4 at its own iteration cap.
+**Human approval record:** `project/decisions/DECISION-003-roadmap-approval.md` (APPROVE, binds v3 at `125d74f6d4bfe85f1a727293064d0887f2d121c7`); `project/decisions/DECISION-015-roadmap-v4-approval.md` (APPROVE, binds **v4** at `9e5ba6d`). **(v5)** `project/decisions/DECISION-029-roadmap-v5-approval.md` (APPROVE, binds **v5** at `8ea41ee`).
 **Delivery status:** `M1` COMPLETE and accepted (`DECISION-012`); all six issues merged. `M2` is `COMPLETE` and accepted (`DECISION-023`); `ISSUE-0007` COMPLETE and merged (`DECISION-016`); `ISSUE-0008` COMPLETE and merged (`DECISION-017`); `ISSUE-0009` COMPLETE and merged (`DECISION-019`); `ISSUE-0010` COMPLETE and merged (`DECISION-020`); `ISSUE-0011` COMPLETE and merged (`DECISION-022`) — all five planned M2 issues are merged and the M2 milestone acceptance gate has passed. **(v5)** `M3` (React/TypeScript dashboard UI) has both of its delivered issues merged — `ISSUE-0012` (`DECISION-025`) and `ISSUE-0013` (`DECISION-027`) — but is **not** complete: `ISSUE-0014` is open and **none of the four blind milestone reviews has been run**. Current state: `project/status/CURRENT.md`.
 
 No implementation may begin until a human records approval of the exact roadmap
-version and commit. Roadmap v4 remains the approved artifact governing M1 and
-M2, both of which are delivered. **(v5)** This version is a candidate: it adds
-`M3`, three issues, and two risks, and authorizes nothing by itself. In
+version and commit. Roadmap v4 remains a separately approved artifact governing
+M1 and M2, both of which are delivered. **(v5)** This version is now approved
+(`DECISION-029`, binding `8ea41ee`): it adds `M3`, three issues, and three
+risks. Approval of the roadmap does not by itself start any issue — in
 particular `ISSUE-0014` is `PLANNED`, not started, and may not begin until a
-human approves this roadmap version at its exact commit and separately decides
-to start that issue.
+separate human decision to start it is recorded.
 
 ## Project outcome
 
@@ -419,7 +419,7 @@ exit status, and limitations in each handoff.
 | `RISK-008` | **(v4, new)** A real client secret is pasted into a test, fixture, issue record, handoff, log, or review report during development or triage | High if it occurs (credential in Git history) | Claude (impl), reviewed by Codex | Prohibited by `AGENTS.md`. Enforced here by requiring a synthetic literal in all tests, by never performing a live app-only run in an agent task, and by an explicit reviewer check on every M2 diff | Every M2 issue |
 
 | `RISK-009` | **(v5, new; accepted `DECISION-028`)** Build-time supply chain. `DECISION-024` introduced a transitive npm dependency graph (`frontend/package-lock.json`) that the stdlib-only backend deliberately does not have. A compromised or typosquatted transitive package executes with the developer's privileges at install/build time and can write arbitrary content into `web/index.js`, which the server then serves. This is a genuinely new trust boundary for this project, not a variation on an existing one | Medium — build-time code execution; would reach the served bundle | Jay (@Jay-cli) | **Accepted as residual per `DECISION-028`**, on the same low-traffic/single-user reasoning already applied to `RISK-002`: the lockfile is committed, so builds are reproducible and a dependency change is visible in a diff; the served page keeps `default-src 'self'` and loads no external asset, so a compromise must arrive through the build rather than at runtime; no dependency reaches the backend, which still handles every token and secret. Gaps not closed by this acceptance: nothing pins or audits transitive versions beyond the lockfile, `npm audit` runs nowhere, and CI does not build the frontend at all (`ISSUE-0014`). Recommended treatment remains `npm ci` in CI via `ISSUE-0014`, then optionally `npm audit`, without needing to reopen `DECISION-028` | At `ISSUE-0014`; then at any M3 milestone security review |
-| `RISK-010` | **(v5, new)** Onboarding regression. `git clone && python3 server.py` no longer produces a working app — the UI's build output is gitignored, so the server starts and its static routes 404 until `npm install && npm run build` has run. The project's original "clone and run, no installs" property is gone for the UI | Low — documentation-shaped, no security impact | Jay (@Jay-cli) | Consequence of `DECISION-024`, accepted implicitly when that decision was made and recorded explicitly here. Mitigated by documentation only: `README.md` Quick Start, `frontend/README.md`, and `CONTRIBUTING.md` all state the build step. Not otherwise mitigated — the alternative (committing build output) was rejected as making generated code look like reviewable source | On any change to the build/serve arrangement |
+| `RISK-010` | **(v5, new; accepted `DECISION-029`)** Onboarding regression. `git clone && python3 server.py` no longer produces a working app — the UI's build output is gitignored, so the server starts and its static routes 404 until `npm install && npm run build` has run. The project's original "clone and run, no installs" property is gone for the UI | Low — documentation-shaped, no security impact | Jay (@Jay-cli) | **Accepted per `DECISION-029`** (resolving round-2 plan-review F-002's inconsistency between this row and the reconciliation text below): a consequence of `DECISION-024`, mitigated by documentation only — `README.md` Quick Start, `frontend/README.md`, and `CONTRIBUTING.md` all state the build step. Not otherwise mitigated — the alternative (committing build output) was rejected as making generated code look like reviewable source | On any change to the build/serve arrangement |
 | `RISK-011` | **(v5, records an already-accepted risk)** `ISSUE-0013`'s device-code abandonment "fails open": if every delivery attempt of `POST /api/auth/abandon` fails, or the tab closes mid-retry, cleanup is never acknowledged and nothing observable records that. The abandoned attempt's own ~15-minute server-side expiry is then the only backstop | Low–medium — a token the user believes abandoned can remain installed until natural expiry | Jay (@Jay-cli) | **Accepted by the human at `DECISION-027`**, exactly as documented: loopback-only delivery, ~16-minute retry window (deliberately past the attempt's own expiry), tab-closure/permanent-failure as the sole uncovered case. Listed here because it was accepted in an issue record while no roadmap entry existed to carry it — a roadmap-level risk register that omits it is incomplete. `ISSUE-0013`'s option 2 (an observable cleanup-pending state) remains available as future work | If the abandon mechanism is revisited |
 
 Critical or high security findings cannot use the default risk-acceptance path.
@@ -427,9 +427,9 @@ Critical or high security findings cannot use the default risk-acceptance path.
 by the human (`DECISION-014`) rather than accepted or inferred by an agent.
 **(v5)** `RISK-011` was likewise decided by the human (`DECISION-027`) and is
 recorded here, not accepted here. `RISK-009` is now decided too: accepted as
-residual per `DECISION-028`. `RISK-010` remains **new and undecided**: it is
-placed on the register so the human can decide it, and is not claimed as
-accepted or mitigated by this roadmap version.
+residual per `DECISION-028`. `RISK-010` is likewise **accepted per
+`DECISION-029`**, resolving round-2 plan-review F-002's inconsistency between
+this text and the risk table above — both now say "accepted."
 
 ## Definitions of done
 
@@ -530,14 +530,15 @@ non-goal. It therefore requires its own Codex plan review and its own human
 decision record; `DECISION-003` does not cover it. The approved-and-executed M1
 content above is unchanged by v4 except where explicitly marked `(v4)`.
 
-**(v5)** This version is also such a change, and is **not yet approved**. It
-adds `M3`, three issues (`ISSUE-0012`, `ISSUE-0013`, `ISSUE-0014`), three risks
-(`RISK-009`, `RISK-010`, `RISK-011`), a first-class statement of the
-`DECISION-024` build-step exception's bounds, and a correction to a
-verification-strategy claim that had become false. It therefore requires its own
-fresh Codex plan review and its own human decision record; `DECISION-003` and
-`DECISION-015` do not cover it. The approved-and-executed M1 and M2 content is
-unchanged by v5 except where explicitly marked `(v5)`.
+**(v5)** This version was also such a change and is now **approved**
+(`DECISION-029`, binding `8ea41ee`). It adds `M3`, three issues (`ISSUE-0012`,
+`ISSUE-0013`, `ISSUE-0014`), three risks (`RISK-009`, `RISK-010`, `RISK-011`),
+a first-class statement of the `DECISION-024` build-step exception's bounds,
+and a correction to a verification-strategy claim that had become false. It
+required its own fresh Codex plan review and its own human decision record;
+`DECISION-003` and `DECISION-015` do not cover it, `DECISION-029` does. The
+approved-and-executed M1 and M2 content is unchanged by v5 except where
+explicitly marked `(v5)`.
 
 Two things about v5 are unusual and are stated plainly rather than smoothed
 over:
@@ -548,16 +549,19 @@ over:
    them to a milestone so they are no longer orphaned, and so `ISSUE-0014` has
    a parent. `ISSUE-0014` is the only genuinely forward-looking item, and it is
    `PLANNED`, not started.
-2. **Its required Codex plan review has now run, once.** `codex` was not
-   available in the environment where v5 was drafted, so the launcher could not
-   be invoked there; it was invoked here, retroactively, against candidate
-   `441b4da0d3ba0d9d13dcf0d710bdae5a1c0685ab` (`project/reviews/plans/
-   ROADMAP-441b4da0d3ba-codex.json`). Result: `CHANGES_REQUIRED` — F-001
-   (missing `ISSUE-0014` record), F-002 (stale candidate SHA in `CURRENT.md`),
-   and F-003 (unspecified negative-CI verification) are fixed at this commit.
-   F-004 (`RISK-009` needs an exact human treatment decision) has now been
-   resolved: the human accepted `RISK-009` as residual (`DECISION-028`). Per
-   `AGENTS.md`'s two-round planning-repair limit, one further fresh Codex plan
-   review may now run against the commit recording that decision; v5 stays
-   `DRAFT` until that review clears and the human separately approves the
-   exact version and commit.
+2. **Its required Codex plan review ran twice, both `CHANGES_REQUIRED`.**
+   `codex` was not available in the environment where v5 was drafted, so the
+   launcher could not be invoked there; it was invoked here, retroactively.
+   Round 1 (`441b4da`, `project/reviews/plans/ROADMAP-441b4da0d3ba-codex.json`):
+   F-001 (missing `ISSUE-0014` record), F-002 (stale candidate SHA in
+   `CURRENT.md`), and F-003 (unspecified negative-CI verification) were fixed;
+   F-004 (`RISK-009` needs an exact human treatment decision) was resolved by
+   the human accepting it as residual (`DECISION-028`). Round 2 (`9bd2c0f`,
+   `project/reviews/plans/ROADMAP-9bd2c0f8f6fb-codex.json`): F-001
+   (`ISSUE-0014`'s negative-CI fallback doesn't verify workflow-level failure
+   propagation) and F-002 (`RISK-010`'s treatment was described
+   inconsistently) were **not** repaired further — `AGENTS.md`'s two-round
+   planning-repair limit was reached, so per `DECISION-029` the human approved
+   v5 directly from the round-2 record, accepting both findings as documented
+   residuals rather than authorizing a third repair round. This mirrors
+   `DECISION-015`'s handling of v4 at its own iteration cap.

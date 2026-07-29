@@ -5,13 +5,20 @@ reviewed the exhausted repair budget and the unresolved round-2
 `CHANGES_REQUIRED` finding (see "Human decision required" below) and chose
 to merge now, accepting the residual as tracked risk and opening
 `ISSUE-0013` to fix it properly (`DECISION-025`, `DECISION-026`).
-**Milestone:** `None` — no M3 exists; this work is out-of-band relative to the
-approved M1/M2 roadmap, authorized directly by the human rather than through
-the normal brief/roadmap cycle (see `DECISION-024`).
-**Approved roadmap:** `N/A` — not governed by `ROADMAP.md` v4 (which governs
-M1/M2 only); the human explicitly chose the direct-override path over
-drafting a roadmap amendment first, per `AGENTS.md`'s own instruction-order
-rule (the human's current explicit instructions outrank `AGENTS.md`).
+**Milestone:** `M3` — **retroactively assigned.** When this issue was
+implemented, reviewed, and merged, no M3 existed and this field read `None`.
+`ROADMAP.md` v5 created M3 afterwards to give this out-of-band work a parent;
+see `project/milestones/M3.md`, whose milestone gate has **not** been run.
+The assignment is a bookkeeping correction, not a claim that this issue was
+delivered under a milestone plan — it was not.
+**Approved roadmap:** `N/A at the time of delivery`; **now recorded in**
+`ROADMAP.md` v5's M3 issue sequence (itself a `DRAFT` awaiting Codex plan
+review and human approval). This work was not governed by `ROADMAP.md` v4
+(which governs M1/M2 only); the human explicitly chose the direct-override
+path over drafting a roadmap amendment first, per `AGENTS.md`'s own
+instruction-order rule (the human's current explicit instructions outrank
+`AGENTS.md`). Recording it in v5 does not retroactively supply the
+brief/roadmap cycle that was skipped, and v5 says so in the same words.
 **Dependencies:** None
 **Branch:** `ai/react-dashboard-frontend`
 **Starting SHA:** `8648f2ba11907ac32016c724d8ae49a08bdb6b2d`

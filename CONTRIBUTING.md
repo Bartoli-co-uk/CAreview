@@ -50,6 +50,34 @@ CI runs the first three of these on every push and pull request, plus a
 PowerShell syntax check of the review launcher, so a local pass should mean a
 green build.
 
+### If you touch the UI
+
+The UI lives in `frontend/` (React + TypeScript, built with Vite). It is the
+one documented exception to this project's stdlib-only, no-build-step rule —
+see [DECISION-024](project/decisions/DECISION-024-react-frontend-build-step.md)
+for its exact bounds. It needs Node.js/npm and two more checks:
+
+```sh
+cd frontend && npm install && npm run build     # compiles into web/index.html, index.js, index.css
+cd frontend && npm test                         # Vitest suite
+```
+
+Two things to know before you start:
+
+- **The build step is not optional.** `web/index.html`, `index.js`, and
+  `index.css` are generated and gitignored, so a fresh clone serves no UI at
+  all until you have run `npm run build`. `python3 server.py` will start
+  happily and then 404 its own static routes.
+- **CI does not run either of these yet.** The Python checks above are the
+  whole of CI today, so nothing catches a broken frontend build or a failing
+  Vitest test except you, locally, before you push. Wiring this up is tracked
+  as `ISSUE-0014` in [`ROADMAP.md`](ROADMAP.md); until it lands, please run
+  both and paste the real output into your pull request.
+
+Do not add a third-party dependency to the Python backend, and do not expand
+the Node toolchain beyond what `DECISION-024` already covers, without a
+separate approved decision.
+
 When behaviour changes, update the tests, documentation, prompts, templates, and
 security limitations in the same contribution. A model's statement that checks
 passed is not evidence; record the command and its real result.

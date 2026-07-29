@@ -3,18 +3,22 @@
 This is the canonical project roadmap for CAreview, a locally-hosted Conditional
 Access policy analyzer.
 
-**Current status:** `APPROVED` (roadmap v4 approved by the human; M2 implementation authorized)
-**Roadmap version:** `4`
+**Current status:** `DRAFT` (roadmap **v5** candidate — awaiting a fresh Codex plan review and an exact human approval). Roadmap **v4** remains the approved artifact and continues to govern the completed M1 and M2 content below; nothing in v5 changes it.
+**Roadmap version:** `5`
 **Approved brief:** `project/brief/PROJECT_BRIEF.md` v1 at `179a02354aecbafa2c9d5aa34f9c9a5a04bbc79a` (DECISION-001) — governs M1
 **Amending brief:** `project/brief/PROJECT_BRIEF.md` v2 at `9ccf835`, approved by `DECISION-013`; open questions resolved by `DECISION-014` — governs M2 below
-**Codex plan review:** v3 rounds recorded in Planning reconciliation below. v4: four rounds recorded below (`ROADMAP-71f7ba60b045-*`, `ROADMAP-605c282c5c81-*`, `ROADMAP-76a09c46a57d-*`, `ROADMAP-faf5ec70bf00-*`); the review/repair loop's absolute five-iteration cap (`AGENTS.md`) was reached, and the human approved directly from that record
-**Human approval record:** `project/decisions/DECISION-003-roadmap-approval.md` (APPROVE, binds v3 at `125d74f6d4bfe85f1a727293064d0887f2d121c7`); `project/decisions/DECISION-015-roadmap-v4-approval.md` (APPROVE, binds **v4** at `9e5ba6d`)
-**Delivery status:** `M1` COMPLETE and accepted (`DECISION-012`); all six issues merged. `M2` is `COMPLETE` and accepted (`DECISION-023`); `ISSUE-0007` COMPLETE and merged (`DECISION-016`); `ISSUE-0008` COMPLETE and merged (`DECISION-017`); `ISSUE-0009` COMPLETE and merged (`DECISION-019`); `ISSUE-0010` COMPLETE and merged (`DECISION-020`); `ISSUE-0011` COMPLETE and merged (`DECISION-022`) — all five planned M2 issues are merged and the M2 milestone acceptance gate has passed. Current state: `project/status/CURRENT.md`.
+**Governing decision for M3:** `project/decisions/DECISION-024-react-frontend-build-step.md`. **(v5)** M3 has **no** governing brief section. It was delivered under a direct human override rather than a brief/roadmap cycle, and this roadmap version records that fact rather than papering over it — see the M3 issue sequence preamble.
+**Codex plan review:** v3 rounds recorded in Planning reconciliation below. v4: four rounds recorded below (`ROADMAP-71f7ba60b045-*`, `ROADMAP-605c282c5c81-*`, `ROADMAP-76a09c46a57d-*`, `ROADMAP-faf5ec70bf00-*`); the review/repair loop's absolute five-iteration cap (`AGENTS.md`) was reached, and the human approved directly from that record. **(v5) Not yet reviewed** — `AGENTS.md` requires a fresh Codex plan review of this new version; it has not run.
+**Human approval record:** `project/decisions/DECISION-003-roadmap-approval.md` (APPROVE, binds v3 at `125d74f6d4bfe85f1a727293064d0887f2d121c7`); `project/decisions/DECISION-015-roadmap-v4-approval.md` (APPROVE, binds **v4** at `9e5ba6d`). **(v5) None yet** — no decision record binds v5.
+**Delivery status:** `M1` COMPLETE and accepted (`DECISION-012`); all six issues merged. `M2` is `COMPLETE` and accepted (`DECISION-023`); `ISSUE-0007` COMPLETE and merged (`DECISION-016`); `ISSUE-0008` COMPLETE and merged (`DECISION-017`); `ISSUE-0009` COMPLETE and merged (`DECISION-019`); `ISSUE-0010` COMPLETE and merged (`DECISION-020`); `ISSUE-0011` COMPLETE and merged (`DECISION-022`) — all five planned M2 issues are merged and the M2 milestone acceptance gate has passed. **(v5)** `M3` (React/TypeScript dashboard UI) has both of its delivered issues merged — `ISSUE-0012` (`DECISION-025`) and `ISSUE-0013` (`DECISION-027`) — but is **not** complete: `ISSUE-0014` is open and **none of the four blind milestone reviews has been run**. Current state: `project/status/CURRENT.md`.
 
 No implementation may begin until a human records approval of the exact roadmap
-version and commit. Roadmap v4 (this version) is now the approved artifact;
-`ISSUE-0009` may start under the same governed per-issue workflow used for M1
-and `ISSUE-0007`/`ISSUE-0008`, once the human decides to begin it.
+version and commit. Roadmap v4 remains the approved artifact governing M1 and
+M2, both of which are delivered. **(v5)** This version is a candidate: it adds
+`M3`, three issues, and two risks, and authorizes nothing by itself. In
+particular `ISSUE-0014` is `PLANNED`, not started, and may not begin until a
+human approves this roadmap version at its exact commit and separately decides
+to start that issue.
 
 ## Project outcome
 
@@ -34,6 +38,18 @@ npm run build`); the running app itself still needs nothing beyond Python.
 with a secret they supply — for the same policies/score/findings output,
 without changing anything for a user who does not opt in. Certificate-based
 auth is not supported and is documented as a deferred future enhancement.
+
+**(v5)** The "simple per-policy visualization" above describes the M1-era
+vanilla-JS UI, which no longer exists. What ships now is a multi-page React +
+TypeScript dashboard (`frontend/src/pages/`) serving two audiences from the
+same data: an at-a-glance Overview for a non-specialist reader, and Policies /
+Policy Explorer / Insights / Recommendations / Reports / Audit Log / Settings /
+About for a practitioner. It consumes the unchanged `/api/policies` and
+`/api/analysis` contract — M3 added no analyzer capability and no new backend
+data source; the Insights page derives its figures client-side
+(`frontend/src/lib/deriveInsights.ts`) precisely so that no new endpoint was
+needed. The served artifact is still a static bundle under the same
+`default-src 'self'` CSP and the same loopback-only binding.
 
 ## Users and success measures
 
@@ -70,6 +86,23 @@ auth is not supported and is documented as a deferred future enhancement.
 - Analyzer must be verifiable offline against committed sanitized fixtures.
 - **(v4)** No live-tenant authentication or fetch is a completion criterion for
   any issue, in either mode. That remains a protected action.
+- **(v5) The exact bounds of the `DECISION-024` build-step exception.** Stated
+  once, as a constraint in its own right rather than as an aside, because it is
+  the only place this project permits a dependency toolchain at all:
+  - **Permitted:** a Node.js/npm toolchain whose sole job is compiling
+    `frontend/` into `web/index.html`, `web/index.css`, and `web/index.js`.
+  - **Not permitted by it:** any third-party *runtime* dependency in the Python
+    backend, which stays stdlib-only; any CSP relaxation; any persistence; any
+    binding beyond loopback; any new Graph scope; any external/CDN asset
+    fetched by the served page. The build's output is plain static files —
+    nothing is fetched at runtime.
+  - **Consequence, not a side note:** the build introduces a transitive
+    dependency graph (`frontend/package-lock.json`) that the backend
+    deliberately does not have. That is a real trust boundary and is tracked
+    as `RISK-009`, not treated as covered by the exception itself.
+  - **Consequence for onboarding:** `web/index.html`/`index.js`/`index.css` are
+    generated and gitignored, so a fresh clone will **not** serve a UI until
+    `npm install && npm run build` has run. Tracked as `RISK-010`.
 
 ### Non-goals
 
@@ -193,6 +226,16 @@ human, who makes the milestone decision after seeing all four reports.
 |---|---|---|---|---|
 | `M1` | Working MVP: device-code sign-in → fetch CA policies → 0–100 score + findings → per-policy visualization, offline-testable | `None` | All six issues COMPLETE; `python3 server.py` runs; `python3 -m unittest discover -s tests` passes; the UI renders score/findings/cards against the offline fixture path; four blind milestone reviews pass. Live-tenant sign-in/fetch is **not** an M1 completion criterion (Codex F-003): it is a separate protected step, recorded as an explicit residual evidence gap that the human may accept at the milestone | `COMPLETE` — accepted `DECISION-012` |
 | `M2` | Least-privilege delegated scope, plus an **opt-in** app-only (client-credentials, secret-only) sign-in mode beside the unchanged device-code default | `M1` COMPLETE; brief v2 APPROVED (`DECISION-013`); secret-retention/RISK-002/tenant-validation decided (`DECISION-014`) | All five M2 issues COMPLETE; `python3 -m unittest discover -s tests`, `python3 -m py_compile $(git ls-files '*.py')`, and `python3 scripts/validate_repo.py` pass at one frozen candidate; every pre-existing device-code test still passes unmodified in behaviour; mock-transport tests prove **the real submitted secret** appears in **no** API response body, **no** log record, and **no** tracked file (the committed synthetic test-sentinel literal used to exercise these tests is expected in `tests/` and is not itself a violation); `auth.py` requests only `Policy.Read.All` delegated; README and `docs/security-boundaries.md` describe both modes, the app-only prerequisites, the secret's lifetime, and certificate support as a deferred future enhancement; four blind milestone reviews against that one SHA, with the **security** pair required to treat the end-to-end secret lifecycle — field → POST body → server memory, **retained for the app-only session and reused to silently renew the token on expiry**, then **cleared on logout, on supersession by a new sign-in, and on process exit** (never discarded after a single use) — as a **named, separately reported check** (brief v2 requirement), not folded into general review. Live app-only sign-in against a real tenant is **not** an exit criterion — it stays a protected action and a declared evidence gap | `COMPLETE` (`DECISION-023`) |
+| `M3` **(v5)** | React/TypeScript dashboard UI (`frontend/`, built with Vite) replacing the vanilla-JS `web/` UI, against the unchanged `/api/policies` + `/api/analysis` contract | `M2` COMPLETE; `DECISION-024` (build-step exception) | `ISSUE-0012` and `ISSUE-0013` COMPLETE and merged — **both satisfied**; `ISSUE-0014` (CI runs the frontend build and tests) COMPLETE — **not satisfied, not started**; `python3 -m unittest discover -s tests`, `python3 -m py_compile $(git ls-files '*.py')`, `python3 scripts/validate_repo.py`, and `cd frontend && npm test` all pass at one frozen candidate; the served bundle keeps `default-src 'self'` with no external asset and no new endpoint; untrusted tenant strings still render as text (JSX escaping, asserted by both `frontend/src/test/hostileMarkup.test.tsx` and `tests/test_ui_safety.py`); four blind milestone reviews against that one SHA — **none has been run** | `ISSUES DELIVERED — milestone gate not run` |
+
+**(v5) Why `M3` is not marked `COMPLETE`.** Its two delivered issues each
+passed the per-issue Codex gate and carry a human merge decision, so the
+*code* is as reviewed as M1's and M2's was. The milestone gate is a different,
+additional gate: four blind reviews against one frozen candidate. For M3 that
+gate has not run at all. `M1` and `M2` earned `COMPLETE` through it
+(`DECISION-012`, `DECISION-023`), and M3 has not, so it does not carry the
+same word. Whether to run that gate — and whether to do it before or after
+`ISSUE-0014` — is a human decision this roadmap does not presume.
 
 ## Issue sequence
 
@@ -235,6 +278,54 @@ satisfied.
 | `ISSUE-0010` | `web/index.html`, `web/app.js`, `web/style.css`, `tests/test_ui_safety.py`, `README.md` | Server or auth logic; new external assets; CSP relaxation | In-page caution text; README screenshot-free description of the toggle (in this issue's own change, since `README.md` is in its allowed paths) |
 | `ISSUE-0011` | `README.md`, `docs/security-boundaries.md`, `project/` records | Any product source change (a source change here reopens the issue as an implementation issue) | This issue *is* the documentation change |
 
+### M3 issue sequence **(v5)** (delivered out-of-band; milestone gate not run)
+
+**Read this preamble before the table.** `ISSUE-0012` and `ISSUE-0013` were
+implemented, reviewed, and merged **before** any roadmap entry for them
+existed. The human explicitly chose that path (`DECISION-024`): asked how to
+reconcile a dashboard rebuild with `AGENTS.md`'s requirement that
+implementation wait on an approved brief and roadmap, they selected "Direct
+override — build it now, record the decision after," relying on `AGENTS.md`'s
+own instruction-order rule, which places the human's current explicit
+instructions above this roadmap.
+
+Recording those issues here does **not** retroactively supply the brief and
+roadmap cycle they skipped, and does not convert the direct override into a
+planning gate that was met. Both statements stay true after this edit:
+
+- The per-issue Codex review gate **was** applied to both, retroactively and
+  in full — three rounds each, every round a fresh ephemeral read-only
+  process, each ending in a recorded human decision (`DECISION-025`,
+  `DECISION-027`). Neither issue's residual was accepted by an agent.
+- The pre-implementation planning gate was **not** applied and cannot now be.
+
+What this section changes is narrower and worth doing anyway: the two issues
+stop being orphans. Before it, `project/issues/ISSUE-0012.md` and
+`ISSUE-0013.md` both read `Milestone: None` / `Approved roadmap: N/A`, so the
+largest single change to the product had no parent in the roadmap, and
+`ISSUE-0014` had nowhere to attach.
+
+| Order | Issue | Objective | Depends on | Acceptance and checks | Risk | Status |
+|---:|---|---|---|---|---|---|
+| 12 | `ISSUE-0012` | Replace the vanilla-JS `web/` UI with a React + TypeScript dashboard built by Vite, against the unchanged API contract | `DECISION-024`; M2 delivered | Retroactive record of work already done. The dashboard builds via `npm run build` into `web/`'s fixed, non-hashed filenames (`server.py` serves an explicit `STATIC_FILES` allowlist, not a directory); `server.py` changes limited to that allowlist; untrusted tenant strings render as text, asserted from both sides (`hostileMarkup.test.tsx`, `tests/test_ui_safety.py`); a `noDangerousSinks.test.ts` scan rejects dangerous DOM/code sinks across `src/`; `unittest`, `py_compile`, `validate_repo.py`, and `npm test` all pass | Medium — largest single product change; no pre-implementation review | `COMPLETE` (`195bd8e746884c23b4774162667ee5905f2680e1`, merged `5189959392ec2331c799199f5d70457ff361a3ba`, `DECISION-025`) — merged with a **tracked residual**, remediated by `ISSUE-0013` |
+| 13 | `ISSUE-0013` | Scoped, server-side device-code session abandonment (`POST /api/auth/abandon`) | `ISSUE-0012` | `AuthManager.abandon(handle)` clears only the pending session or installed token produced by that exact handle, under the same lock as every other lifecycle transition, touching neither `_generation` nor app-only state — so a late abandon can never clear a different, newer, legitimately-current session; an unknown handle is a safe no-op; tests in both `tests/test_auth.py` and `tests/test_server.py` directly exercise that race | Medium — auth-lifecycle change | `COMPLETE` (`8858858a2090aa72d8d0b14a6de64a17a447c120`, fast-forwarded to `main` at `80156d32feb6f4b85debc44897d04563bb35998a`, `DECISION-027`) — merged with an **accepted residual** (see `RISK-011`) |
+| 14 | `ISSUE-0014` | Wire the frontend build and test suite into CI | `ISSUE-0012` | `.github/workflows/validate.yml` gains a Node step running `npm ci` (not `npm install` — CI must build from the committed lockfile), `npm run build`, and `npm test`, with the Node version pinned and the action SHA-pinned like the existing `actions/checkout` step; a red frontend test fails the workflow (verified by observing a deliberate failure, not asserted); the three existing Python steps keep working unchanged; no new dependency beyond the Node toolchain `DECISION-024` already permits | Low | `PLANNED` — not started; requires human approval of this roadmap version **and** a separate decision to start |
+
+**Why `ISSUE-0014` is worth its own issue.** The frontend's test suite — 91
+Vitest tests, including the hostile-markup and dangerous-sink checks that are
+part of how this project argues the UI is XSS-safe — has never run in CI. It
+runs only when someone runs it locally. `DECISION-024` recorded this as
+untracked follow-up with no owner and no date; nothing has tracked it since.
+Until it lands, "the frontend tests pass" is a claim about somebody's laptop.
+
+#### Per-issue boundaries **(v5)**
+
+| Issue | Allowed paths | Explicitly out of scope | Documentation in the same change |
+|---|---|---|---|
+| `ISSUE-0012` | `frontend/`, `web/` (build output + removal of superseded sources), `server.py` (`STATIC_FILES` only), `tests/test_ui_safety.py`, `.gitignore`, `scripts/validate_repo.py` (node_modules exclusion, JSONC tolerance), `README.md`, `AGENTS.md`, `ROADMAP.md`, `project/` records | Any auth/analyzer/Graph logic change; any new endpoint; any CSP relaxation; any backend dependency | `frontend/README.md`; README build step and dashboard description |
+| `ISSUE-0013` | `auth.py`, `server.py`, `frontend/src/state/appState.tsx`, `tests/test_auth.py`, `tests/test_server.py`, `frontend/src/test/`, `docs/security-boundaries.md` | Any analyzer/Graph change; any change to app-only state; widening `logout()` semantics | `docs/security-boundaries.md` abandonment + residual entry |
+| `ISSUE-0014` | `.github/workflows/validate.yml`, `CONTRIBUTING.md`, `README.md` (CI status wording) | Any product source change; any change to the frontend's test content to make CI pass; loosening a check to get green | README/CONTRIBUTING note that CI now covers the frontend |
+
 ## Verification strategy
 
 - Unit checks: `python3 -m unittest discover -s tests` (auth handling for **both**
@@ -269,8 +360,21 @@ satisfied.
   named check.
 - Documentation checks: run README steps for both modes from a clean checkout in
   ISSUE-0011, stopping short of the protected live steps.
-- Clean-environment / onboarding check: fresh clone → `python3 server.py` with no
-  installs.
+- ~~Clean-environment / onboarding check: fresh clone → `python3 server.py` with
+  no installs.~~ **(v5) No longer true, corrected here rather than quietly
+  dropped.** Since `DECISION-024`, `web/index.html`/`index.js`/`index.css` are
+  generated and gitignored, so a fresh clone serves no UI until
+  `cd frontend && npm install && npm run build` has run. The onboarding check is
+  now: fresh clone → `npm install && npm run build` → `python3 server.py` →
+  the dashboard loads. The *backend* still installs nothing, which is the part
+  of the original constraint that survives.
+- **(v5) Frontend checks:** `cd frontend && npm test` (Vitest — 91 tests at the
+  `ISSUE-0013` candidate: severity/score logic, the typed API client's error
+  branches, the SVG gauge, the device-code cancellation race, hostile-markup
+  rendering, and a dangerous-sink scan across `src/`) and
+  `cd frontend && npm run build`. **These do not run in CI** until `ISSUE-0014`
+  lands — see that issue. A frontend check is currently only as good as the
+  last person who ran it locally, and this roadmap should not imply otherwise.
 - Evidence gaps requiring human judgement: live-tenant behaviour in both modes
   (A1/A2/A6/A7); whether first-party device-code is permitted in the target
   tenant; whether the user's app registration holds application permissions
@@ -291,6 +395,15 @@ exit status, and limitations in each handoff.
   not yet supported and would require a separate dependency-approval decision;
   a rotation/revocation pointer; `docs/security-boundaries.md` threat-model
   delta for the widened trust boundary; per-issue handoffs.
+- **(v5)** `M3`: `README.md`'s dashboard description, Quick Start build step,
+  and known-limitations table (done in `ISSUE-0012`/`ISSUE-0013`);
+  `frontend/README.md` covering install, build, dev-server caveat, tests, and
+  source layout (done in `ISSUE-0012`); `docs/security-boundaries.md` entries
+  for scoped abandonment (done in `ISSUE-0013`) and for the build-time
+  dependency boundary plus the frontend's rendering-safety model (done in this
+  roadmap change, alongside `RISK-009`); `CONTRIBUTING.md` frontend commands
+  (done in this roadmap change — its command list was Python-only, which would
+  have left a new contributor unable to build the UI at all).
 
 ## Risks and decisions
 
@@ -305,9 +418,17 @@ exit status, and limitations in each handoff.
 | `RISK-007` | **(v4, resolved `DECISION-014`)** Originally: hourly re-authentication burden with no refresh token. **Superseded:** per `DECISION-014`, the secret is retained for the session and used to silently renew the app-only token on expiry, so no re-entry is required. The traded-off cost is `RISK-002`'s widened retention window, not user friction | Low (was low–medium; friction removed, retention cost moved to RISK-002) | Jay (@Jay-cli) | `ISSUE-0008` must implement silent renewal from the retained secret, per `DECISION-014`; document that persistence to disk remains a hard non-goal regardless | `ISSUE-0008` |
 | `RISK-008` | **(v4, new)** A real client secret is pasted into a test, fixture, issue record, handoff, log, or review report during development or triage | High if it occurs (credential in Git history) | Claude (impl), reviewed by Codex | Prohibited by `AGENTS.md`. Enforced here by requiring a synthetic literal in all tests, by never performing a live app-only run in an agent task, and by an explicit reviewer check on every M2 diff | Every M2 issue |
 
+| `RISK-009` | **(v5, new)** Build-time supply chain. `DECISION-024` introduced a transitive npm dependency graph (`frontend/package-lock.json`) that the stdlib-only backend deliberately does not have. A compromised or typosquatted transitive package executes with the developer's privileges at install/build time and can write arbitrary content into `web/index.js`, which the server then serves. This is a genuinely new trust boundary for this project, not a variation on an existing one | Medium — build-time code execution; would reach the served bundle | Jay (@Jay-cli) | **Not yet decided — this is a proposal, not an accepted risk.** Only the human may accept it. Existing partial mitigations, none of them chosen for this purpose: the lockfile is committed, so builds are reproducible and a dependency change is visible in a diff; the served page keeps `default-src 'self'` and loads no external asset, so a compromise must arrive through the build rather than at runtime; no dependency reaches the backend, which still handles every token and secret. Gaps: nothing pins or audits transitive versions beyond the lockfile, `npm audit` runs nowhere, and CI does not build the frontend at all (`ISSUE-0014`). Recommended treatment is `npm ci` in CI via `ISSUE-0014`, then a human decision on whether the remainder is accepted as residual | At `ISSUE-0014`; then at any M3 milestone security review |
+| `RISK-010` | **(v5, new)** Onboarding regression. `git clone && python3 server.py` no longer produces a working app — the UI's build output is gitignored, so the server starts and its static routes 404 until `npm install && npm run build` has run. The project's original "clone and run, no installs" property is gone for the UI | Low — documentation-shaped, no security impact | Jay (@Jay-cli) | Consequence of `DECISION-024`, accepted implicitly when that decision was made and recorded explicitly here. Mitigated by documentation only: `README.md` Quick Start, `frontend/README.md`, and `CONTRIBUTING.md` all state the build step. Not otherwise mitigated — the alternative (committing build output) was rejected as making generated code look like reviewable source | On any change to the build/serve arrangement |
+| `RISK-011` | **(v5, records an already-accepted risk)** `ISSUE-0013`'s device-code abandonment "fails open": if every delivery attempt of `POST /api/auth/abandon` fails, or the tab closes mid-retry, cleanup is never acknowledged and nothing observable records that. The abandoned attempt's own ~15-minute server-side expiry is then the only backstop | Low–medium — a token the user believes abandoned can remain installed until natural expiry | Jay (@Jay-cli) | **Accepted by the human at `DECISION-027`**, exactly as documented: loopback-only delivery, ~16-minute retry window (deliberately past the attempt's own expiry), tab-closure/permanent-failure as the sole uncovered case. Listed here because it was accepted in an issue record while no roadmap entry existed to carry it — a roadmap-level risk register that omits it is incomplete. `ISSUE-0013`'s option 2 (an observable cleanup-pending state) remains available as future work | If the abandon mechanism is revisited |
+
 Critical or high security findings cannot use the default risk-acceptance path.
 `RISK-002` as widened, `RISK-005`, `RISK-006`, and `RISK-007` were each decided
 by the human (`DECISION-014`) rather than accepted or inferred by an agent.
+**(v5)** `RISK-011` was likewise decided by the human (`DECISION-027`) and is
+recorded here, not accepted here. `RISK-009` and `RISK-010` are **new and
+undecided**: they are placed on the register so the human can decide them, and
+neither is claimed as accepted or mitigated by this roadmap version.
 
 ## Definitions of done
 
@@ -407,3 +528,30 @@ five new/modified risks, a materially widened `RISK-002`, and a narrowed
 non-goal. It therefore requires its own Codex plan review and its own human
 decision record; `DECISION-003` does not cover it. The approved-and-executed M1
 content above is unchanged by v4 except where explicitly marked `(v4)`.
+
+**(v5)** This version is also such a change, and is **not yet approved**. It
+adds `M3`, three issues (`ISSUE-0012`, `ISSUE-0013`, `ISSUE-0014`), three risks
+(`RISK-009`, `RISK-010`, `RISK-011`), a first-class statement of the
+`DECISION-024` build-step exception's bounds, and a correction to a
+verification-strategy claim that had become false. It therefore requires its own
+fresh Codex plan review and its own human decision record; `DECISION-003` and
+`DECISION-015` do not cover it. The approved-and-executed M1 and M2 content is
+unchanged by v5 except where explicitly marked `(v5)`.
+
+Two things about v5 are unusual and are stated plainly rather than smoothed
+over:
+
+1. **It is partly retroactive.** `ISSUE-0012` and `ISSUE-0013` are already
+   implemented, reviewed, and merged. Approving v5 does not approve them —
+   they were already merged under `DECISION-025` and `DECISION-027`. It binds
+   them to a milestone so they are no longer orphaned, and so `ISSUE-0014` has
+   a parent. `ISSUE-0014` is the only genuinely forward-looking item, and it is
+   `PLANNED`, not started.
+2. **Its own required Codex plan review has not run.** `codex` was not
+   available in the environment where this version was drafted, so the launcher
+   could not be invoked. Per `AGENTS.md` an unavailable Codex tool **blocks**;
+   it is never silently skipped or relabelled. v5 therefore stays `DRAFT` until
+   either that review runs against this exact commit, or the human records an
+   explicit decision to approve directly from the record — the route
+   `DECISION-015` took for v4 when its review loop hit the five-iteration cap.
+   Approving directly is the human's call to make, not an agent's to assume.

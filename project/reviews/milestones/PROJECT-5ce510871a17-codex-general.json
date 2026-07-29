@@ -1,0 +1,109 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-29T19:13:31Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faf4a-ce68-7263-9f81-938b51b1937f"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "The isolated checkout is clean and HEAD exactly matches the launcher target.",
+        "reference": "5ce510871a17677fe862e3098972d9a85a6727a9",
+        "source": "command"
+      },
+      {
+        "detail": "The project record instead identifies 802ea4d5d9cb92a6c5dd26ce7022ebe65bb8b589 as the frozen candidate and binds all recorded verification results to that different commit.",
+        "reference": "project/milestones/PROJECT.md:5",
+        "source": "file"
+      },
+      {
+        "detail": "CURRENT.md likewise says the project review is frozen at candidate 802ea4d, not the launcher target 5ce5108.",
+        "reference": "project/status/CURRENT.md:208",
+        "source": "file"
+      },
+      {
+        "detail": "The recorded evidence claims 188 backend tests, 91 frontend tests, compilation, governance validation, build, and CI passed against 802ea4d.",
+        "reference": "project/milestones/PROJECT.md:53",
+        "source": "file"
+      },
+      {
+        "detail": "Independent backend execution at the launcher target ran 188 tests but ended with 76 errors because the sandbox prohibits loopback socket binding.",
+        "reference": "python3 -m unittest discover -s tests (exit 1)",
+        "source": "check"
+      },
+      {
+        "detail": "Independent compilation and governance validation could not complete because the read-only sandbox provides no writable bytecode or temporary directory.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py'); python3 scripts/validate_repo.py (both exit 1)",
+        "source": "check"
+      },
+      {
+        "detail": "Frontend tests and build could not execute because dependencies are absent; vitest and tsc were not found. Installing them was neither authorized nor possible in this read-only, network-restricted review.",
+        "reference": "cd frontend && npm test (exit 127); cd frontend && npm run build (exit 127)",
+        "source": "check"
+      },
+      {
+        "detail": "Static inspection found the three milestones recorded complete and accepted, project-wide residual risks listed, onboarding and rollback documented, and no whitespace errors from git diff --check.",
+        "reference": "project/milestones/PROJECT.md:41",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Launcher target: 5ce510871a17677fe862e3098972d9a85a6727a9.",
+          "project/milestones/PROJECT.md names 802ea4d5d9cb92a6c5dd26ce7022ebe65bb8b589 as the frozen candidate.",
+          "The verification table explicitly says its checks were re-executed against 802ea4d, while repository rules prohibit PASS when target identity or evidence differs.",
+          "The shallow checkout does not contain object 802ea4d, so tree identity between the recorded candidate and launcher target cannot be independently established.",
+          "Required checks at 5ce5108 either failed for sandbox reasons or could not start, leaving no independently verified exact-target execution evidence."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 5,
+            "path": "project/milestones/PROJECT.md"
+          },
+          {
+            "line": 53,
+            "path": "project/milestones/PROJECT.md"
+          },
+          {
+            "line": 208,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Freeze and name the exact commit intended for review consistently in project/milestones/PROJECT.md, project/status/CURRENT.md, and the launcher binding. Run and record all required checks against that same exact commit in an environment supporting writable temporary files, loopback sockets, and the already-approved frontend dependencies, then launch a fresh review against it.",
+        "severity": "high",
+        "title": "Launcher target differs from the frozen and verified project candidate",
+        "verification": "Confirm git rev-parse HEAD, the launcher target, PROJECT.md's Frozen candidate SHA, CURRENT.md's project candidate, and every check-evidence SHA are identical; then independently run backend tests, frontend tests, compilation, governance validation, and frontend build with successful exit statuses."
+      }
+    ],
+    "limitations": [
+      "The launcher supplied no base commit, and the checkout is shallow/grafted with only the target object, so full-project ancestry, cross-issue diffs, merge history, and claimed tree identity with 802ea4d could not be independently verified.",
+      "The sandbox blocks loopback socket binding, causing 76 of 188 backend tests to error despite 112 completing without reported failure.",
+      "The read-only filesystem prevents Python bytecode and temporary-directory writes, blocking py_compile and governance validation.",
+      "Frontend dependencies are absent, and network/install actions are unavailable, so the 91 Vitest tests and production build could not be rerun.",
+      "Network access is unavailable, so the claimed green GitHub Actions run and repository branch hygiene could not be queried.",
+      "Live-tenant authentication and Graph retrieval were not performed; the repository records this as a protected, accepted evidence gap.",
+      "No automated real-browser suite is recorded; browser evidence remains a prior manual walkthrough plus jsdom tests."
+    ],
+    "mode": "milestone-general",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "5ce510871a17677fe862e3098972d9a85a6727a9",
+    "schema_version": "1.0",
+    "summary": "The project records show broad milestone traceability, documentation, known limitations, and prior check results, and no new product defect was established by static inspection. The review is BLOCKED because the launcher targets 5ce5108 while the project package and all recorded verification evidence are frozen at 802ea4d, and the sandbox could not independently reproduce the required checks at the launcher target.",
+    "target_id": "PROJECT"
+  },
+  "test_only": false
+}

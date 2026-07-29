@@ -1,0 +1,130 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-29T19:13:42Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faf4a-ce77-7752-b5fb-c5047cb7feed"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "HEAD and the launcher target both resolve to 5ce510871a17677fe862e3098972d9a85a6727a9; the working tree was clean and detached.",
+        "reference": "git rev-parse HEAD; git status --short --branch",
+        "source": "command"
+      },
+      {
+        "detail": "The target record declares a different frozen candidate, 802ea4d5d9cb92a6c5dd26ce7022ebe65bb8b589, and says its verification was executed against that different SHA.",
+        "reference": "project/milestones/PROJECT.md:4",
+        "source": "file"
+      },
+      {
+        "detail": "Independent backend execution ran 188 tests but failed with 76 errors because the read-only sandbox prohibited loopback socket binding.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Frontend tests could not run because dependencies were absent and vitest was unavailable.",
+        "reference": "cd frontend && npm test -- --run",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not complete because the read-only environment provided no writable temporary directory.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The committed record reports successful backend, frontend, compile, governance, build, and CI checks, but binds them to 802ea4d5d9cb92a6c5dd26ce7022ebe65bb8b589 rather than the launcher target.",
+        "reference": "project/milestones/PROJECT.md:51",
+        "source": "file"
+      },
+      {
+        "detail": "Static inspection covered the application trust boundaries, authentication state, Graph egress, request validation, rendering sinks, secret handling, dependency manifest/lockfile, CI workflow, tests, and documented residual risks.",
+        "reference": "docs/security-boundaries.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "attack_preconditions": "A reviewer or human gate would need to treat a report for launcher target 5ce510871a17677fe862e3098972d9a85a6727a9 as validating the separately named frozen candidate 802ea4d5d9cb92a6c5dd26ce7022ebe65bb8b589.",
+        "blocking": true,
+        "category": "review-integrity",
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "disposition": "open",
+        "evidence": [
+          "The launcher requires review of 5ce510871a17677fe862e3098972d9a85a6727a9.",
+          "project/milestones/PROJECT.md names 802ea4d5d9cb92a6c5dd26ce7022ebe65bb8b589 as the frozen candidate and binds its verification evidence to that SHA.",
+          "The isolated checkout is grafted and contains only the target commit, so the claimed frozen SHA cannot be resolved or compared independently."
+        ],
+        "exploitability": "This is a deterministic gate-integrity failure rather than a product exploit. It can cause stale or wrong-commit evidence to be accepted for the final project package.",
+        "fingerprint": "PROJECT-SEC-TARGET-IDENTITY-MISMATCH",
+        "id": "SEC-001",
+        "impact": "The security review cannot establish that its inspected tree, the recorded frozen candidate, and the existing execution evidence identify one exact candidate. Repository rules explicitly require wrong-SHA evidence to block.",
+        "locations": [
+          {
+            "line": 4,
+            "path": "project/milestones/PROJECT.md"
+          },
+          {
+            "line": 53,
+            "path": "project/milestones/PROJECT.md"
+          }
+        ],
+        "remediation": "Choose one exact candidate SHA and synchronize the launcher binding, target record, status record, and all verification evidence to it. Then launch fresh general and security reviews against that same SHA.",
+        "severity": "high",
+        "title": "Launcher target differs from the recorded frozen candidate",
+        "verification": "In a fresh checkout, confirm git rev-parse HEAD equals the frozen candidate recorded in project/milestones/PROJECT.md and that every check/report names that same full SHA."
+      },
+      {
+        "attack_preconditions": "None; the evidence gap exists in the supplied review environment.",
+        "blocking": true,
+        "category": "verification-evidence",
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "disposition": "open",
+        "evidence": [
+          "Backend tests failed with 76 PermissionError results when server tests attempted loopback binds.",
+          "Frontend tests exited 127 because vitest was not installed.",
+          "Governance validation failed because no writable temporary directory was available.",
+          "Live tenant end-to-end authentication and Graph retrieval were not performed, as acknowledged by the target record."
+        ],
+        "exploitability": "Unverified regressions or environment-dependent security defects could remain undetected because required checks could not be independently completed against the supplied target.",
+        "fingerprint": "PROJECT-SEC-EXECUTION-EVIDENCE-INCOMPLETE",
+        "id": "SEC-002",
+        "impact": "The reviewer cannot independently validate authentication endpoints, origin enforcement, security headers, frontend safety tests, or governance checks. The prompt requires missing or failed security evidence to block.",
+        "locations": [
+          {
+            "line": 56,
+            "path": "project/milestones/PROJECT.md"
+          }
+        ],
+        "remediation": "Provide a fresh read-only review environment that permits loopback test sockets and writable ephemeral storage, with lockfile-resolved frontend dependencies already available without an unapproved install. Run all required checks against the synchronized candidate and retain exact outputs. Live tenant testing remains a separately approved protected action and must stay explicitly recorded if not performed.",
+        "severity": "medium",
+        "title": "Required security-relevant checks could not be independently executed",
+        "verification": "Run backend tests, frontend tests, compile validation, governance validation, and frontend build successfully against the exact candidate; record command, exit status, and relevant output. Confirm any CI evidence also names that SHA."
+      }
+    ],
+    "limitations": [
+      "The checkout is a grafted single-commit view, so commit 802ea4d5d9cb92a6c5dd26ce7022ebe65bb8b589 and its relationship to the target could not be independently resolved.",
+      "Network access was unavailable; GitHub Actions state, dependency advisories, npm provenance, Microsoft endpoints, and live Graph behavior were not independently checked.",
+      "The read-only sandbox prohibited loopback socket binding and temporary-file creation.",
+      "Frontend dependencies were not present, and installation was neither authorized nor possible in the read-only environment.",
+      "No live tenant end-to-end test was performed; this is documented as requiring separate human approval."
+    ],
+    "mode": "milestone-security",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "5ce510871a17677fe862e3098972d9a85a6727a9",
+    "schema_version": "1.0",
+    "summary": "Blocked. The launcher target is not the frozen candidate named by the target record, and required security-relevant checks could not be independently completed in the supplied environment. Static inspection did not support a passing conclusion in the presence of these mandatory evidence failures.",
+    "target_id": "PROJECT"
+  },
+  "test_only": false
+}

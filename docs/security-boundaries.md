@@ -156,13 +156,18 @@ policies, so these project-specific rules apply on top of the general boundaries
   served page keeps `default-src 'self'` and loads nothing from a CDN or any
   external origin, so this is the *only* path in; and no dependency touches
   the Python process that handles tokens and secrets.
-  What does not limit it, and should not be assumed to: nothing pins or
-  audits transitive versions beyond the lockfile, `npm audit` is not run
-  anywhere, and **CI does not build the frontend or run its tests at all**
-  (`ISSUE-0014`), so a dependency change reaching `main` is reviewed by
-  humans reading a lockfile diff or not at all. This residual has **not**
-  been accepted by the human — it is recorded as `RISK-009` in `ROADMAP.md`
-  awaiting that decision, and this document does not claim it is mitigated.
+  What still does not limit it, and should not be assumed to: nothing pins
+  or audits transitive versions beyond the lockfile, and `npm audit` is not
+  run anywhere. **CI now builds the frontend and runs its tests on every
+  push and pull request** (`ISSUE-0014`, merged), so a broken build or a
+  failing test is caught automatically — but a *malicious-but-passing*
+  dependency change reaching `main` is still reviewed only by a human
+  reading a lockfile diff, or not at all; CI running the build does not
+  audit what the build pulled in. This residual **has been accepted by the
+  human** as `RISK-009` (`DECISION-028`), on the basis that the tool is
+  low-traffic and single-user; it is recorded in `ROADMAP.md` and this
+  document does not claim the underlying supply-chain exposure is
+  mitigated, only that CI now exercises the build path.
 - **Frontend rendering safety (`M3`).** The rule is unchanged from the
   vanilla UI — untrusted tenant strings (policy and display names) are
   rendered as text, never as HTML — but the *mechanism* changed and so does
@@ -175,8 +180,9 @@ policies, so these project-specific rules apply on top of the general boundaries
   scans `src/` for exactly those sinks, and
   `frontend/src/test/hostileMarkup.test.tsx` renders a hostile fixture shared
   with `tests/test_ui_safety.py`'s Python-side check, so the property is
-  asserted from both sides. Both are Vitest tests, which means — until
-  `ISSUE-0014` lands — they run only when someone runs them locally.
+  asserted from both sides. Both are Vitest tests, and CI now runs them on
+  every push and pull request (`ISSUE-0014`, merged), not only whenever
+  someone happens to run them locally.
 - **App-only mode cannot narrow its own scope (`RISK-006`).** Client-
   credentials requests always use Microsoft's `.default` scope, which
   returns every application permission the target app registration already

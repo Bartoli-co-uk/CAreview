@@ -1,12 +1,14 @@
 # ISSUE-0014: Wire the frontend build and test suite into CI
 
-**Status:** `REVIEWING`
+**Status:** `REPAIRING`
 **Milestone:** `M3`
 **Approved roadmap:** `ROADMAP.md` version `5`, `APPROVED` (`DECISION-029`, binds `8ea41ee`).
 **Dependencies:** `ISSUE-0012` (frontend exists to build/test)
 **Branch:** `ai/ISSUE-0014-frontend-ci`
 **Starting SHA:** `8e864a38e03d0df90c79a469c0e1fdf740da7904`
-**Candidate SHA:** round 0 is this commit — the launcher records the full HEAD SHA
+**Candidate SHA:** round 0 `c4cb4d28f9b710e4f24366ec6fbb61e810246d96` (`BLOCKED`,
+F-001: stale `CURRENT.md` rows); round 1 candidate is this commit — the
+launcher records the full HEAD SHA
 
 ## Objective
 
@@ -115,7 +117,7 @@ broken Python check already does.
 
 | Round | Claude handoff | Candidate SHA | Check evidence | Fresh Codex report | Outcome |
 |---:|---|---|---|---|---|
-| — | *Not started* | — | — | — | — |
+| 0 | This record's Required checks table | `c4cb4d28f9b710e4f24366ec6fbb61e810246d96` | 188 backend tests, py_compile, validate_repo.py, frontend build, 91 frontend tests, negative-CI local fallback — all recorded above | `project/reviews/issues/ISSUE-0014-c4cb4d28f9b7-codex.json` | `BLOCKED` — F-001 (medium): `CURRENT.md` contained stale rows contradicting this candidate |
 
 Maximum two repair rounds. Every Codex review/re-review must be a new ephemeral read-only process against the named SHA.
 No workflow loop may exceed five total iterations; the tighter two-round issue

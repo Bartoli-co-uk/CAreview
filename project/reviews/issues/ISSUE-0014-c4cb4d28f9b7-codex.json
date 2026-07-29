@@ -1,0 +1,107 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-29T17:34:37Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faef0-246c-7272-9fee-4280ddb12907"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "8e864a38e03d0df90c79a469c0e1fdf740da7904",
+    "evidence": [
+      {
+        "detail": "HEAD and the launcher target both resolve to c4cb4d28f9b710e4f24366ec6fbb61e810246d96; the working tree is clean and detached at that commit.",
+        "reference": "git rev-parse HEAD; git status --short --branch",
+        "source": "command"
+      },
+      {
+        "detail": "The base-to-target diff changes six allowed files: the workflow, README.md, CONTRIBUTING.md, and ISSUE-0014 governance records. No product source or dependency manifest changed.",
+        "reference": "git diff --name-status 8e864a38e03d0df90c79a469c0e1fdf740da7904 c4cb4d28f9b710e4f24366ec6fbb61e810246d96",
+        "source": "diff"
+      },
+      {
+        "detail": "The workflow SHA-pins actions/setup-node, selects Node 22, enables npm caching from frontend/package-lock.json, and runs npm ci, npm run build, and npm test in frontend/ after the existing Python checks.",
+        "reference": ".github/workflows/validate.yml:25",
+        "source": "file"
+      },
+      {
+        "detail": "README.md and CONTRIBUTING.md now describe frontend build and test coverage in CI.",
+        "reference": "README.md:435; CONTRIBUTING.md:71",
+        "source": "file"
+      },
+      {
+        "detail": "git diff --check completed successfully.",
+        "reference": "git diff --check 8e864a38e03d0df90c79a469c0e1fdf740da7904 c4cb4d28f9b710e4f24366ec6fbb61e810246d96",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not execute to completion because the read-only review environment provides no writable temporary directory; it raised FileNotFoundError before producing a result.",
+        "reference": "python3 -B scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The backend suite ran 188 tests but failed with 76 errors because the review sandbox prohibits loopback socket binding; affected tests raised PermissionError in ThreadingHTTPServer.bind().",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "frontend/node_modules is absent. The read-only, network-restricted review environment cannot run npm ci or create the build output, so the frontend build, positive test run, and negative-test proof could not be independently reproduced.",
+        "reference": "frontend/node_modules; filesystem and network restrictions",
+        "source": "limitation"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: project/status/CURRENT.md must be an internally consistent current-state index naming the current gate and next permitted action.",
+          "Observed: line 207 says ISSUE-0014 is start-authorized and awaiting review, while line 213 says it is PLANNED/not started, line 222 says deciding whether to start it remains open, and line 223 says CI still omits the frontend and ISSUE-0014 is not started.",
+          "The same candidate adds DECISION-030 and changes the workflow to run the frontend checks, so the contradictory statements are stale at the reviewed SHA."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 213,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 222,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 223,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Update the current-state table so the milestone, blockers, and tracked-follow-up rows consistently state that ISSUE-0014 is implemented and under round-0 review, and that the candidate workflow now contains the frontend CI steps. Keep any hosted-runner/YAML execution limitation explicit.",
+        "severity": "medium",
+        "title": "Current-state index contradicts the candidate’s issue and CI status",
+        "verification": "At the repaired commit, search project/status/CURRENT.md for ISSUE-0014, “not started,” and “CI still does not run”; confirm every current-state statement agrees with the active ISSUE_REVIEW gate and the workflow diff, then rerun governance validation."
+      }
+    ],
+    "limitations": [
+      "The mandatory governance check could not complete because no writable temporary directory is available.",
+      "The backend suite could not pass because sandbox policy blocks its loopback socket tests; 76 of 188 tests errored for that environmental reason.",
+      "The frontend build and tests could not be independently executed because dependencies are absent and the environment is read-only and network-restricted.",
+      "The recorded positive and negative frontend results in project/issues/ISSUE-0014.md are author-provided summaries rather than independently reproducible raw output in this checkout.",
+      "No local or hosted GitHub Actions runner evidence verifies workflow parsing, action resolution, Node setup, cache behavior, or step-level failure propagation. DECISION-029 accepts the narrower negative-proof residual, but it does not supply execution evidence for this review.",
+      "The SHA-pinned actions/setup-node identity and its v7.0.0 annotation could not be independently verified without network access.",
+      "The candidate deliberately leaves stale pre-delivery statements in ROADMAP.md, project/milestones/M3.md, and docs/security-boundaries.md because those paths are outside ISSUE-0014’s allowed implementation scope; these remain documentation residuals for later governed reconciliation."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "c4cb4d28f9b710e4f24366ec6fbb61e810246d96",
+    "schema_version": "1.0",
+    "summary": "BLOCKED. The workflow change itself is scoped and structurally matches the principal CI acceptance criteria, but project/status/CURRENT.md contains material contradictions about whether ISSUE-0014 started and whether frontend CI exists. Mandatory checks also could not be independently completed in the read-only, network-restricted sandbox, so repository rules prohibit a passing outcome. Residual risks include unverified GitHub Actions execution/action identity and intentionally stale delivery statements outside the issue’s allowed paths.",
+    "target_id": "ISSUE-0014"
+  },
+  "test_only": false
+}

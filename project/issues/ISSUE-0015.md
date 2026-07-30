@@ -1,8 +1,8 @@
 # ISSUE-0015: Analyzer rule — location-restriction presence
 
 **Status:** `PLANNED` — drafted for human review; not yet authorized to start
-**Milestone:** `None yet` — requires a new roadmap version/milestone before work may begin (roadmap v5's milestones are all `COMPLETE`; this is new scope)
-**Approved roadmap:** `pending` — no roadmap version currently covers this work; `AGENTS.md` requires an approved roadmap before implementation starts
+**Milestone:** `M4` — bound by roadmap v6 (analyzer rule-set expansion); `M4` itself is `PLANNED`, not started
+**Approved roadmap:** `pending` — `ROADMAP.md` version `6` (`DRAFT`) proposes this work under `M4`; not yet human-approved. `AGENTS.md` requires an approved roadmap before implementation starts, and a separate human decision to start this specific issue even after v6 is approved
 **Dependencies:** `None`
 **Branch:** `ai/ISSUE-0015-location-restriction-rule` (not yet created)
 **Starting SHA:** `not yet created`

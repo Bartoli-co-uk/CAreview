@@ -1,8 +1,8 @@
 # ISSUE-0018: Analyzer rule — phishing-resistant authentication strength for admins
 
 **Status:** `PLANNED` — drafted for human review; not yet authorized to start
-**Milestone:** `None yet` — requires a new roadmap version/milestone before work may begin (roadmap v5's milestones are all `COMPLETE`; this is new scope)
-**Approved roadmap:** `pending` — no roadmap version currently covers this work; `AGENTS.md` requires an approved roadmap before implementation starts
+**Milestone:** `M4` — bound by roadmap v6 (analyzer rule-set expansion); `M4` itself is `PLANNED`, not started
+**Approved roadmap:** `pending` — `ROADMAP.md` version `6` (`DRAFT`) proposes this work under `M4`; not yet human-approved. `AGENTS.md` requires an approved roadmap before implementation starts, and a separate human decision to start this specific issue even after v6 is approved
 **Dependencies:** `None` (independent of `ISSUE-0015`/`ISSUE-0016`/`ISSUE-0017`; may be sequenced after them or in parallel once all are authorized)
 **Branch:** `ai/ISSUE-0018-phishing-resistant-mfa-rule` (not yet created)
 **Starting SHA:** `not yet created`
@@ -46,24 +46,46 @@ unverifiable fact, per `AGENTS.md`'s evidence discipline.
   `PHISHING_RESISTANT_STRENGTH_ID = "00000000-0000-0000-0000-000000000004"`
   with a comment citing the source above; new
   `Rule("phishing-resistant-mfa-admins", ...)`, high severity, weight 15,
-  plus a `_check_phishing_resistant_mfa_admins` function reusing
-  `ADMIN_ROLE_TEMPLATE_IDS` and the same full-admin-role-union coverage
-  pattern as `_check_mfa_for_admins`. PASS requires the union of enabled
-  policies scoped to admin roles to fully cover `ADMIN_ROLE_TEMPLATE_IDS`,
-  each with `grantControls.authenticationStrengthId ==
-  PHISHING_RESISTANT_STRENGTH_ID`.
+  plus a `_check_phishing_resistant_mfa_admins` function using the **same
+  effective-coverage algorithm specified in `ISSUE-0017`** (deliberately
+  more precise than `_check_mfa_for_admins`'s existing pattern, which
+  ignores `excludeRoles` and doesn't handle an `includeUsers: ["All"]`
+  policy contributing role coverage — Codex's round-1 plan review, F-004,
+  flagged that copying it verbatim would carry the same ambiguity into
+  this new rule; the existing, already-accepted `mfa-admins` rule itself is
+  unchanged by this issue), adapted to this rule's qualifying condition:
+
+  1. **Qualifying policies**: enabled policies where
+     `grantControls.authenticationStrengthId == PHISHING_RESISTANT_STRENGTH_ID`.
+  2. **Effectively covered roles, per qualifying policy**: if `"All"` is in
+     `includeUsers`, the policy covers `ADMIN_ROLE_TEMPLATE_IDS` **minus**
+     any of those role IDs present in `excludeRoles`. Otherwise, the policy
+     covers `(includeRoles ∩ ADMIN_ROLE_TEMPLATE_IDS) minus excludeRoles`.
+  3. **PASS** iff the union of effectively-covered-roles across *all*
+     qualifying policies equals `ADMIN_ROLE_TEMPLATE_IDS`. Non-qualifying
+     policies (e.g. admin-scoped but with plain MFA, not phishing-resistant
+     strength) are excluded from the union and never subtract from or block
+     coverage a qualifying policy already established for the same role.
 - `README.md` — one new "What it checks" table row (rationale must state the
   documented limitation below, not bury it in code comments only); update
   rule-count/total-weight sentence.
 - `tests/test_graph.py` — extend the missing-fields/malformed-nested-objects
   tests to assert `grantControls["authenticationStrengthId"] == ""` on
   missing/malformed input, plus one positive-shape test.
-- `tests/test_analyzer.py` — at least three cases: (1) admin-scoped enabled
+- `tests/test_analyzer.py` — at least six cases: (1) admin-scoped enabled
   policy with `builtInControls: ["mfa"]` only, no authentication strength →
   FAIL; (2) same policy with `authenticationStrengthId` set to the
   phishing-resistant ID, full admin-role union → PASS; (3) same as (2) but
   with the *plain* MFA strength ID (`...002`) instead → still FAIL (proves
-  the check is strength-specific, not "any strength configured").
+  the check is strength-specific, not "any strength configured");
+  (4) a qualifying `includeUsers: ["All"]` policy that also `excludeRoles`
+  one admin role, with no other policy covering that role → FAIL; (5) a
+  qualifying policy covering all admin roles, PLUS a second, non-qualifying
+  policy (plain MFA only) also scoped to one of those roles → still PASS
+  (proves a non-qualifying overlapping policy doesn't subtract established
+  coverage); (6) two qualifying policies whose role sets only jointly cover
+  `ADMIN_ROLE_TEMPLATE_IDS` → PASS (proves the union, not a single-policy
+  check).
 
 ## Out of scope
 
@@ -85,14 +107,16 @@ unverifiable fact, per `AGENTS.md`'s evidence discipline.
 ## Acceptance criteria
 
 1. `python3 -m unittest discover -s tests` passes, including the new
-   `test_graph.py` cases and all three `phishing-resistant-mfa-admins`
+   `test_graph.py` cases and all six `phishing-resistant-mfa-admins`
    analyzer cases.
 2. The hardcoded `PHISHING_RESISTANT_STRENGTH_ID` is re-verified against a
    current, cited source at implementation time (not copy-pasted from this
    issue file without a fresh check) and the source is cited in a code
    comment, mirroring how `ADMIN_ROLE_TEMPLATE_IDS` cites its source.
-3. The rule requires full admin-role-union coverage, not a single narrow
-   policy.
+3. The rule implements the effective-coverage algorithm exactly as specified
+   in `ISSUE-0017` (adapted to this rule's qualifying condition) — not a
+   single narrow-policy check, and not a verbatim copy of `mfa-admins`'s
+   simpler pattern.
 4. The custom-authentication-strength limitation is documented in both
    `rules.py`'s rationale string and the `README.md` table row.
 5. `README.md`'s "What it checks" table and rule-count/total-weight sentence

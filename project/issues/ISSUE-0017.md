@@ -1,8 +1,8 @@
 # ISSUE-0017: Analyzer rule — admin-scoped sign-in frequency / no persistent browser
 
 **Status:** `PLANNED` — drafted for human review; not yet authorized to start
-**Milestone:** `None yet` — requires a new roadmap version/milestone before work may begin (roadmap v5's milestones are all `COMPLETE`; this is new scope)
-**Approved roadmap:** `pending` — no roadmap version currently covers this work; `AGENTS.md` requires an approved roadmap before implementation starts
+**Milestone:** `M4` — bound by roadmap v6 (analyzer rule-set expansion); `M4` itself is `PLANNED`, not started
+**Approved roadmap:** `pending` — `ROADMAP.md` version `6` (`DRAFT`) proposes this work under `M4`; not yet human-approved. `AGENTS.md` requires an approved roadmap before implementation starts, and a separate human decision to start this specific issue even after v6 is approved
 **Dependencies:** `None` (independent of `ISSUE-0015`/`ISSUE-0016`; may be sequenced after them or in parallel once all are authorized)
 **Branch:** `ai/ISSUE-0017-admin-signin-frequency-rule` (not yet created)
 **Starting SHA:** `not yet created`
@@ -30,27 +30,52 @@ the same `identity/conditionalAccess/policies` call CAreview already makes.
   raises). Must not change the existing `sessionControls` key's current
   shape or its test contract (still `[]` on malformed input).
 - `rules.py` — new `Rule("admin-signin-frequency", ...)`, medium severity,
-  weight 10, plus a `_check_admin_signin_frequency` function reusing
-  `ADMIN_ROLE_TEMPLATE_IDS` and the existing full-admin-role-union coverage
-  pattern from `_check_mfa_for_admins` (a single narrow policy must not
-  overstate admin coverage). **PASS** requires: the union of enabled
-  policies scoped to admin roles fully covers `ADMIN_ROLE_TEMPLATE_IDS`, AND
-  each covering policy has `signInFrequency.enabled` true with either
-  `frequencyInterval == "everyTime"` or (`type == "hours"` and
-  `1 <= value <= 4`) — human-confirmed threshold — AND
-  `persistentBrowser.mode != "always"`. A day-scale interval, a disabled/
-  missing `signInFrequency`, or `persistentBrowser.mode == "always"` all
-  FAIL, even if the frequency value looks short.
+  weight 10, plus a `_check_admin_signin_frequency` function using the
+  **effective-coverage algorithm** below (deliberately more precise than
+  `_check_mfa_for_admins`'s existing pattern, which ignores `excludeRoles`
+  and doesn't handle an `includeUsers: ["All"]` policy contributing role
+  coverage — Codex's round-1 plan review, F-004, flagged that copying it
+  verbatim would carry the same ambiguity into this new rule; the existing,
+  already-accepted `mfa-admins` rule itself is unchanged by this issue):
+
+  1. **Qualifying policies**: enabled policies where `signInFrequency.enabled`
+     is true with either `frequencyInterval == "everyTime"` or (`type ==
+     "hours"` and `1 <= value <= 4` — human-confirmed threshold), AND
+     `persistentBrowser.mode != "always"`. A day-scale interval, a disabled/
+     missing `signInFrequency`, or `persistentBrowser.mode == "always"` all
+     disqualify a policy, even if some other part of it looks compliant.
+  2. **Effectively covered roles, per qualifying policy**: if `"All"` is in
+     `includeUsers`, the policy covers `ADMIN_ROLE_TEMPLATE_IDS` **minus**
+     any of those role IDs present in `excludeRoles` (an all-users policy
+     that excludes a specific admin role does not cover that role).
+     Otherwise, the policy covers `(includeRoles ∩ ADMIN_ROLE_TEMPLATE_IDS)
+     minus excludeRoles`.
+  3. **PASS** iff the union of effectively-covered-roles across *all*
+     qualifying policies equals `ADMIN_ROLE_TEMPLATE_IDS`. Non-qualifying
+     policies (e.g. admin-scoped but with too-long a frequency) are simply
+     excluded from the union — they never subtract from or block coverage
+     a qualifying policy already established for the same role; this is
+     the direct fix for F-004's "overlapping compliant/non-compliant
+     policies" ambiguity.
 - `README.md` — one new "What it checks" table row; update rule-count/total-
   weight sentence.
 - `tests/test_graph.py` — extend the missing-fields/malformed-nested-objects
   tests for the two new keys' safe defaults, plus one positive-shape test.
-- `tests/test_analyzer.py` — at least three cases: (1) admin-scoped enabled
+- `tests/test_analyzer.py` — at least six cases: (1) admin-scoped enabled
   policy with `signInFrequency` disabled → FAIL; (2) same policy with
   `signInFrequency` enabled at `frequencyInterval: "everyTime"` (or 1–4
   hours) and `persistentBrowser.mode: "never"`, full admin-role union → PASS;
   (3) same as (2) but `persistentBrowser.mode: "always"` → still FAIL (proves
-  the persistent-browser half is enforced independently of frequency).
+  the persistent-browser half is enforced independently of frequency);
+  (4) a qualifying `includeUsers: ["All"]` policy that also `excludeRoles`
+  one admin role, with no other policy covering that role → FAIL (proves
+  the all-users-minus-exclusion computation); (5) a qualifying policy
+  covering all admin roles, PLUS a second, non-qualifying policy (frequency
+  disabled) also scoped to one of those roles → still PASS (proves a
+  non-qualifying overlapping policy doesn't subtract established coverage);
+  (6) two qualifying policies whose role sets only jointly cover
+  `ADMIN_ROLE_TEMPLATE_IDS` (neither alone does) → PASS (proves the union,
+  not a single-policy check).
 - `tests/fixtures/strong_tenant.json` — one new, narrowly-scoped additive
   policy entry satisfying this rule without perturbing any of the 14 other
   rules' pass/fail state.
@@ -72,13 +97,17 @@ the same `identity/conditionalAccess/policies` call CAreview already makes.
 ## Acceptance criteria
 
 1. `python3 -m unittest discover -s tests` passes, including the new
-   `test_graph.py` cases and all three `admin-signin-frequency` analyzer
+   `test_graph.py` cases and all six `admin-signin-frequency` analyzer
    cases.
 2. `normalize_policy({})` gains exactly the two new top-level keys described
    above, both safely defaulted; no existing normalized field is removed,
    renamed, or reshaped.
-3. The rule requires **full** admin-role-union coverage, not a single narrow
-   policy — mirroring `mfa-admins`'s existing coverage discipline.
+3. The rule implements the effective-coverage algorithm exactly as specified
+   (role coverage computed per qualifying policy, including the
+   all-users-minus-`excludeRoles` case; union across qualifying policies
+   only; non-qualifying policies never subtract established coverage) —
+   not a single narrow-policy check, and not a verbatim copy of
+   `mfa-admins`'s simpler pattern.
 4. `README.md`'s "What it checks" table and rule-count/total-weight sentence
    match `rules.py` exactly.
 5. `test_strong_tenant_scores_high` (or equivalent) continues to expect a

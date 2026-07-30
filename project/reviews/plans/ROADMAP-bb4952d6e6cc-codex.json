@@ -1,0 +1,193 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-30T17:27:23Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fb40f-947b-7e72-b9f8-a89aa72d1bcf"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "Repository HEAD exactly matches the launcher-bound target commit.",
+        "reference": "bb4952d6e6cc7a14eda10a30c1dbcb74f09bf8cd",
+        "source": "command"
+      },
+      {
+        "detail": "The target record exists and identifies roadmap v6 as DRAFT pending Codex review and human approval.",
+        "reference": "ROADMAP.md",
+        "source": "file"
+      },
+      {
+        "detail": "Reviewed the approved brief, roadmap, all proposed M4 work items, current-state record, workflow/security governance, and the existing analyzer and normalization contracts.",
+        "reference": "project/brief/PROJECT_BRIEF.md; ROADMAP.md; project/issues/ISSUE-0015.md; project/issues/ISSUE-0016.md; project/issues/ISSUE-0017.md; project/issues/ISSUE-0018.md; project/status/CURRENT.md; rules.py; graph.py",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "ROADMAP.md:231 marks M3 COMPLETE under DECISION-032.",
+          "ROADMAP.md:234-241 immediately states that M3 is not COMPLETE, its milestone reviews have not run, and ISSUE-0014 may still be pending.",
+          "This contradiction prevents the roadmap from being a reliable current-state and dependency record for M4, whose dependency is M3 COMPLETE."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 231,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 234,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Remove or rewrite the obsolete M3 paragraph so it consistently records M3 as complete and accepted under DECISION-032.",
+        "severity": "medium",
+        "title": "Roadmap contradicts itself about the M3 prerequisite",
+        "verification": "Re-read the milestone and M3 sequence sections and confirm every M3 status, gate, and next-action statement agrees with DECISION-032."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "ROADMAP.md:232 defines M4 and binds ISSUE-0015 through ISSUE-0018 to it as planned work.",
+          "Each proposed issue still says `Milestone: None yet` and claims no roadmap version currently covers the work.",
+          "The workflow requires issue records to identify their roadmap and milestone before implementation; retaining these assertions after v6 approval would leave the durable work-item records contradictory."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 4,
+            "path": "project/issues/ISSUE-0015.md"
+          },
+          {
+            "line": 4,
+            "path": "project/issues/ISSUE-0016.md"
+          },
+          {
+            "line": 4,
+            "path": "project/issues/ISSUE-0017.md"
+          },
+          {
+            "line": 4,
+            "path": "project/issues/ISSUE-0018.md"
+          }
+        ],
+        "remediation": "Set each issue's milestone to M4 and describe roadmap v6 as the pending, not-yet-approved governing roadmap candidate. Keep implementation explicitly blocked until exact human approval and separate issue-start authorization.",
+        "severity": "medium",
+        "title": "M4 work-item metadata denies the roadmap association that v6 establishes",
+        "verification": "Confirm ISSUE-0015 through ISSUE-0018 consistently name M4 and roadmap v6 while retaining PLANNED status and both human gates."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "ISSUE-0016 defines PASS whenever a scoped policy has a non-empty `grantControls.termsOfUse`.",
+          "The proposed rule does not require `grantControls.operator == \"AND\"`; with an OR grant-control operator, Terms of Use may be an alternative rather than required.",
+          "The proposed tests cover only absent versus non-empty Terms of Use and therefore cannot detect this false pass.",
+          "The scope definition also does not state how excluded users or roles affect whether a policy is meaningfully scoped."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 28,
+            "path": "project/issues/ISSUE-0016.md"
+          },
+          {
+            "line": 38,
+            "path": "project/issues/ISSUE-0016.md"
+          }
+        ],
+        "remediation": "Define effective scope including relevant exclusions and require semantics that actually make Terms of Use mandatory, including appropriate handling of the grant-control operator. Add negative tests for an OR-combined Terms of Use control and for excluded target scope.",
+        "severity": "high",
+        "title": "Terms-of-Use rule can pass when acceptance is optional",
+        "verification": "Run analyzer tests showing that a scoped AND policy requiring Terms of Use passes, while an OR policy where Terms of Use is only an alternative and a policy excluding the claimed target scope do not pass."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "ISSUE-0017 says to union enabled admin-scoped policies and then require `each covering policy` to satisfy the session controls, which is ambiguous when compliant and non-compliant policies overlap.",
+          "ISSUE-0018 uses the same formulation for authentication strength.",
+          "The existing `_check_mfa_for_admins` first filters qualifying policies and unions their included roles, but it ignores `excludeRoles` and all-users policies; copying it verbatim does not establish effective coverage of every admin role.",
+          "The planned tests cover full included-role union but do not cover exclusions, all-users coverage, or overlapping compliant/non-compliant policies."
+        ],
+        "id": "F-004",
+        "locations": [
+          {
+            "line": 32,
+            "path": "project/issues/ISSUE-0017.md"
+          },
+          {
+            "line": 48,
+            "path": "project/issues/ISSUE-0017.md"
+          },
+          {
+            "line": 45,
+            "path": "project/issues/ISSUE-0018.md"
+          },
+          {
+            "line": 57,
+            "path": "project/issues/ISSUE-0018.md"
+          },
+          {
+            "line": 85,
+            "path": "rules.py"
+          }
+        ],
+        "remediation": "Specify a single effective-coverage algorithm for both rules: determine which policies satisfy the required control, compute the admin roles each such policy effectively covers after inclusions and exclusions, and require their union to cover the governed admin-role set. Explicitly decide how `includeUsers: [\"All\"]` and exclusions contribute. Add tests for exclusions and overlapping qualifying/non-qualifying policies.",
+        "severity": "high",
+        "title": "Admin-rule coverage semantics are ambiguous and can misstate effective role protection",
+        "verification": "Run tests proving excluded roles are not counted, overlapping weak policies do not invalidate coverage supplied by qualifying policies, uncovered roles fail, and the documented treatment of all-users policies is enforced."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "medium",
+        "evidence": [
+          "M4 changes the analyzer response contents and README-facing rule count at the project milestone level.",
+          "ROADMAP.md:232 requires only Python tests, Python compilation, and governance validation for the frozen M4 candidate.",
+          "The repository's established frontend checks exercise consumption of `/api/analysis`, and AGENTS.md lists `cd frontend && npm test` plus the UI build as project commands.",
+          "A milestone general review must cover integration and regressions, but the M4 exit criteria omit executable frontend/build regression evidence."
+        ],
+        "id": "F-005",
+        "locations": [
+          {
+            "line": 232,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Add `cd frontend && npm test` and a reproducible frontend build check (`npm ci` or the repository-approved clean-install equivalent followed by `npm run build`) to the M4 frozen-candidate exit criteria, or explicitly justify and obtain human agreement for excluding them.",
+        "severity": "medium",
+        "title": "M4 milestone verification omits the frontend integration checks",
+        "verification": "Record successful frontend test and build results against the same frozen M4 candidate used for the Python and governance checks."
+      }
+    ],
+    "limitations": [
+      "No external Microsoft documentation was accessed because network access is restricted. ISSUE-0018 appropriately requires fresh implementation-time verification of the authentication-strength ID, so that external fact remains unverified in this review.",
+      "Implementation checks were not run because this is a roadmap review of unimplemented work; feasibility was assessed against the committed source and current test contracts.",
+      "Review scope focused on the proposed v6/M4 delta while checking completed milestones and governance records for dependency consistency."
+    ],
+    "mode": "plan",
+    "outcome": "CHANGES_REQUIRED",
+    "reviewed_sha": "bb4952d6e6cc7a14eda10a30c1dbcb74f09bf8cd",
+    "schema_version": "1.0",
+    "summary": "Target identity is valid, and M4 is broadly feasible and appropriately decomposed, but the roadmap is not ready for approval. It contains contradictory milestone/work-item state, underspecifies rule semantics in ways that can produce false posture results, and omits frontend integration checks from the M4 frozen-candidate gate.",
+    "target_id": ""
+  },
+  "test_only": false
+}

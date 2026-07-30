@@ -40,6 +40,27 @@ No `rules.py`, `README.md`, or `tests/test_analyzer.py` source content
 changed in this round — only `project/issues/ISSUE-0015.md`, this handoff,
 `project/status/CURRENT.md`, and the two new decision records.
 
+### Round 1 verification (real, run in this task's environment)
+
+| Check | Exact command | Actual result/exit |
+|---|---|---|
+| Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 |
+| Tests | `python3 -m unittest discover -s tests` | 190 passed, exit 0 |
+| Governance | `python3 scripts/validate_repo.py` | passed (67 required files checked) |
+
+### Round 1 fresh Codex review
+
+The round-1 fresh Codex issue review
+(`project/reviews/issues/ISSUE-0015-31c94a824cc7-codex.json`) returned
+`findings: []` — zero content findings against the repaired candidate. Its
+`BLOCKED` outcome is solely the review sandbox's inability to reproduce the
+three required checks (denied `__pycache__` write, denied loopback socket
+binding for `test_server.py`, no writable temp directory for
+`validate_repo.py`'s smoke tests) — the same failure class `ISSUE-0014`'s
+round-2 review hit and the human accepted (`DECISION-031`). This is
+presented to the human as the round-1 outcome for an advance/merge
+decision; it is not self-declared as passing.
+
 ## Outcome
 
 Implemented in full. Adds the `location-restriction-present` analyzer rule

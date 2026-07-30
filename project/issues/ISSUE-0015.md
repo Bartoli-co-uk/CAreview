@@ -103,6 +103,9 @@ at least one enabled Conditional Access policy conditions on a named location
 | Round | Reviewed SHA | Outcome | Findings |
 |---|---|---|---|
 | 0 | `1ff0b987d2f75377589e6c4875724b94aef81591` | `BLOCKED` | F-001 (medium: candidate-identity mismatch between issue/handoff and reviewed HEAD); F-002 (medium: `strong_tenant.json` changed outside allowed paths); F-003 (high: no durable ISSUE-0015 start-authorization record) — see `project/reviews/issues/ISSUE-0015-1ff0b987d2f7-codex.json` |
+| 1 | `31c94a824cc7ae85e0baadc926f9cd94faaab8fc` | `BLOCKED` | Zero content findings (`findings: []`). Blocked solely because the review sandbox could not independently reproduce the three required checks: `py_compile` denied `__pycache__` write, `unittest discover` had 76 `test_server.py` setup errors from denied loopback socket binding, and `validate_repo.py` had no writable temp directory. Same failure class as `ISSUE-0014`'s accepted round-2 residual. All three required checks were independently run in this task's own environment with real, non-sandboxed results: compile exit 0, `python3 -m unittest discover -s tests` → 190 passed, `python3 scripts/validate_repo.py` → passed (67 required files) — see the "Verification evidence" section of `project/handoffs/ISSUE-0015-handoff.md`. See `project/reviews/issues/ISSUE-0015-31c94a824cc7-codex.json` |
 
-Round 0's F-001 and F-002 are repaired in this same round-1 commit; F-003 is
-resolved by `DECISION-035`.
+Round 0's F-001 and F-002 were repaired in the round-1 commit; F-003 was
+resolved by `DECISION-035`. Round 1's sole blocker is the sandbox
+execution-evidence limitation, presented to the human for an advance/merge
+decision rather than treated as a passing outcome on its own.

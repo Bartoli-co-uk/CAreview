@@ -92,9 +92,13 @@ unverifiable fact, per `AGENTS.md`'s evidence discipline.
 - Recognizing tenant-defined **custom** authentication strengths that
   happen to be restricted to phishing-resistant methods (FIDO2/certificate/
   Windows Hello) — this rule only recognizes Microsoft's built-in
-  phishing-resistant strength by ID. This is an accepted MVP limitation and
-  must be stated explicitly in the rule's rationale and the README row, not
-  silently hidden.
+  phishing-resistant strength by ID. This is a **proposed** MVP limitation,
+  tracked as `ROADMAP.md`'s `RISK-012` — it is not yet an accepted residual
+  (Codex's round-2 plan review, F-002: an agent may not infer risk
+  acceptance). It must be stated explicitly in the rule's rationale and the
+  README row regardless of acceptance status, and this issue may not start
+  until the human has recorded `RISK-012`'s acceptance (or an alternative
+  treatment) as part of approving roadmap v6.
 - The other three proposed rules (`location-restriction-present`,
   `terms-of-use-required`, `admin-signin-frequency`) — each is its own
   issue.

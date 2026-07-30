@@ -53,7 +53,7 @@ at least one enabled Conditional Access policy conditions on a named location
    the existing `test_every_rule_has_metadata` contract test).
 3. `README.md`'s "What it checks" table and rule-count/total-weight sentence
    are updated to match `rules.py` exactly.
-4. The rule does not regress any of the 14 other rules' pass/fail state on
+4. The rule does not regress any pre-existing rule's pass/fail state on
    the existing `strong_tenant.json`/`weak_tenant.json`/`incomplete_tenant.json`
    fixtures (no fixture changes are needed for this issue).
 

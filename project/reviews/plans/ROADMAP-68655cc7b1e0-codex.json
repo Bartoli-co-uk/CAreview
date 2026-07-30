@@ -1,0 +1,160 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-30T17:34:27Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fb415-fc84-7321-bbf9-0e5087410c27"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "Repository HEAD exactly matches the launcher-supplied target commit.",
+        "reference": "68655cc7b1e0a63db3d6b37debf834c126bb60e0",
+        "source": "command"
+      },
+      {
+        "detail": "ROADMAP.md exists and identifies roadmap v6 as DRAFT pending review and human approval.",
+        "reference": "ROADMAP.md:6",
+        "source": "file"
+      },
+      {
+        "detail": "Reviewed the approved brief, roadmap, proposed ISSUE-0015 through ISSUE-0018 records, workflow/status records, relevant security documentation, and current normalization/rule implementation.",
+        "reference": "project/brief/PROJECT_BRIEF.md",
+        "source": "file"
+      },
+      {
+        "detail": "The governance validator could not complete because the read-only review environment provided no writable temporary directory; it failed while creating a TemporaryDirectory, before producing a validation result.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "The rule is described as requiring short re-authentication “with no persistent browser session.”",
+          "The qualifying algorithm accepts any policy whose persistentBrowser.mode is not \"always\", so a missing/defaulted value of \"\" qualifies.",
+          "The positive test uses mode \"never\", but there is no test proving that missing or disabled persistent-browser control fails.",
+          "Without an explicit \"never\" control, the analyzer lacks evidence that persistent browser sessions are prohibited."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 41,
+            "path": "project/issues/ISSUE-0017.md"
+          },
+          {
+            "line": 64,
+            "path": "project/issues/ISSUE-0017.md"
+          },
+          {
+            "line": 352,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Require persistentBrowser to be enabled with mode exactly \"never\" (or revise the stated product requirement through an explicit human decision). Add fail cases for missing, disabled, and empty-mode controls while retaining the existing \"always\" failure case.",
+        "severity": "medium",
+        "title": "Admin sign-in-frequency rule can pass without prohibiting persistent browser sessions",
+        "verification": "Review the amended qualifying algorithm and run analyzer tests demonstrating FAIL for missing/disabled/empty/always persistentBrowser values and PASS only for enabled mode \"never\" with an otherwise qualifying frequency."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "ISSUE-0018 calls the custom-authentication-strength false-negative limitation “an accepted MVP limitation.”",
+          "ROADMAP.md RISK-012 says the same limitation is new, still needs an explicit human treatment decision, and must be accepted before v6 approval.",
+          "AGENTS.md prohibits agents from inferring risk acceptance."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 90,
+            "path": "project/issues/ISSUE-0018.md"
+          },
+          {
+            "line": 459,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Change ISSUE-0018 to describe the limitation as proposed/pending human acceptance, and make issue start or completion explicitly depend on the recorded RISK-012 decision. Do not label it accepted until the human records that decision.",
+        "severity": "medium",
+        "title": "ISSUE-0018 incorrectly records an unaccepted residual risk as accepted",
+        "verification": "Confirm ROADMAP.md, ISSUE-0018, CURRENT.md, and the eventual decision record consistently distinguish proposed treatment from human acceptance."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "The current rules.RULES list contains 10 rules.",
+          "ISSUE-0015 says its implementation must avoid regression of “14 other rules,” although it is the first M4 issue and therefore has only 10 pre-existing rules.",
+          "ISSUE-0017 similarly refers to 14 other rules, although sequential implementation would leave 12 pre-existing rules before it.",
+          "These counts make the acceptance criteria inaccurate and cannot be verified literally."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 56,
+            "path": "project/issues/ISSUE-0015.md"
+          },
+          {
+            "line": 80,
+            "path": "project/issues/ISSUE-0017.md"
+          }
+        ],
+        "remediation": "Replace fixed incorrect counts with “all pre-existing rules,” or use the correct issue-specific counts. Keep the milestone-level expectation that the completed rule set totals 14 rules and weight 160.",
+        "severity": "low",
+        "title": "Per-issue regression criteria use impossible existing-rule counts",
+        "verification": "Count rules.RULES at each issue baseline and confirm each issue criterion refers unambiguously to every rule present before that issue."
+      },
+      {
+        "blocking": false,
+        "classification": "ADVISORY",
+        "confidence": "high",
+        "evidence": [
+          "The M4 milestone summary says all four rules read fields currently dropped by normalize_policy.",
+          "ISSUE-0015 explicitly requires no graph.py change because includeLocations/excludeLocations are already captured.",
+          "Current graph.normalize_policy already retains both location fields."
+        ],
+        "id": "F-004",
+        "locations": [
+          {
+            "line": 232,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 333,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Qualify the milestone description: all rules use fields already returned by the existing Graph call, while only ISSUE-0016 through ISSUE-0018 require newly retained normalized fields.",
+        "severity": "low",
+        "title": "M4 summary inaccurately says every proposed rule uses currently dropped fields",
+        "verification": "Compare the revised roadmap wording with graph.py and each issue's data-contract section."
+      }
+    ],
+    "limitations": [
+      "The governance validator did not complete because the read-only environment had no usable writable temporary directory; therefore no successful validator evidence is available for this target.",
+      "External Microsoft/CIS claims were not independently checked over the network because network access is restricted. ISSUE-0018 appropriately requires fresh source verification at implementation time, but the exact source citation and retrieval evidence remain pending.",
+      "No implementation tests were run because this is a roadmap review of unimplemented work; feasibility was assessed against the current source and test contracts."
+    ],
+    "mode": "plan",
+    "outcome": "CHANGES_REQUIRED",
+    "reviewed_sha": "68655cc7b1e0a63db3d6b37debf834c126bb60e0",
+    "schema_version": "1.0",
+    "summary": "Roadmap v6 is identity-bound correctly and substantially improved, but it still needs three corrections before approval: ISSUE-0017 can pass without an explicit non-persistent-browser control, ISSUE-0018 claims human acceptance that has not occurred, and two issue-level regression criteria use incorrect rule counts. One additional roadmap wording inconsistency is advisory. Governance validation could not complete in the read-only environment.",
+    "target_id": ""
+  },
+  "test_only": false
+}

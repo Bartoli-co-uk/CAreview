@@ -41,9 +41,15 @@ the same `identity/conditionalAccess/policies` call CAreview already makes.
   1. **Qualifying policies**: enabled policies where `signInFrequency.enabled`
      is true with either `frequencyInterval == "everyTime"` or (`type ==
      "hours"` and `1 <= value <= 4` — human-confirmed threshold), AND
-     `persistentBrowser.mode != "always"`. A day-scale interval, a disabled/
-     missing `signInFrequency`, or `persistentBrowser.mode == "always"` all
-     disqualify a policy, even if some other part of it looks compliant.
+     `persistentBrowser.mode == "never"` **exactly** — not merely
+     `!= "always"` (Codex's round-2 plan review, F-001: the rule's own stated
+     requirement is "no persistent browser session," and a missing/disabled/
+     empty-string `persistentBrowser.mode` is not evidence that persistence
+     is prohibited, only that it wasn't configured either way). A day-scale
+     interval, a disabled/missing `signInFrequency`, or any
+     `persistentBrowser.mode` other than exactly `"never"` (including
+     `"always"`, empty, or absent) all disqualify a policy, even if some
+     other part of it looks compliant.
   2. **Effectively covered roles, per qualifying policy**: if `"All"` is in
      `includeUsers`, the policy covers `ADMIN_ROLE_TEMPLATE_IDS` **minus**
      any of those role IDs present in `excludeRoles` (an all-users policy
@@ -61,24 +67,31 @@ the same `identity/conditionalAccess/policies` call CAreview already makes.
   weight sentence.
 - `tests/test_graph.py` — extend the missing-fields/malformed-nested-objects
   tests for the two new keys' safe defaults, plus one positive-shape test.
-- `tests/test_analyzer.py` — at least six cases: (1) admin-scoped enabled
+- `tests/test_analyzer.py` — at least nine cases: (1) admin-scoped enabled
   policy with `signInFrequency` disabled → FAIL; (2) same policy with
   `signInFrequency` enabled at `frequencyInterval: "everyTime"` (or 1–4
   hours) and `persistentBrowser.mode: "never"`, full admin-role union → PASS;
-  (3) same as (2) but `persistentBrowser.mode: "always"` → still FAIL (proves
-  the persistent-browser half is enforced independently of frequency);
-  (4) a qualifying `includeUsers: ["All"]` policy that also `excludeRoles`
-  one admin role, with no other policy covering that role → FAIL (proves
-  the all-users-minus-exclusion computation); (5) a qualifying policy
-  covering all admin roles, PLUS a second, non-qualifying policy (frequency
-  disabled) also scoped to one of those roles → still PASS (proves a
-  non-qualifying overlapping policy doesn't subtract established coverage);
+  (3) same as (2) but `persistentBrowser.mode: "always"` → still FAIL;
+  (3a) same as (2) but `persistentBrowser` entirely absent/disabled → still
+  FAIL; (3b) same as (2) but `persistentBrowser.mode: ""` (present but no
+  mode set) → still FAIL — (3), (3a), and (3b) together prove
+  `mode == "never"` is required exactly, not merely "not always" (Codex's
+  round-2 plan review, F-001); (4) a qualifying `includeUsers: ["All"]`
+  policy that also `excludeRoles` one admin role, with no other policy
+  covering that role → FAIL (proves the all-users-minus-exclusion
+  computation); (5) a qualifying policy covering all admin roles, PLUS a
+  second, non-qualifying policy (frequency disabled) also scoped to one of
+  those roles → still PASS (proves a non-qualifying overlapping policy
+  doesn't subtract established coverage);
   (6) two qualifying policies whose role sets only jointly cover
   `ADMIN_ROLE_TEMPLATE_IDS` (neither alone does) → PASS (proves the union,
   not a single-policy check).
 - `tests/fixtures/strong_tenant.json` — one new, narrowly-scoped additive
-  policy entry satisfying this rule without perturbing any of the 14 other
-  rules' pass/fail state.
+  policy entry satisfying this rule without perturbing any pre-existing
+  rule's pass/fail state (12 rules will pre-exist at this issue's baseline,
+  assuming `ISSUE-0015` and `ISSUE-0016` land first per the sequencing
+  above — the exact count is whatever `rules.RULES` holds at the actual
+  implementation baseline, not a number fixed by this document).
 
 ## Out of scope
 
@@ -97,7 +110,7 @@ the same `identity/conditionalAccess/policies` call CAreview already makes.
 ## Acceptance criteria
 
 1. `python3 -m unittest discover -s tests` passes, including the new
-   `test_graph.py` cases and all six `admin-signin-frequency` analyzer
+   `test_graph.py` cases and all nine `admin-signin-frequency` analyzer
    cases.
 2. `normalize_policy({})` gains exactly the two new top-level keys described
    above, both safely defaulted; no existing normalized field is removed,

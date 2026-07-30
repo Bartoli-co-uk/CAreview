@@ -1,6 +1,6 @@
 # Project-level final review: CAreview
 
-**Status:** `REVIEWING`
+**Status:** `AWAITING_HUMAN_APPROVAL` — both rounds of the four-review gate are complete; general-remediation budget exhausted per `AGENTS.md`; see "Human decision" below.
 **Approved roadmap:** `ROADMAP.md` version `5`, `APPROVED` (`DECISION-029`, binds `8ea41ee`)
 **Frozen candidate SHA:** round 1 was `5ce510871a17677fe862e3098972d9a85a6727a9` (the freeze commit itself — both round-1 general reviewers correctly blocked because this field then named `802ea4d`, the product-identical parent, instead of the actual reviewed commit). Round 2 (this repair) is this commit — the launcher records the full HEAD SHA. Product/backend/frontend content has been unchanged since `861f401`/`802ea4d`; only `project/`-tree and `README.md` files differ across all three commits.
 **Tree identity:** working tree clean; 188 backend tests, `py_compile` clean, `validate_repo.py` clean, `cd frontend && npm run build && npm test` clean (91 passed), CI green on `main` (confirmed via `gh run watch`)
@@ -88,9 +88,23 @@ launched as background processes before either Claude report was
 written, and both Claude reports were written without reading
 `project/reviews/milestones/PROJECT-*` first.
 
-**Round 2 (this repair) has not yet run** — see "Findings, remediation,
-and invalidation" below. A fresh set of all four reviews against this
-commit is the next required action.
+**Round 2** (candidate `917764a46cea280480f4bc40f2fbc7478dde5f9b`, the round-1
+repair):
+
+| Order | Fresh review | Report path | Reviewed SHA | Outcome |
+|---:|---|---|---|---|
+| 1 | Claude general | `project/reviews/milestones/PROJECT-917764a46cea-claude-general.md` | `917764a46cea…` | `PASS_WITH_NOTES` |
+| 2 | Codex general | `project/reviews/milestones/PROJECT-917764a46cea-codex-general.json` | `917764a46cea…` | `BLOCKED` |
+| 3 | Claude security | `project/reviews/milestones/PROJECT-917764a46cea-claude-security.md` | `917764a46cea…` | `PASS_WITH_NOTES` |
+| 4 | Codex security | `project/reviews/milestones/PROJECT-917764a46cea-codex-security.json` | `917764a46cea…` | `BLOCKED` |
+
+Initial peer conclusions were withheld for round 2 too: **yes**, same
+independence discipline as round 1.
+
+**This was the second general/security review cycle (round 1 → round 2
+was the one permitted general-remediation cycle; `AGENTS.md` allows at
+most one).** Per that limit, round 2's findings (below) are not repaired
+by a further automated round — they are presented to the human.
 
 ## Findings, remediation, and invalidation
 
@@ -151,20 +165,61 @@ staleness/omission defects (both general reviews' F-002 / both security
 reviews' SEC-002). No product, backend, frontend, or CI-config file
 changed in this repair.
 
-- General-remediation cycles used: **`1` (maximum 1) — exhausted**, this
-  round.
-- Security-remediation cycles used: `1` (maximum 2).
-- Highest iteration count for any loop: `2` (round 1 + round 2; absolute
-  maximum 5).
-- Reviews invalidated and rerun: this repair creates a new candidate per
-  `AGENTS.md` — round 1's four reports above remain on record but are
-  superseded; all four reviews must run fresh against the new candidate
-  (this commit) before any human decision.
-- Critical/high findings remaining: **none on product code.** Every
-  finding across all four round-1 reviews was either the shared
-  candidate-binding defect or the `README.md` disclosure staleness — no
-  reviewer identified a product-code correctness or security defect
-  anywhere in the project.
+**Round-2 general findings (both against `917764a46cea…`, the round-1 repair):**
+
+- **Claude general — `PASS_WITH_NOTES`:** confirmed both round-1 findings
+  fixed by direct inspection (candidate-binding field, `README.md`'s
+  three risk rows); no new finding.
+- **Codex general — `BLOCKED`, one finding (F-001, high):** the repair
+  fixed `README.md`'s disclosure staleness but did not fully fix the
+  candidate-binding defect — this file's verification table explicitly
+  bound its command evidence to round 1's SHA (`5ce5108…`) rather than
+  the actual round-2 candidate itself, and `project/status/CURRENT.md`'s
+  own project-review rows (lines 223/225) still named `802ea4d`,
+  contradicting the launcher target. A narrower, second instance of the
+  same defect class round 1 found.
+
+**Round-2 security findings (both against `917764a46cea…`):**
+
+- **Claude security — `PASS_WITH_NOTES`:** confirmed both round-1
+  findings fixed; no new security-relevant finding — this round's diff
+  touched only `README.md` prose and this file, nothing in scope of
+  auth/secrets/CSP/dependencies/CI.
+- **Codex security — `BLOCKED`, two findings:** `SEC-001` (high,
+  `PROJECT-SEC-STALE-CANDIDATE-EVIDENCE`) — same verification-table
+  binding defect Codex general found, security-framed: a human gate
+  could otherwise accept round-1 evidence as if it validated the
+  round-2 candidate without independently confirming tree equivalence.
+  `SEC-002` (medium) — the review sandbox's own recurring inability to
+  complete required checks (loopback sockets, temp dir, frontend
+  dependencies, network), the same accepted-elsewhere limitation class,
+  not a new finding about this candidate's actual security posture.
+
+**All four round-2 reviewers converged**: the repair fixed the
+disclosed-content defect (`README.md`) fully, but only partially fixed
+the candidate-binding defect — it explained *why* the verification table
+still referenced round 1's SHA (product content unchanged), but per
+`AGENTS.md`'s strict rule, evidence must be bound to the *exact* candidate
+under review, not cross-referenced to a prior one with a rationale.
+`CURRENT.md`'s own lines 223/225 were also missed.
+
+- General-remediation cycles used: **`1` (maximum 1) — exhausted.** Per
+  `AGENTS.md`, round 2's findings are **not** repaired by a third
+  automated round.
+- Security-remediation cycles used: `1` (maximum 2) — one remains, but is
+  moot without a new candidate, which requires resolving the exhausted
+  general-remediation budget first.
+- Highest iteration count for any loop: `3` (round 1 + round 2 + this
+  accounting; absolute maximum 5).
+- Reviews invalidated and rerun: round 1's four reports are superseded by
+  round 2's. Round 2's four reports stand as the current record pending
+  the human's decision below.
+- Critical/high findings remaining: **none, in either round.** Every
+  finding across both rounds and all eight review reports is a
+  governance-record/evidence-binding defect or a documentation-disclosure
+  defect (both now content-fixed; the binding mechanics remain the open
+  item) — no reviewer, in either round, identified a product-code
+  correctness or security defect.
 
 ## Documentation and release readiness
 
@@ -206,9 +261,63 @@ project-level definition of done requires ("security... accurate").
 
 ## Human decision
 
+Both rounds of the project-level four-review gate are complete. Round 1
+(candidate `5ce510871a17677fe862e3098972d9a85a6727a9`) was blocked by both
+general reviewers on a single defect class: this file's "Frozen candidate
+SHA" and verification-evidence table named the product-identical parent
+commit (`802ea4d`) rather than the actual reviewed candidate, plus a stale
+`README.md` risk-disclosure passage. Round 2 (candidate
+`917764a46cea280480f4bc40f2fbc7478dde5f9b`, the round-1 repair) fixed the
+`README.md` disclosure fully, but all four round-2 reviewers converged on
+a narrower, second instance of the same candidate-binding defect:
+
+- **Codex general — `BLOCKED`, F-001 (high):** the "Verification evidence"
+  table above still binds its command evidence to round 1's SHA
+  (`5ce510871a17…`) rather than round 2's actual candidate, and
+  `project/status/CURRENT.md`'s own project-review rows (Stage/Open
+  blockers cells) still named `802ea4d`, contradicting the launcher
+  target.
+- **Codex security — `BLOCKED`, SEC-001 (high) + SEC-002 (medium):**
+  SEC-001 is the same binding defect, security-framed — a human gate
+  could otherwise accept round-1 evidence as validating round 2 without
+  independently confirming tree equivalence. SEC-002 is the review
+  sandbox's own recurring inability to complete required checks
+  (loopback sockets, temp dir, frontend dependencies, network) — the
+  same already-accepted limitation class from every prior milestone
+  gate, not a new finding about this candidate.
+- **Claude general and Claude security — both `PASS_WITH_NOTES`:**
+  confirmed the round-1 findings fixed by direct inspection; neither
+  identified a new finding.
+
+**No reviewer, in either round, identified a product-code correctness or
+security defect anywhere in the project.** Every finding across both
+rounds and all eight reports is a governance-record/evidence-binding
+defect or a documentation-disclosure defect (the latter now fixed).
+
+`AGENTS.md` permits exactly one general-remediation cycle; it is now used
+(round 1 → round 2), and round 2 still found a binding defect. Per that
+limit, no further automated repair round is permitted without an explicit
+human decision to extend past it.
+
+**Options for the human:**
+1. **Accept round 2's residual candidate-binding and `CURRENT.md`-staleness
+   findings as documented, fix them as an ordinary follow-up commit (not a
+   new project-review candidate), and record final project approval
+   directly from this record** — the same disposition `DECISION-012` (M1),
+   `DECISION-023` (M2), and `DECISION-032` (M3) each gave their own
+   milestone gates at this same finding class (record staleness, never a
+   product defect).
+2. **Authorize a third review round** outside the normal one-cycle budget,
+   after the binding defect is fixed, to get a fully clean set of four
+   reports before any approval decision.
+3. **Reject or hold** final approval for other reasons.
+
 - Decision record: **none yet.**
-- Exact package/candidate approved: `N/A` — pending the four reviews above.
-- Result: `N/A`.
+- Exact package/candidate reviewed: round 1
+  `5ce510871a17677fe862e3098972d9a85a6727a9`; round 2 (current)
+  `917764a46cea280480f4bc40f2fbc7478dde5f9b`. Product/backend/frontend
+  content unchanged from `861f401`/`802ea4d` throughout both rounds.
+- Result: **pending** — see "Options for the human" above.
 
 Reviews passing means only that they passed for the documented scope, SHA,
 and evidence. It is not a security certification.

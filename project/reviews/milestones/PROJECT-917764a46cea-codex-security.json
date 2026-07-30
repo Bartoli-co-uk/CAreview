@@ -1,0 +1,142 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-29T19:22:05Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faf52-5f20-7913-bd34-00363f1641c3"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "The isolated checkout is clean and HEAD exactly matches the launcher target, 917764a46cea280480f4bc40f2fbc7478dde5f9b.",
+        "reference": "git status --porcelain=v1; git rev-parse HEAD",
+        "source": "command"
+      },
+      {
+        "detail": "The target record identifies this commit as the round-2 candidate, but its verification table explicitly binds all local checks to the earlier round-1 candidate 5ce510871a17677fe862e3098972d9a85a6727a9.",
+        "reference": "project/milestones/PROJECT.md",
+        "source": "file"
+      },
+      {
+        "detail": "The backend suite discovered 188 tests, but 76 server tests errored because the review sandbox prohibited loopback socket binding; exit status was 1.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Frontend tests could not start because frontend dependencies were absent and vitest was unavailable; exit status was 127.",
+        "reference": "cd frontend && npm test -- --run",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not complete because the read-only environment had no usable temporary directory; exit status was 1.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "Static inspection covered loopback Host/Origin controls, authentication state and secret retention, Graph URL validation and redirect refusal, static-file path controls, output escaping tests, dependency manifests, CI permissions, and documented residual risks.",
+        "reference": "server.py; auth.py; graph.py; frontend/src; frontend/package-lock.json; .github/workflows/validate.yml; docs/security-boundaries.md",
+        "source": "file"
+      },
+      {
+        "detail": "CI uses read-only contents permission, disables persisted checkout credentials, pins GitHub actions by commit SHA, installs frontend packages from the lockfile with npm ci, and runs backend/frontend/build/governance checks.",
+        "reference": ".github/workflows/validate.yml",
+        "source": "file"
+      },
+      {
+        "detail": "A static history/tree scan found no private-key marker, AWS access-key pattern, or apparent concrete client-secret assignment; matches were field names and function parameters only.",
+        "reference": "git grep secret-pattern scan",
+        "source": "check"
+      }
+    ],
+    "findings": [
+      {
+        "attack_preconditions": "A human gate would need to accept checks executed against the earlier round-1 commit as exact-candidate evidence for the new round-2 candidate without independently establishing tree equivalence and rerunning the required checks.",
+        "blocking": true,
+        "category": "review-integrity",
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "disposition": "open",
+        "evidence": [
+          "The launcher target and reviewed HEAD are 917764a46cea280480f4bc40f2fbc7478dde5f9b.",
+          "project/milestones/PROJECT.md binds backend tests, frontend tests, compilation, governance validation, build, and onboarding evidence to 5ce510871a17677fe862e3098972d9a85a6727a9.",
+          "AGENTS.md requires real checks against the exact candidate and states that a repair creating a new milestone candidate invalidates all four reports.",
+          "The supplied checkout is a grafted single-commit view with no parent, so the assertion that only documentation changed since the checked commit cannot be independently verified from this checkout."
+        ],
+        "exploitability": "This is a deterministic assurance-gate failure rather than a direct application exploit. It can allow regressions or security-relevant documentation/configuration changes in a new candidate to inherit stale evidence.",
+        "fingerprint": "PROJECT-SEC-STALE-CANDIDATE-EVIDENCE",
+        "id": "SEC-001",
+        "impact": "The review cannot establish that the required checks passed on the exact candidate. Repository rules and the launcher prompt require wrong-SHA, stale, or uncertain security evidence to block.",
+        "locations": [
+          {
+            "line": 4,
+            "path": "project/milestones/PROJECT.md"
+          },
+          {
+            "line": 28,
+            "path": "project/milestones/PROJECT.md"
+          },
+          {
+            "line": 51,
+            "path": "project/milestones/PROJECT.md"
+          }
+        ],
+        "remediation": "Run every required backend, frontend, build, compile, governance, and onboarding check against 917764a46cea280480f4bc40f2fbc7478dde5f9b itself and record the exact commands, results, and full candidate SHA. Then rerun both general and both security reviews against the resulting single candidate.",
+        "severity": "high",
+        "title": "Round-2 candidate relies on round-1 execution evidence",
+        "verification": "In a fresh checkout, confirm HEAD equals the candidate recorded by the launcher and that every verification row and retained command output names that same full SHA."
+      },
+      {
+        "attack_preconditions": "None; the evidence gap exists in the supplied review environment.",
+        "blocking": true,
+        "category": "verification-evidence",
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "disposition": "open",
+        "evidence": [
+          "Backend tests exited 1 with 76 PermissionError failures when server tests attempted loopback binds.",
+          "Frontend tests exited 127 because vitest and lockfile-resolved dependencies were unavailable.",
+          "Governance validation exited 1 because no writable temporary directory was available.",
+          "Network access was unavailable, so CI state and current dependency advisories could not be independently queried.",
+          "The target record states that no live tenant end-to-end authentication or Graph retrieval was performed."
+        ],
+        "exploitability": "Security regressions in HTTP boundary enforcement, frontend rendering, dependency behavior, or authentication integration could remain undetected because required checks were not independently completed.",
+        "fingerprint": "PROJECT-SEC-EXECUTION-EVIDENCE-INCOMPLETE",
+        "id": "SEC-002",
+        "impact": "The reviewer cannot independently verify security-relevant endpoint tests, frontend hostile-markup tests, governance checks, build integrity, CI results, or dependency advisory status. The prompt explicitly requires missing or failed evidence to block.",
+        "locations": [
+          {
+            "line": 51,
+            "path": "project/milestones/PROJECT.md"
+          }
+        ],
+        "remediation": "Provide a fresh read-only review environment with loopback sockets, writable ephemeral storage, and lockfile-resolved frontend dependencies already available. Run all required checks and an appropriate dependency advisory scan against the exact candidate, retaining concrete output. Keep the unperformed live-tenant test explicitly documented unless separately authorized.",
+        "severity": "medium",
+        "title": "Required security evidence could not be independently completed",
+        "verification": "Successfully run backend tests, frontend tests, frontend build, Python compilation, governance validation, and dependency scanning against one exact candidate; independently confirm commit-bound CI evidence. Record any still-unperformed protected live test as a limitation."
+      }
+    ],
+    "limitations": [
+      "The checkout is a grafted single-commit view with no parent or base commit, so historical tree-equivalence claims and the round-2 diff could not be independently verified.",
+      "Network access was unavailable; GitHub Actions state, package-registry advisories and provenance, Microsoft endpoints, and live Graph behavior were not independently checked.",
+      "The sandbox prohibited loopback socket binding and temporary-file creation.",
+      "Frontend dependencies were absent, and installing them was neither authorized nor possible in the read-only environment.",
+      "No live tenant end-to-end test was performed; the repository records this as requiring separate human approval.",
+      "Static inspection found no additional product-code security defect, but it cannot replace the missing execution and dependency evidence."
+    ],
+    "mode": "milestone-security",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "917764a46cea280480f4bc40f2fbc7478dde5f9b",
+    "schema_version": "1.0",
+    "summary": "Blocked within the documented review scope. The round-2 candidate relies on checks bound to the prior candidate, and required security-relevant checks could not be independently completed in the supplied sandbox. Static inspection found no additional product-code security defect, but stale and missing evidence precludes a passing outcome.",
+    "target_id": "PROJECT"
+  },
+  "test_only": false
+}

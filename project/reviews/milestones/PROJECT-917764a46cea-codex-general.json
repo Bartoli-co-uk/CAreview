@@ -1,0 +1,119 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-29T19:21:50Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019faf52-5f25-7c40-a01c-c6f9ffac610e"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "",
+    "evidence": [
+      {
+        "detail": "The isolated checkout is clean and detached at the launcher-supplied target commit.",
+        "reference": "917764a46cea280480f4bc40f2fbc7478dde5f9b",
+        "source": "command"
+      },
+      {
+        "detail": "The approved roadmap is version 5; M1, M2, and M3 are recorded complete with human acceptance decisions DECISION-012, DECISION-023, and DECISION-032.",
+        "reference": "project/milestones/PROJECT.md:41",
+        "source": "file"
+      },
+      {
+        "detail": "The round-2 milestone record does not state the exact frozen candidate SHA and binds its verification table to superseded round-1 commit 5ce510871a17677fe862e3098972d9a85a6727a9.",
+        "reference": "project/milestones/PROJECT.md:5",
+        "source": "file"
+      },
+      {
+        "detail": "The current-state index still identifies 802ea4d as the project-review candidate and instructs reviewers to review that commit, contradicting the launcher target.",
+        "reference": "project/status/CURRENT.md:223",
+        "source": "file"
+      },
+      {
+        "detail": "The README now discloses RISK-009, RISK-010, and the human-accepted RISK-011 abandonment limitation; the round-1 documentation-disclosure finding is substantively repaired.",
+        "reference": "README.md:503",
+        "source": "file"
+      },
+      {
+        "detail": "The independently runnable non-server Python subset passed: 107 tests, exit 0.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_auth tests.test_graph tests.test_analyzer tests.test_ui_safety",
+        "source": "check"
+      },
+      {
+        "detail": "The full backend suite discovered and ran 188 tests but exited 1 with 76 errors because the read-only sandbox denied loopback socket binding; the failures originated in server setup rather than assertions.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not complete because the read-only sandbox provides no writable temporary directory.",
+        "reference": "PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "Frontend tests could not start because node_modules is absent and vitest is unavailable; installing dependencies is not permitted in this review sandbox.",
+        "reference": "frontend/package.json",
+        "source": "limitation"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "The launcher binds this review to 917764a46cea280480f4bc40f2fbc7478dde5f9b.",
+          "project/milestones/PROJECT.md:5 calls the round-2 candidate only “this commit” rather than recording its exact SHA.",
+          "project/milestones/PROJECT.md:53-70 explicitly binds all recorded command evidence to superseded round-1 candidate 5ce510871a17677fe862e3098972d9a85a6727a9 or older product/CI commits.",
+          "project/status/CURRENT.md:223 and :225 still name 802ea4d as the project-review candidate and next review target.",
+          "AGENTS.md requires repository records alone to identify the reviewed candidate and requires BLOCKED for stale, contradictory, or wrong-commit evidence."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 5,
+            "path": "project/milestones/PROJECT.md"
+          },
+          {
+            "line": 53,
+            "path": "project/milestones/PROJECT.md"
+          },
+          {
+            "line": 223,
+            "path": "project/status/CURRENT.md"
+          },
+          {
+            "line": 225,
+            "path": "project/status/CURRENT.md"
+          }
+        ],
+        "remediation": "Because the one permitted general-remediation cycle is recorded as exhausted, stop for an exact human workflow decision. If authorized, create a new candidate whose milestone record and CURRENT.md consistently name the exact candidate and whose real check evidence is explicitly bound to it; then rerun all four milestone reviews as required.",
+        "severity": "high",
+        "title": "Round-2 candidate identity and verification evidence remain stale",
+        "verification": "Confirm the launcher target, PROJECT.md frozen-candidate field, every applicable verification-evidence SHA, and CURRENT.md candidate/next-action rows all identify one exact commit. Independently rerun the required checks against that same commit and rerun all four reviews."
+      }
+    ],
+    "limitations": [
+      "The supplied base commit is empty, and the isolated checkout exposes the target as a grafted/root commit, so no independently verifiable base diff is available.",
+      "Full backend verification is incomplete because sandbox policy denies loopback socket binding; 76 server tests errored during setup.",
+      "Governance validation is incomplete because no writable temporary directory is available.",
+      "Frontend build and tests are incomplete because dependencies are not installed and the read-only sandbox prevents installation.",
+      "The compile command writes bytecode and could not be run in the read-only candidate tree.",
+      "Network-reliant claims about GitHub Actions, remote branch hygiene, and live tenant behavior could not be independently verified.",
+      "No automated real-browser test exists; the recorded browser walkthrough is historical evidence.",
+      "No live tenant sign-in or Graph fetch was performed; this remains a documented protected-action evidence gap."
+    ],
+    "mode": "milestone-general",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "917764a46cea280480f4bc40f2fbc7478dde5f9b",
+    "schema_version": "1.0",
+    "summary": "BLOCKED. The README risk-disclosure repair is present and 107 independently runnable Python tests pass, but the repository still does not consistently bind the round-2 project review or its real verification evidence to the launcher target. CURRENT.md continues to direct review of 802ea4d, while PROJECT.md records checks against superseded commit 5ce5108. Required full checks also could not be completed in the read-only sandbox.",
+    "target_id": "PROJECT"
+  },
+  "test_only": false
+}

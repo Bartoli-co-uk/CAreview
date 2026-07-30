@@ -1,6 +1,6 @@
 # Project-level final review: CAreview
 
-**Status:** `AWAITING_HUMAN_APPROVAL` — both rounds of the four-review gate are complete; general-remediation budget exhausted per `AGENTS.md`; see "Human decision" below.
+**Status:** `COMPLETE` — accepted `DECISION-033`.
 **Approved roadmap:** `ROADMAP.md` version `5`, `APPROVED` (`DECISION-029`, binds `8ea41ee`)
 **Frozen candidate SHA:** round 1 was `5ce510871a17677fe862e3098972d9a85a6727a9` (the freeze commit itself — both round-1 general reviewers correctly blocked because this field then named `802ea4d`, the product-identical parent, instead of the actual reviewed commit). Round 2 (this repair) is this commit — the launcher records the full HEAD SHA. Product/backend/frontend content has been unchanged since `861f401`/`802ea4d`; only `project/`-tree and `README.md` files differ across all three commits.
 **Tree identity:** working tree clean; 188 backend tests, `py_compile` clean, `validate_repo.py` clean, `cd frontend && npm run build && npm test` clean (91 passed), CI green on `main` (confirmed via `gh run watch`)
@@ -50,24 +50,30 @@ still governs the M1/M2 content it delivered.
 
 ## Verification evidence
 
-Independently re-executed against the frozen **round-1** candidate
-`5ce510871a17677fe862e3098972d9a85a6727a9`. Round 1's Codex general and
-Codex security reviews both independently found this table, at the time,
-still bound to the product-identical parent commit (`802ea4d…`) rather
-than the actual reviewed candidate — real finding, fixed here. This
-repair commit changes `README.md` (two governance/`RISK` rows) and this
-file only — no product/backend/frontend/CI-config file — so the round-1
-results below remain the accurate, current state of the tree.
+Independently re-executed once, against a product/backend/frontend/CI-config
+tree that is **byte-identical across round 1's candidate**
+(`5ce510871a17677fe862e3098972d9a85a6727a9`) **and round 2's candidate**
+(`917764a46cea280480f4bc40f2fbc7478dde5f9b`, the round-1 repair) — neither
+repair touched any product, backend, frontend, or CI-config file, only
+`project/`-tree and `README.md`. Round 1's Codex general and Codex
+security reviews found this table bound to the product-identical parent
+commit (`802ea4d…`) rather than either actual reviewed candidate; round
+2's Codex general and Codex security reviews found the round-1 repair
+still bound it to round 1's SHA specifically rather than describing the
+identity explicitly, plus stale `CURRENT.md` rows (both fixed in this
+follow-up commit, accepted as ordinary record-hygiene per `DECISION-033`
+rather than requiring a third review round). The results below are the
+accurate, current state of the tree as of round 2's candidate.
 
-| Check | Command/method | Candidate SHA | Result | Evidence gap |
+| Check | Command/method | Candidate SHA (product state, identical round 1 ↔ round 2) | Result | Evidence gap |
 |---|---|---|---|---|
-| Backend tests | `python3 -m unittest discover -s tests` | `5ce510871a17…` | 188 passed, exit 0 | none |
-| Frontend tests | `cd frontend && npm test` | `5ce510871a17…` | 91 passed, 7 test files, exit 0 | none |
-| Compile | `python3 -m py_compile $(git ls-files '*.py')` | `5ce510871a17…` | exit 0 | none |
-| Governance | `python3 scripts/validate_repo.py` | `5ce510871a17…` | passed (67 required files) | none |
-| Frontend build | `cd frontend && npm run build` | `5ce510871a17…` | produced `web/index.html`/`index.css`/`index.js` | no build-provenance/lockfile-audit check (`RISK-009`, accepted `DECISION-028`) |
-| Fresh-clone onboarding | `git clone` to a scratch directory, then `cd frontend && npm install && npm run build && cd .. && python3 server.py` | `5ce510871a17…` | exit 0 throughout; `GET /api/health` → 200; `GET /` → 200 with CSP header present; no Python dependency manifest exists | none — independently reproduced from a genuinely fresh clone, not asserted from memory |
-| CI (GitHub Actions) | `.github/workflows/validate.yml`, `validate` job | `861f401` (product/CI-config identical to `5ce510871a17…`) | green — all 10 steps succeeded (confirmed via `gh run watch`) | reviewer sandboxes have no network access to independently query the Actions API |
+| Backend tests | `python3 -m unittest discover -s tests` | `5ce510871a17…` = `917764a46cea…` | 188 passed, exit 0 | none |
+| Frontend tests | `cd frontend && npm test` | `5ce510871a17…` = `917764a46cea…` | 91 passed, 7 test files, exit 0 | none |
+| Compile | `python3 -m py_compile $(git ls-files '*.py')` | `5ce510871a17…` = `917764a46cea…` | exit 0 | none |
+| Governance | `python3 scripts/validate_repo.py` | `5ce510871a17…` = `917764a46cea…` | passed (67 required files) | none |
+| Frontend build | `cd frontend && npm run build` | `5ce510871a17…` = `917764a46cea…` | produced `web/index.html`/`index.css`/`index.js` | no build-provenance/lockfile-audit check (`RISK-009`, accepted `DECISION-028`) |
+| Fresh-clone onboarding | `git clone` to a scratch directory, then `cd frontend && npm install && npm run build && cd .. && python3 server.py` | `5ce510871a17…` = `917764a46cea…` | exit 0 throughout; `GET /api/health` → 200; `GET /` → 200 with CSP header present; no Python dependency manifest exists | none — independently reproduced from a genuinely fresh clone, not asserted from memory |
+| CI (GitHub Actions) | `.github/workflows/validate.yml`, `validate` job | `861f401` (product/CI-config identical to both round-1 and round-2 candidates) | green — all 10 steps succeeded (confirmed via `gh run watch`) | reviewer sandboxes have no network access to independently query the Actions API |
 | Repository/branch hygiene | `git ls-remote --heads origin`; `gh api repos/.../branches` | — | exactly one branch, `main`, on `origin`; local `main` identical to `origin/main`; all four historical PRs merged/closed | none |
 | Browser verification | Manual walkthrough in a real browser | per `ISSUE-0012` handoff | as expected | jsdom-based tests are not a real browser engine; no automated real-browser test exists in CI |
 | Live E2E | Sign-in + fetch against a real tenant, either mode | — | **not performed** | protected action requiring separate human approval; unchanged since M1 |
@@ -312,12 +318,18 @@ human decision to extend past it.
    reports before any approval decision.
 3. **Reject or hold** final approval for other reasons.
 
-- Decision record: **none yet.**
-- Exact package/candidate reviewed: round 1
-  `5ce510871a17677fe862e3098972d9a85a6727a9`; round 2 (current)
-  `917764a46cea280480f4bc40f2fbc7478dde5f9b`. Product/backend/frontend
-  content unchanged from `861f401`/`802ea4d` throughout both rounds.
-- Result: **pending** — see "Options for the human" above.
+- Decision record: `project/decisions/DECISION-033-project-final-approval.md`
+- Exact package/candidate approved: round 1
+  `5ce510871a17677fe862e3098972d9a85a6727a9`; round 2 (final reviewed
+  candidate) `917764a46cea280480f4bc40f2fbc7478dde5f9b`. Product/backend/
+  frontend content unchanged from `861f401`/`802ea4d` throughout both
+  rounds.
+- Result: **approved** — option 1 of the three presented above: round 2's
+  residual candidate-binding table and `CURRENT.md` staleness is treated
+  as ordinary record-hygiene follow-up, corrected in this same commit
+  that records this decision, mirroring `DECISION-012` (M1), `DECISION-023`
+  (M2), and `DECISION-032` (M3)'s acceptance of the same class of finding
+  at their own gates.
 
 Reviews passing means only that they passed for the documented scope, SHA,
 and evidence. It is not a security certification.

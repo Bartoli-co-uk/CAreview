@@ -2,7 +2,7 @@
 
 **Status:** `PLANNED` — drafted for human review; not yet authorized to start
 **Milestone:** `M4` — bound by roadmap v6 (analyzer rule-set expansion); `M4` itself is `PLANNED`, not started
-**Approved roadmap:** `pending` — `ROADMAP.md` version `6` (`DRAFT`) proposes this work under `M4`; not yet human-approved. `AGENTS.md` requires an approved roadmap before implementation starts, and a separate human decision to start this specific issue even after v6 is approved
+**Approved roadmap:** `ROADMAP.md` version `6`, `APPROVED` (`DECISION-034`, binds `68655cc7b1e0a63db3d6b37debf834c126bb60e0`) — binds this issue to `M4`. `AGENTS.md` still requires a separate human decision to start this specific issue
 **Dependencies:** `None` (independent of `ISSUE-0015`/`ISSUE-0016`/`ISSUE-0017`; may be sequenced after them or in parallel once all are authorized)
 **Branch:** `ai/ISSUE-0018-phishing-resistant-mfa-rule` (not yet created)
 **Starting SHA:** `not yet created`
@@ -92,13 +92,12 @@ unverifiable fact, per `AGENTS.md`'s evidence discipline.
 - Recognizing tenant-defined **custom** authentication strengths that
   happen to be restricted to phishing-resistant methods (FIDO2/certificate/
   Windows Hello) — this rule only recognizes Microsoft's built-in
-  phishing-resistant strength by ID. This is a **proposed** MVP limitation,
-  tracked as `ROADMAP.md`'s `RISK-012` — it is not yet an accepted residual
-  (Codex's round-2 plan review, F-002: an agent may not infer risk
-  acceptance). It must be stated explicitly in the rule's rationale and the
-  README row regardless of acceptance status, and this issue may not start
-  until the human has recorded `RISK-012`'s acceptance (or an alternative
-  treatment) as part of approving roadmap v6.
+  phishing-resistant strength by ID. This is `ROADMAP.md`'s `RISK-012`,
+  **accepted as a residual by the human at `DECISION-034`** (roadmap v6
+  approval). It must still be stated explicitly in the rule's rationale and
+  the README row — acceptance means the human has agreed not to require
+  custom-strength recognition in this pass, not that the limitation is
+  hidden.
 - The other three proposed rules (`location-restriction-present`,
   `terms-of-use-required`, `admin-signin-frequency`) — each is its own
   issue.

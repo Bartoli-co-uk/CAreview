@@ -1,12 +1,12 @@
 # ISSUE-0015: Analyzer rule — location-restriction presence
 
-**Status:** `PLANNED` — drafted for human review; not yet authorized to start
+**Status:** `REVIEWING`
 **Milestone:** `M4` — bound by roadmap v6 (analyzer rule-set expansion); `M4` itself is `PLANNED`, not started
-**Approved roadmap:** `ROADMAP.md` version `6`, `APPROVED` (`DECISION-034`, binds `68655cc7b1e0a63db3d6b37debf834c126bb60e0`) — binds this issue to `M4`. `AGENTS.md` still requires a separate human decision to start this specific issue
+**Approved roadmap:** `ROADMAP.md` version `6`, `APPROVED` (`DECISION-034`, binds `68655cc7b1e0a63db3d6b37debf834c126bb60e0`) — binds this issue to `M4`
 **Dependencies:** `None`
-**Branch:** `ai/ISSUE-0015-location-restriction-rule` (not yet created)
-**Starting SHA:** `not yet created`
-**Candidate SHA:** `Not created`
+**Branch:** `ai/ISSUE-0015-location-restriction-rule`
+**Starting SHA:** `ee29aa91346c5246d75ae48cdfdcf39137de0858`
+**Candidate SHA:** `bcfeacdb0e264db42badf4a6a945acb94f3fc3ff`
 
 ## Objective
 

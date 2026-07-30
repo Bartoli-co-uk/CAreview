@@ -63,6 +63,33 @@ class AnalyzerTests(unittest.TestCase):
         ids = {f["id"] for f in analyzer.analyze([ok])["findings"]}
         self.assertNotIn("no-overly-broad-block", ids)
 
+    def test_location_restriction_flagged_without_named_location(self) -> None:
+        no_location = graph.normalize_policy({
+            "id": "x", "displayName": "All users, no location condition", "state": "enabled",
+            "conditions": {
+                "users": {"includeUsers": ["All"]},
+                "locations": {"includeLocations": ["All"]},
+            },
+            "grantControls": {"builtInControls": ["mfa"]},
+        })
+        ids = {f["id"] for f in analyzer.analyze([no_location])["findings"]}
+        self.assertIn("location-restriction-present", ids)
+
+    def test_location_restriction_not_flagged_with_named_location(self) -> None:
+        with_location = graph.normalize_policy({
+            "id": "x", "displayName": "All users, named-location excluded", "state": "enabled",
+            "conditions": {
+                "users": {"includeUsers": ["All"]},
+                "locations": {
+                    "includeLocations": ["All"],
+                    "excludeLocations": ["33333333-3333-3333-3333-333333333333"],
+                },
+            },
+            "grantControls": {"builtInControls": ["mfa"]},
+        })
+        ids = {f["id"] for f in analyzer.analyze([with_location])["findings"]}
+        self.assertNotIn("location-restriction-present", ids)
+
     def test_break_glass_requires_exclusion_from_every_broad_policy(self) -> None:
         bg = ["11111111-1111-1111-1111-111111111111"]
         policies = load("strong_tenant.json")

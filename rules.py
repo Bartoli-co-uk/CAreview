@@ -169,6 +169,24 @@ def _check_break_glass_excluded(policies: list[dict], ctx: dict) -> tuple[str, l
     return (PASS, _names(broad)) if not noncompliant else (FAIL, _names(noncompliant))
 
 
+def _check_location_restriction(policies: list[dict], ctx: dict) -> tuple[str, list[str]]:
+    # Presence only: does any enabled policy condition on a specific named
+    # location at all, beyond the default "All"/"AllTrusted" sentinels? This
+    # deliberately does not resolve location GUIDs to friendly names or
+    # countries (would need the separate namedLocations Graph endpoint).
+    default_sentinels = {"all", "alltrusted"}
+
+    def has_location_condition(p: dict) -> bool:
+        c = _cond(p)
+        locations = {loc.lower() for loc in c.get("includeLocations", [])} | {
+            loc.lower() for loc in c.get("excludeLocations", [])
+        }
+        return bool(locations - default_sentinels)
+
+    hits = _any(policies, lambda p: _enabled(p) and has_location_condition(p))
+    return (PASS, _names(hits)) if hits else (FAIL, [])
+
+
 def _check_no_overly_broad_block(policies: list[dict], ctx: dict) -> tuple[str, list[str]]:
     # An enabled "all users + all apps + block" policy with no exclusions can lock
     # the entire tenant out. Flag any such policy.
@@ -249,6 +267,15 @@ RULES: list[Rule] = [
         "Scope block policies narrowly or add break-glass/administrator exclusions.",
         ["state", "grantControls", "conditions.includeUsers", "conditions.includeApplications"],
         _check_no_overly_broad_block,
+    ),
+    Rule(
+        "location-restriction-present", "At least one policy conditions on named locations", "medium", 10,
+        "Geographic/network conditioning (e.g. blocking or requiring specific locations) narrows the "
+        "attack surface for account compromise from unexpected networks.",
+        "Add an enabled policy whose conditions include or exclude a specific named location "
+        "(not just the default All/AllTrusted).",
+        ["state", "conditions.includeLocations", "conditions.excludeLocations"],
+        _check_location_restriction,
     ),
 ]
 

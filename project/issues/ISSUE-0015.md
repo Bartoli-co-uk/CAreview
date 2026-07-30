@@ -3,10 +3,11 @@
 **Status:** `REVIEWING`
 **Milestone:** `M4` — bound by roadmap v6 (analyzer rule-set expansion); `M4` itself is `PLANNED`, not started
 **Approved roadmap:** `ROADMAP.md` version `6`, `APPROVED` (`DECISION-034`, binds `68655cc7b1e0a63db3d6b37debf834c126bb60e0`) — binds this issue to `M4`
+**Start authorization:** `DECISION-035` (retroactive, recorded after the round-0 review's F-003 finding)
 **Dependencies:** `None`
 **Branch:** `ai/ISSUE-0015-location-restriction-rule`
 **Starting SHA:** `ee29aa91346c5246d75ae48cdfdcf39137de0858`
-**Candidate SHA:** `bcfeacdb0e264db42badf4a6a945acb94f3fc3ff`
+**Candidate SHA:** round 1 is this commit — the launcher records the full HEAD SHA at review time; see the round table below for each round's exact reviewed SHA
 
 ## Objective
 
@@ -43,6 +44,8 @@ at least one enabled Conditional Access policy conditions on a named location
 ## Allowed paths
 
 - `rules.py`, `README.md`, `tests/test_analyzer.py`
+- `tests/fixtures/strong_tenant.json` — added by scope amendment
+  `DECISION-036`, scoped to exactly one additive policy (see below)
 
 ## Acceptance criteria
 
@@ -53,9 +56,12 @@ at least one enabled Conditional Access policy conditions on a named location
    the existing `test_every_rule_has_metadata` contract test).
 3. `README.md`'s "What it checks" table and rule-count/total-weight sentence
    are updated to match `rules.py` exactly.
-4. The rule does not regress any pre-existing rule's pass/fail state on
-   the existing `strong_tenant.json`/`weak_tenant.json`/`incomplete_tenant.json`
-   fixtures (no fixture changes are needed for this issue).
+4. The rule does not regress any pre-existing rule's pass/fail state on the
+   existing `strong_tenant.json`/`weak_tenant.json`/`incomplete_tenant.json`
+   fixtures, **except** the one additive `strong_tenant.json` policy
+   approved by `DECISION-036` (added because the new rule would otherwise
+   newly fire against `strong_tenant.json`, regressing
+   `test_strong_tenant_scores_high`). No other fixture change is in scope.
 
 ## Required checks
 
@@ -87,11 +93,16 @@ at least one enabled Conditional Access policy conditions on a named location
   of scope for this issue.
 - Any fixture change that would perturb an existing rule's pass/fail state —
   if that seems unavoidable, stop and re-scope rather than silently accepting
-  a fixture-driven regression elsewhere.
+  a fixture-driven regression elsewhere. **Triggered once**: the round-0
+  candidate's `strong_tenant.json` addition did exactly this without first
+  stopping; resolved after the fact by `DECISION-036` rather than reverted,
+  per the human's explicit choice on the round-0 finding.
 
-## Not yet started
+## Round history
 
-No branch has been created and no Codex review has run. Per `AGENTS.md`, this
-issue may not begin until: (1) a roadmap version/milestone covering it is
-drafted and approved by the human, and (2) the human separately authorizes
-starting this specific issue.
+| Round | Reviewed SHA | Outcome | Findings |
+|---|---|---|---|
+| 0 | `1ff0b987d2f75377589e6c4875724b94aef81591` | `BLOCKED` | F-001 (medium: candidate-identity mismatch between issue/handoff and reviewed HEAD); F-002 (medium: `strong_tenant.json` changed outside allowed paths); F-003 (high: no durable ISSUE-0015 start-authorization record) — see `project/reviews/issues/ISSUE-0015-1ff0b987d2f7-codex.json` |
+
+Round 0's F-001 and F-002 are repaired in this same round-1 commit; F-003 is
+resolved by `DECISION-035`.

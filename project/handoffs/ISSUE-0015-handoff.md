@@ -1,10 +1,44 @@
-# Claude handoff: ISSUE-0015, round 0
+# Claude handoff: ISSUE-0015
 
 **Claude issue task:** `ISSUE-0015 location-restriction-rule implementation`
-**Approved issue:** `project/issues/ISSUE-0015.md` at this commit (bound to `M4`, roadmap v6, `DECISION-034`)
+**Approved issue:** `project/issues/ISSUE-0015.md` at this commit (bound to `M4`, roadmap v6, `DECISION-034`; start authorized by `DECISION-035`)
 **Starting SHA:** `ee29aa91346c5246d75ae48cdfdcf39137de0858`
-**Candidate SHA:** `bcfeacdb0e264db42badf4a6a945acb94f3fc3ff` (product/test commit); this commit adds the metadata update on top
+**Candidate SHA:** this commit — the launcher records the full HEAD SHA at review time
 **Created at:** `2026-07-31`
+
+## Round 1 repair (this section)
+
+Round 0's fresh Codex review (`project/reviews/issues/ISSUE-0015-1ff0b987d2f7-codex.json`)
+returned `BLOCKED` with three findings. This repair addresses all three:
+
+- **F-001** (candidate-identity mismatch): round 0's docs commit hardcoded a
+  Candidate SHA (`bcfeacdb0e264db42badf4a6a945acb94f3fc3ff`) that was the
+  *product* commit, one commit behind the actual reviewed HEAD
+  (`1ff0b987d2f75377589e6c4875724b94aef81591`). Fixed by switching both
+  `ISSUE-0015.md` and this handoff to the self-referential "this commit —
+  the launcher records the full HEAD SHA" phrasing already used by
+  `ISSUE-0014.md`, so the record can never point one commit behind the
+  actual reviewed target again.
+- **F-002** (fixture change outside allowed paths): the `strong_tenant.json`
+  addition (policy `...0008`) was real and necessary — without it, the new
+  rule would newly fire against `strong_tenant.json` and regress
+  `test_strong_tenant_scores_high`. Per the issue's own stop conditions,
+  this should have triggered a stop-and-rescope in round 0, not a silent
+  change. Resolved after the fact by `DECISION-036`, which the human
+  approved: `ISSUE-0015.md`'s allowed paths now explicitly include
+  `tests/fixtures/strong_tenant.json`, scoped to exactly this one additive
+  policy. No file content changed for this finding — only the issue's
+  scope record.
+- **F-003** (no durable start-authorization record): resolved by
+  `DECISION-035`, recorded retroactively after the human confirmed they had
+  authorized starting `ISSUE-0015`. `ISSUE-0015.md`'s stale "Not yet
+  started" section (which contradicted its own `REVIEWING` status and the
+  already-implemented candidate) is replaced with a round-history table
+  naming this authorization and the round-0 finding it resolves.
+
+No `rules.py`, `README.md`, or `tests/test_analyzer.py` source content
+changed in this round — only `project/issues/ISSUE-0015.md`, this handoff,
+`project/status/CURRENT.md`, and the two new decision records.
 
 ## Outcome
 

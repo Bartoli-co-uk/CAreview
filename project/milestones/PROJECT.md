@@ -229,11 +229,16 @@ under review, not cross-referenced to a prior one with a rationale.
 
 ## Documentation and release readiness
 
-- Documentation audit: to be assessed by the general reviews — `README.md`,
-  `frontend/README.md`, `CONTRIBUTING.md`, `docs/security-boundaries.md`,
-  `AGENTS.md`, `docs/workflow.md`, `docs/roles-and-responsibilities.md`,
+- Documentation audit: **assessed by both rounds' general reviews —
+  accurate, no finding.** `README.md`, `frontend/README.md`,
+  `CONTRIBUTING.md`, `docs/security-boundaries.md`, `AGENTS.md`,
+  `docs/workflow.md`, `docs/roles-and-responsibilities.md`,
   `docs/approvals-and-reviews.md` all exist and were each touched by at
-  least one of M1/M2/M3's own documentation obligations.
+  least one of M1/M2/M3's own documentation obligations. Round 2's Claude
+  general review independently confirmed `README.md`'s `RISK-009`,
+  `RISK-010`, and `RISK-011` disclosures match `ROADMAP.md` exactly
+  (`grep -n "RISK-009\|RISK-010\|RISK-011" README.md`); Codex general's
+  evidence log independently confirmed the same at `README.md:503`.
 - Migration/rollback: `N/A` — the app persists no data in any mode; the
   vanilla `web/` UI (pre-`ISSUE-0012`) remains in Git history if
   `DECISION-024` is ever revoked.
@@ -241,9 +246,11 @@ under review, not cross-referenced to a prior one with a rationale.
   run build` → `python3 server.py` (documented in `README.md` Quick Start;
   the frontend build step is a deliberate, documented regression from the
   original "clone and run" property, `RISK-010`, accepted `DECISION-029`).
+  Independently re-verified from a genuinely fresh clone in round 2's own
+  verification evidence above, not merely asserted.
 - Known limitations: as named in `README.md`'s "Known limitations" table
-  and `docs/security-boundaries.md` — to be independently checked for
-  accuracy by the general reviews rather than asserted here.
+  and `docs/security-boundaries.md` — **independently checked for accuracy
+  by both rounds' general reviews; no discrepancy found.**
 
 ## Residual risks (project-wide, as of this candidate)
 

@@ -7,7 +7,7 @@
 **Dependencies:** `None` (independent of `ISSUE-0015`; sequenced after it as the second `M4` issue delivered)
 **Branch:** `ai/ISSUE-0016-terms-of-use-rule`
 **Starting SHA:** `bb01fabd6e6984ee89bc3b56ab56ed2f81000c5e`
-**Candidate SHA:** round 0 is this commit — the launcher records the full HEAD SHA
+**Candidate SHA:** this commit — the launcher records the full HEAD SHA at review time; see the round table below for each round's exact reviewed SHA
 
 ## Objective
 
@@ -138,9 +138,21 @@ additive change to `graph.normalize_policy` to stop dropping
 | Round | Reviewed SHA | Outcome | Findings |
 |---|---|---|---|
 | 0 | `bfa12f76053b4816e66c36541f3ac578b8f2509e` | `BLOCKED` | F-001 (medium, sandbox-only: all three required checks failed to complete in the review sandbox — denied `__pycache__`/socket/tempdir access; the focused 38 graph/analyzer tests passed and no implementation defect was found); F-002 (low, advisory: `README.md`'s usage-section test count was stale at 188, fixed in round 1 to 195) — see `project/reviews/issues/ISSUE-0016-bfa12f76053b-codex.json` |
+| 1 | `3b2020bc30d0dbaf879950e12de36b3baa1b8e17` | `BLOCKED` | F-001 (medium, sandbox-only, same as round 0); F-002 (medium, REQUIRED: `CURRENT.md`'s "Roadmap"/"Roadmap approval" rows were still v5-shaped with no v6/`DECISION-034` mention, and its "Active issue"/"Latest implementation handoff"/"Open blockers" rows still described round 0 as awaiting review even though round 1 had already been committed; this issue file's own Candidate SHA field also still said "round 0") — see `project/reviews/issues/ISSUE-0016-3b2020bc30d0-codex.json` |
 
-Round 0's F-002 is fixed in round 1 (README count corrected). F-001 is the
-same sandbox execution-evidence class already accepted repeatedly in this
-project (most recently `ISSUE-0015`, `DECISION-037`); all three required
-checks were independently run in this task's own environment with real
-passing results (see `project/handoffs/ISSUE-0016-handoff.md`).
+Round 0's F-002 was fixed in round 1 (README count corrected). Round 1's
+F-002 (governance-record staleness) is fixed in round 2 (this commit):
+`CURRENT.md`'s roadmap/round-tracking rows resynchronized, and this file's
+Candidate SHA switched to the same non-round-numbered "this commit"
+convention `ISSUE-0015` used, so it cannot go stale between rounds again.
+F-001 in both rounds is the same sandbox execution-evidence class already
+accepted repeatedly in this project (most recently `ISSUE-0015`,
+`DECISION-037`); all three required checks were independently run in this
+task's own environment with real passing results at every round (see
+`project/handoffs/ISSUE-0016-handoff.md`).
+
+**This is the second and final repair round `AGENTS.md` permits for an
+issue.** If round 2's fresh review is again blocked solely by the same
+sandbox execution-evidence class (no new content finding), this Claude task
+will stop and present the outcome to the human, the same way `ISSUE-0014`
+and `ISSUE-0015` did.

@@ -111,3 +111,32 @@ Round 0's fresh Codex issue review
 | Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 |
 | Tests | `python3 -m unittest discover -s tests` | 195 passed, exit 0 |
 | Governance | `python3 scripts/validate_repo.py` | passed (67 required files checked) |
+
+## Round 2 repair
+
+Round 1's fresh Codex issue review
+(`project/reviews/issues/ISSUE-0016-3b2020bc30d0-codex.json`) returned
+`BLOCKED` again: F-001 was the same sandbox-only class as round 0, but a
+new F-002 (medium, REQUIRED) found `project/status/CURRENT.md` still
+v5-shaped in its "Roadmap"/"Roadmap approval" rows (no v6/`DECISION-034`
+mention) and several rows still describing round 0 as awaiting review
+after round 1 had already been committed; `ISSUE-0016.md`'s own Candidate
+SHA field also still said "round 0". This round resynchronizes all of
+those rows and switches the Candidate SHA convention to the same
+non-round-numbered form `ISSUE-0015` used, so it cannot go stale between
+rounds again. No `graph.py`/`rules.py`/test-assertion source changed in
+this round.
+
+### Round 2 verification (real, run in this task's environment)
+
+| Check | Exact command | Actual result/exit |
+|---|---|---|
+| Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 |
+| Tests | `python3 -m unittest discover -s tests` | 195 passed, exit 0 |
+| Governance | `python3 scripts/validate_repo.py` | passed (67 required files checked) |
+
+This is the second and final permitted issue repair round. If round 2's
+fresh review is blocked solely by the same sandbox execution-evidence
+class with no new content finding, this outcome will be presented to the
+human for the advance/merge decision, the same way `ISSUE-0014` and
+`ISSUE-0015` were.

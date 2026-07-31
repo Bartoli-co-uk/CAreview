@@ -1,6 +1,10 @@
 # ISSUE-0017: Analyzer rule — admin-scoped sign-in frequency / no persistent browser
 
-**Status:** `REVIEWING`
+**Status:** `COMPLETE` (merged, with an accepted sandbox execution-evidence
+residual) — the human reviewed the round-2 `BLOCKED` outcome (no
+product-code defect; see round history below) and chose to accept the
+residual, authorize the metadata-only `ROADMAP.md`/`README.md` follow-up,
+and merge (`DECISION-042`)
 **Milestone:** `M4` — bound by roadmap v6 (analyzer rule-set expansion); `M4` itself is `PLANNED`, not started
 **Approved roadmap:** `ROADMAP.md` version `6`, `APPROVED` (`DECISION-034`, binds `68655cc7b1e0a63db3d6b37debf834c126bb60e0`) — binds this issue to `M4`
 **Start authorization:** `DECISION-041`
@@ -220,3 +224,14 @@ Round 2's remaining findings, none of which are a product-code defect:
    than a same-task metadata commit).
 3. **Ask for something else** — e.g. an independent re-run of the three
    required checks in a different environment before deciding.
+
+## Advance/merge decision
+
+The human reviewed round 2's `BLOCKED` outcome (no product-code defect)
+and the real, independently-run check results and chose option 1: accept
+the sandbox execution-evidence residual, authorize the metadata-only
+`ROADMAP.md` (F-002) and `README.md` (F-003) follow-up, and merge — the
+same disposition used repeatedly for this class of finding elsewhere in
+this project (most recently `ISSUE-0016`, `DECISION-040`). `DECISION-042`
+records the exact binding. `ai/ISSUE-0017-admin-signin-frequency-rule` is
+merged to `main`.

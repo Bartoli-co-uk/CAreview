@@ -1,6 +1,9 @@
 # ISSUE-0015: Analyzer rule — location-restriction presence
 
-**Status:** `REVIEWING`
+**Status:** `COMPLETE` (merged, with an accepted sandbox execution-evidence
+residual) — the human reviewed the round-1 zero-finding `BLOCKED` outcome
+(see round history below) and chose to accept the sandbox residual and
+merge (`DECISION-037`)
 **Milestone:** `M4` — bound by roadmap v6 (analyzer rule-set expansion); `M4` itself is `PLANNED`, not started
 **Approved roadmap:** `ROADMAP.md` version `6`, `APPROVED` (`DECISION-034`, binds `68655cc7b1e0a63db3d6b37debf834c126bb60e0`) — binds this issue to `M4`
 **Start authorization:** `DECISION-035` (retroactive, recorded after the round-0 review's F-003 finding)
@@ -109,3 +112,12 @@ Round 0's F-001 and F-002 were repaired in the round-1 commit; F-003 was
 resolved by `DECISION-035`. Round 1's sole blocker is the sandbox
 execution-evidence limitation, presented to the human for an advance/merge
 decision rather than treated as a passing outcome on its own.
+
+## Advance/merge decision
+
+The human reviewed round 1's zero-finding `BLOCKED` outcome and the real,
+independently-run check results and chose to accept the sandbox
+execution-evidence residual and merge, the same disposition used
+repeatedly for this class of finding elsewhere in this project (most
+recently `ISSUE-0014`, `DECISION-031`). `DECISION-037` records the exact
+binding. `ai/ISSUE-0015-location-restriction-rule` is merged to `main`.

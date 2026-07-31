@@ -1,6 +1,9 @@
 # ISSUE-0016: Analyzer rule — Terms of Use requirement present
 
-**Status:** `REVIEWING`
+**Status:** `COMPLETE` (merged, with an accepted sandbox execution-evidence
+residual) — the human reviewed the round-2 zero-finding `BLOCKED` outcome
+(see round history below) and chose to accept the sandbox residual and
+merge (`DECISION-040`)
 **Milestone:** `M4` — bound by roadmap v6 (analyzer rule-set expansion); `M4` itself is `PLANNED`, not started
 **Approved roadmap:** `ROADMAP.md` version `6`, `APPROVED` (`DECISION-034`, binds `68655cc7b1e0a63db3d6b37debf834c126bb60e0`) — binds this issue to `M4`
 **Start authorization:** `DECISION-038`
@@ -161,4 +164,9 @@ outcome to the human for the advance/merge decision, the same way
 
 ## Advance/merge decision
 
-Pending — see round 2's outcome above.
+The human reviewed round 2's zero-finding `BLOCKED` outcome and the real,
+independently-run check results and chose to accept the sandbox
+execution-evidence residual and merge, the same disposition used
+repeatedly for this class of finding elsewhere in this project (most
+recently `ISSUE-0015`, `DECISION-037`). `DECISION-040` records the exact
+binding. `ai/ISSUE-0016-terms-of-use-rule` is merged to `main`.

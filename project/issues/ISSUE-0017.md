@@ -7,7 +7,7 @@
 **Dependencies:** `None` (independent of `ISSUE-0015`/`ISSUE-0016`; sequenced after them as the third `M4` issue delivered)
 **Branch:** `ai/ISSUE-0017-admin-signin-frequency-rule`
 **Starting SHA:** `48129547a68239e8f733ce6b50b6a63407a35256`
-**Candidate SHA:** round 0 is this commit — the launcher records the full HEAD SHA
+**Candidate SHA:** this commit — the launcher records the full HEAD SHA at review time; see the round table below for each round's exact reviewed SHA
 
 ## Objective
 
@@ -168,5 +168,7 @@ the same `identity/conditionalAccess/policies` call CAreview already makes.
 | Round | Reviewed SHA | Outcome | Findings |
 |---|---|---|---|
 | 0 | `079f5c72cb27c2e525b59d70c6bc5e3d0ee9a7f6` | `CHANGES_REQUIRED` | F-001 (medium, real defect): `_qualifies_for_admin_signin_frequency` checked only `persistentBrowser.mode == "never"`, ignoring `persistentBrowser.enabled` — a disabled control with a stale `mode: "never"` falsely qualified. Fixed in round 1: both `enabled is True` and `mode == "never"` are now required, with a new regression test. |
+| 1 | `72910d8b22dd74d664036d74c0d909e1d6a32c6a` | `BLOCKED` | F-001 (medium, sandbox-only: same accepted execution-evidence limitation class as prior issues). F-002 (medium, real: issue/handoff records left internally contradictory after the round-1 source fix — candidate-SHA header and handoff primary sections still round-0-shaped). Both fixed in round 2 (record accuracy only; no further source change). |
 
-Round 1 candidate committed; awaiting fresh Codex re-review.
+This was the second and final permitted issue repair round (`AGENTS.md`).
+Round 2 candidate committed; awaiting fresh Codex re-review.

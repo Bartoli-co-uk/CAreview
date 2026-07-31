@@ -8,22 +8,25 @@
 
 ## Outcome
 
-Implemented in full. Adds the `admin-signin-frequency` analyzer rule exactly
-as specified in `ISSUE-0017.md`, using the effective-coverage algorithm
-(union of qualifying policies' coverage; all-users-minus-`excludeRoles`;
-`persistentBrowser.mode == "never"` exactly, not merely `!= "always"`) rather
-than a verbatim copy of `mfa-admins`'s simpler single-condition pattern.
-`graph.normalize_policy` gained two strictly additive top-level keys.
+Implemented in full, current state after the round-1 repair below. Adds the
+`admin-signin-frequency` analyzer rule exactly as specified in
+`ISSUE-0017.md`, using the effective-coverage algorithm (union of qualifying
+policies' coverage; all-users-minus-`excludeRoles`;
+`persistentBrowser.enabled is True and persistentBrowser.mode == "never"`
+exactly, not merely `!= "always"`) rather than a verbatim copy of
+`mfa-admins`'s simpler single-condition pattern. `graph.normalize_policy`
+gained two strictly additive top-level keys. See "Round 1 repair" below for
+the one real defect round 0's Codex review found and its fix.
 
 ## Changed files
 
 | Path | Change and reason |
 |---|---|
 | `graph.py` | `normalize_policy` gains `signInFrequency` (`{"enabled", "type", "value", "frequencyInterval"}`) and `persistentBrowser` (`{"enabled", "mode"}`), both read from `sessionControls` and safely defaulted (`enabled` uses the same `_control_enabled` pattern already used for the `sessionControls` list; enum fields fall back to `""` on any value outside the documented set; `value` falls back to `None` on any non-`int`/bool input). `sessionControls`'s existing shape and test contract are unchanged. |
-| `rules.py` | New `_qualifies_for_admin_signin_frequency` and `_effectively_covered_admin_roles` helpers plus `_check_admin_signin_frequency` and a new `Rule("admin-signin-frequency", ...)` entry (medium, weight 10). Qualifying = enabled, `frequencyInterval == "everyTime"` or (`type == "hours"` and `1 <= value <= 4`), AND `persistentBrowser.mode == "never"` exactly. Coverage per qualifying policy = `ADMIN_ROLE_TEMPLATE_IDS` minus `excludeRoles` when `"All" in includeUsers`, else `(includeRoles ∩ ADMIN_ROLE_TEMPLATE_IDS)` minus `excludeRoles`. PASS iff the union across all qualifying policies equals `ADMIN_ROLE_TEMPLATE_IDS`; non-qualifying policies are excluded from the union and never subtract established coverage. |
+| `rules.py` | New `_qualifies_for_admin_signin_frequency` and `_effectively_covered_admin_roles` helpers plus `_check_admin_signin_frequency` and a new `Rule("admin-signin-frequency", ...)` entry (medium, weight 10). Qualifying = enabled, `frequencyInterval == "everyTime"` or (`type == "hours"` and `1 <= value <= 4`), AND `persistentBrowser.enabled is True and persistentBrowser.mode == "never"` exactly (the `enabled` check was added in round 1; see below). Coverage per qualifying policy = `ADMIN_ROLE_TEMPLATE_IDS` minus `excludeRoles` when `"All" in includeUsers`, else `(includeRoles ∩ ADMIN_ROLE_TEMPLATE_IDS)` minus `excludeRoles`. PASS iff the union across all qualifying policies equals `ADMIN_ROLE_TEMPLATE_IDS`; non-qualifying policies are excluded from the union and never subtract established coverage. |
 | `README.md` | "What it checks" table gains one row; rule-count/total-weight sentence updated (12 → 13 rules, 135 → 145 weight); the `rules.py` file-list row's count updated too. |
 | `tests/test_graph.py` | Extended the malformed/missing-fields tests to assert both new keys' safe defaults, plus a new positive round-trip test (`test_normalize_round_trips_signin_frequency_and_persistent_browser`). |
-| `tests/test_analyzer.py` | New `AdminSignInFrequencyTests` class with nine cases: frequency disabled → FAIL; `everyTime` + `never` full coverage → PASS; `1-4 hours` + `never` full coverage → PASS; `persistentBrowser.mode: "always"` → FAIL; `persistentBrowser` absent → FAIL; `persistentBrowser.mode: ""` → FAIL (these three together prove `mode == "never"` is required exactly, per Codex round-2 F-001); an `includeUsers: ["All"]` policy excluding one admin role, uncovered elsewhere → FAIL; a qualifying full-coverage policy plus a second, non-qualifying overlapping policy → still PASS; two qualifying policies whose role sets only jointly cover all admin roles → PASS. |
+| `tests/test_analyzer.py` | `AdminSignInFrequencyTests` class, ten cases (nine from round 0 plus one round-1 regression): frequency disabled → FAIL; `everyTime` + `never` full coverage → PASS; `1-4 hours` + `never` full coverage → PASS; `persistentBrowser.mode: "always"` → FAIL; `persistentBrowser` absent → FAIL; `persistentBrowser.mode: ""` → FAIL; `persistentBrowser` explicitly disabled with a stale `mode: "never"` → FAIL (round-1 regression for F-001, proving `enabled` is checked, not just `mode`); an `includeUsers: ["All"]` policy excluding one admin role, uncovered elsewhere → FAIL; a qualifying full-coverage policy plus a second, non-qualifying overlapping policy → still PASS; two qualifying policies whose role sets only jointly cover all admin roles → PASS. |
 | `tests/fixtures/strong_tenant.json` | One new, narrowly-scoped additive policy (`...0010`, "Frequent re-auth for administrators, no persistent browser": admin-role scope, `signInFrequency.frequencyInterval: "everyTime"`, `persistentBrowser.mode: "never"`, no `grantControls`) satisfying only this rule — carries no `mfa`/`block`/`termsOfUse` control, so it cannot affect any other rule's evaluation. Verified the full suite stays at 100/no findings before committing. |
 
 ## Decisions and assumptions
@@ -51,9 +54,9 @@ than a verbatim copy of `mfa-admins`'s simpler single-condition pattern.
 
 | Criterion (from `ISSUE-0017.md`) | Implementation evidence | Status |
 |---|---|---|
-| 1. Tests pass, including new `test_graph.py` and nine `admin-signin-frequency` cases | `python3 -m unittest discover -s tests` → 205 passed | Met |
+| 1. Tests pass, including new `test_graph.py` and `admin-signin-frequency` cases | `python3 -m unittest discover -s tests` → 206 passed | Met |
 | 2. `normalize_policy({})` gains exactly the two new keys, safely defaulted; no existing field removed/renamed/reshaped | `test_normalize_handles_missing_fields`'s new assertions; `sessionControls`'s own assertions unchanged | Met |
-| 3. Effective-coverage algorithm implemented exactly (all-users-minus-`excludeRoles`; union across qualifying policies only; non-qualifying policies never subtract) | `_check_admin_signin_frequency`/`_effectively_covered_admin_roles`; `test_non_qualifying_overlapping_policy_does_not_subtract_coverage`, `test_union_of_two_qualifying_policies_covers_all_roles`, `test_all_users_policy_excluding_one_admin_role_fails_for_that_role` | Met |
+| 3. Effective-coverage algorithm implemented exactly (all-users-minus-`excludeRoles`; union across qualifying policies only; non-qualifying policies never subtract; disabled `persistentBrowser` disqualifies per round-1 fix) | `_check_admin_signin_frequency`/`_effectively_covered_admin_roles`; `test_non_qualifying_overlapping_policy_does_not_subtract_coverage`, `test_union_of_two_qualifying_policies_covers_all_roles`, `test_all_users_policy_excluding_one_admin_role_fails_for_that_role`, `test_persistent_browser_disabled_with_stale_never_mode_still_fails` | Met |
 | 4. README table/weight sentence match `rules.py` | Manual diff, both updated in this commit | Met |
 | 5. `test_strong_tenant_scores_high` (or equivalent) still expects a full pass at the new total weight; no other rule's pass/fail state changes | Full suite green; `analyzer.analyze` on `strong_tenant.json` manually confirmed `score == 100`, `findings == []` before commit | Met |
 
@@ -62,7 +65,7 @@ than a verbatim copy of `mfa-admins`'s simpler single-condition pattern.
 | Check | Exact command | Actual result/exit | Evidence limitation |
 |---|---|---|---|
 | Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 | none |
-| Tests | `python3 -m unittest discover -s tests` | 205 passed, exit 0 | none |
+| Tests | `python3 -m unittest discover -s tests` | 206 passed, exit 0 | none |
 | Governance | `python3 scripts/validate_repo.py` | passed (67 required files checked) | none |
 
 The reviewer or CI must independently confirm required checks; this
@@ -99,8 +102,9 @@ handoff is not test authority.
 ## Round 1 repair
 
 Round 0's fresh Codex issue review
-(`project/reviews/issues/ISSUE-0017-079f5c72cb27-codex.json`) returned
-`CHANGES_REQUIRED` with one real, medium-severity defect:
+(`project/reviews/issues/ISSUE-0017-079f5c72cb27-codex.json`, candidate
+`079f5c72cb27c2e525b59d70c6bc5e3d0ee9a7f6`) returned `CHANGES_REQUIRED` with
+one real, medium-severity defect:
 
 - **F-001**: `_qualifies_for_admin_signin_frequency` checked only
   `persistentBrowser.mode == "never"` and ignored
@@ -129,3 +133,43 @@ environment with real passing results below.
 | Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 |
 | Tests | `python3 -m unittest discover -s tests` | 206 passed, exit 0 |
 | Governance | `python3 scripts/validate_repo.py` | passed (67 required files checked) |
+
+## Round 2 repair
+
+Round 1's fresh Codex issue review
+(`project/reviews/issues/ISSUE-0017-72910d8b22dd-codex.json`, candidate
+`72910d8b22dd74d664036d74c0d909e1d6a32c6a`) returned `BLOCKED` with two
+findings:
+
+- **F-001** (medium, sandbox-only): the review sandbox could not complete
+  any of the three required checks (denied `__pycache__` write, denied
+  loopback socket binding, no writable temp directory) — the same class
+  already accepted repeatedly in this project (most recently `ISSUE-0016`,
+  `DECISION-040`). All three were independently run in this task's own
+  environment with real passing results (round-1 table above, unchanged by
+  this round since no product source changed).
+- **F-002** (medium, real, REQUIRED): the committed issue and handoff
+  records were internally contradictory after the round-1 repair — the
+  issue's `Candidate SHA` header still said "round 0 is this commit," and
+  this handoff's primary `Outcome`/`Changed files`/acceptance/verification
+  sections still described `persistentBrowser.mode == "never"` alone and
+  205 tests, with only a trailing round-1 appendix describing the actual
+  fix. Fixed in this round: the issue's `Candidate SHA` line now uses the
+  same non-round-numbered convention `ISSUE-0016` adopted after its own
+  equivalent staleness finding (round 2, F-002), and every primary section
+  of this handoff (`Outcome`, the `rules.py` row, the acceptance-criteria
+  table, the verification table) now describes the current, round-1
+  behavior and count directly, with prior-round detail preserved only in
+  these labeled round sections.
+
+### Round 2 verification (real, run in this task's environment)
+
+| Check | Exact command | Actual result/exit |
+|---|---|---|
+| Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 |
+| Tests | `python3 -m unittest discover -s tests` | 206 passed, exit 0 |
+| Governance | `python3 scripts/validate_repo.py` | passed (67 required files checked) |
+
+This was the second and final permitted issue repair round (`AGENTS.md`).
+No `graph.py`/`rules.py`/test-assertion source changed in this round —
+governance-record accuracy only.

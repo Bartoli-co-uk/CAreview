@@ -88,3 +88,26 @@ handoff is not test authority.
   discipline are the two places most likely to hide a subtle logic error —
   a reviewer should re-derive both from `rules.py` rather than trust this
   handoff's claim.
+
+## Round 1 repair
+
+Round 0's fresh Codex issue review
+(`project/reviews/issues/ISSUE-0016-bfa12f76053b-codex.json`) returned
+`BLOCKED` with two findings, no implementation defect:
+
+- **F-001** (medium, sandbox-only): the review sandbox could not complete
+  any of the three required checks (denied `__pycache__` write, denied
+  loopback socket binding, no writable temp directory) — the same class
+  already accepted repeatedly in this project (most recently `ISSUE-0015`,
+  `DECISION-037`). All three were independently run in this task's own
+  environment with real passing results (below).
+- **F-002** (low, advisory): `README.md`'s usage-section comment still said
+  `188 tests`; fixed to `195 tests` in this round.
+
+### Round 1 verification (real, run in this task's environment)
+
+| Check | Exact command | Actual result/exit |
+|---|---|---|
+| Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 |
+| Tests | `python3 -m unittest discover -s tests` | 195 passed, exit 0 |
+| Governance | `python3 scripts/validate_repo.py` | passed (67 required files checked) |

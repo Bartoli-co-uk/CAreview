@@ -137,5 +137,10 @@ additive change to `graph.normalize_policy` to stop dropping
 
 | Round | Reviewed SHA | Outcome | Findings |
 |---|---|---|---|
+| 0 | `bfa12f76053b4816e66c36541f3ac578b8f2509e` | `BLOCKED` | F-001 (medium, sandbox-only: all three required checks failed to complete in the review sandbox — denied `__pycache__`/socket/tempdir access; the focused 38 graph/analyzer tests passed and no implementation defect was found); F-002 (low, advisory: `README.md`'s usage-section test count was stale at 188, fixed in round 1 to 195) — see `project/reviews/issues/ISSUE-0016-bfa12f76053b-codex.json` |
 
-Round 0 not yet reviewed by Codex.
+Round 0's F-002 is fixed in round 1 (README count corrected). F-001 is the
+same sandbox execution-evidence class already accepted repeatedly in this
+project (most recently `ISSUE-0015`, `DECISION-037`); all three required
+checks were independently run in this task's own environment with real
+passing results (see `project/handoffs/ISSUE-0016-handoff.md`).

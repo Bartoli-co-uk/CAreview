@@ -425,7 +425,7 @@ The first four are the React frontend's build output (see
 ```sh
 cd frontend && npm install && npm run build      # builds web/index.html, index.js, index.css
 cd frontend && npm test                          # frontend unit/component tests
-python3 -m unittest discover -s tests            # 188 tests; no sign-in, no network
+python3 -m unittest discover -s tests            # 195 tests; no sign-in, no network
 python3 -m py_compile $(git ls-files '*.py')     # compile check
 python3 scripts/validate_repo.py                 # governance/docs validator
 ```

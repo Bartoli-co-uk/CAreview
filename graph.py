@@ -191,6 +191,7 @@ def normalize_policy(raw: object) -> dict:
         "grantControls": {
             "operator": grant.get("operator") or "",
             "builtInControls": _str_list(grant.get("builtInControls")),
+            "termsOfUse": _str_list(grant.get("termsOfUse")),
         },
         "sessionControls": session_controls,
     }

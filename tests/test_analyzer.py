@@ -90,6 +90,58 @@ class AnalyzerTests(unittest.TestCase):
         ids = {f["id"] for f in analyzer.analyze([with_location])["findings"]}
         self.assertNotIn("location-restriction-present", ids)
 
+    def test_terms_of_use_flagged_when_missing(self) -> None:
+        no_terms = graph.normalize_policy({
+            "id": "x", "displayName": "All users, MFA only", "state": "enabled",
+            "conditions": {"users": {"includeUsers": ["All"]}},
+            "grantControls": {"operator": "OR", "builtInControls": ["mfa"]},
+        })
+        ids = {f["id"] for f in analyzer.analyze([no_terms])["findings"]}
+        self.assertIn("terms-of-use-required", ids)
+
+    def test_terms_of_use_not_flagged_when_required_alongside_and_operator(self) -> None:
+        with_terms = graph.normalize_policy({
+            "id": "x", "displayName": "All users, MFA and Terms of Use", "state": "enabled",
+            "conditions": {"users": {"includeUsers": ["All"]}},
+            "grantControls": {
+                "operator": "AND",
+                "builtInControls": ["mfa"],
+                "termsOfUse": ["11111111-1111-1111-1111-111111111111"],
+            },
+        })
+        ids = {f["id"] for f in analyzer.analyze([with_terms])["findings"]}
+        self.assertNotIn("terms-of-use-required", ids)
+
+    def test_terms_of_use_flagged_when_only_an_or_alternative(self) -> None:
+        # F-003 (round-1 plan review): with operator "OR" and another builtInControl
+        # present, Terms of Use is merely one alternative, not required — must
+        # still FAIL even though termsOfUse is non-empty.
+        or_alternative = graph.normalize_policy({
+            "id": "x", "displayName": "All users, MFA or Terms of Use", "state": "enabled",
+            "conditions": {"users": {"includeUsers": ["All"]}},
+            "grantControls": {
+                "operator": "OR",
+                "builtInControls": ["mfa"],
+                "termsOfUse": ["11111111-1111-1111-1111-111111111111"],
+            },
+        })
+        ids = {f["id"] for f in analyzer.analyze([or_alternative])["findings"]}
+        self.assertIn("terms-of-use-required", ids)
+
+    def test_terms_of_use_not_flagged_when_scope_excludes_a_group(self) -> None:
+        # Mirrors mfa-all-users's own exclusion-discipline test: an excluded
+        # GROUP or ROLE means the policy is not "meaningfully broad" scope.
+        excluded_group = graph.normalize_policy({
+            "id": "x", "displayName": "All users minus a group, Terms of Use", "state": "enabled",
+            "conditions": {"users": {"includeUsers": ["All"], "excludeGroups": ["some-group-id"]}},
+            "grantControls": {
+                "operator": "AND",
+                "termsOfUse": ["11111111-1111-1111-1111-111111111111"],
+            },
+        })
+        ids = {f["id"] for f in analyzer.analyze([excluded_group])["findings"]}
+        self.assertIn("terms-of-use-required", ids)
+
     def test_break_glass_requires_exclusion_from_every_broad_policy(self) -> None:
         bg = ["11111111-1111-1111-1111-111111111111"]
         policies = load("strong_tenant.json")

@@ -1,12 +1,13 @@
 # ISSUE-0016: Analyzer rule — Terms of Use requirement present
 
-**Status:** `PLANNED` — drafted for human review; not yet authorized to start
+**Status:** `REVIEWING`
 **Milestone:** `M4` — bound by roadmap v6 (analyzer rule-set expansion); `M4` itself is `PLANNED`, not started
-**Approved roadmap:** `ROADMAP.md` version `6`, `APPROVED` (`DECISION-034`, binds `68655cc7b1e0a63db3d6b37debf834c126bb60e0`) — binds this issue to `M4`. `AGENTS.md` still requires a separate human decision to start this specific issue
-**Dependencies:** `None` (independent of `ISSUE-0015`; may be sequenced after it or in parallel once both are authorized)
-**Branch:** `ai/ISSUE-0016-terms-of-use-rule` (not yet created)
-**Starting SHA:** `not yet created`
-**Candidate SHA:** `Not created`
+**Approved roadmap:** `ROADMAP.md` version `6`, `APPROVED` (`DECISION-034`, binds `68655cc7b1e0a63db3d6b37debf834c126bb60e0`) — binds this issue to `M4`
+**Start authorization:** `DECISION-038`
+**Dependencies:** `None` (independent of `ISSUE-0015`; sequenced after it as the second `M4` issue delivered)
+**Branch:** `ai/ISSUE-0016-terms-of-use-rule`
+**Starting SHA:** `bb01fabd6e6984ee89bc3b56ab56ed2f81000c5e`
+**Candidate SHA:** round 0 is this commit — the launcher records the full HEAD SHA
 
 ## Objective
 
@@ -69,6 +70,8 @@ additive change to `graph.normalize_policy` to stop dropping
 
 - `graph.py`, `rules.py`, `README.md`, `tests/test_graph.py`,
   `tests/test_analyzer.py`
+- `tests/fixtures/strong_tenant.json` — added by scope amendment
+  `DECISION-039`, scoped to exactly one additive policy (see below)
 
 ## Acceptance criteria
 
@@ -84,8 +87,12 @@ additive change to `graph.normalize_policy` to stop dropping
    `test_every_rule_has_metadata`).
 4. `README.md`'s "What it checks" table and rule-count/total-weight sentence
    match `rules.py` exactly.
-5. No existing rule's pass/fail state changes on the current fixtures (no
-   fixture file changes are needed for this issue).
+5. No existing rule's pass/fail state changes on the current fixtures,
+   **except** the one additive `strong_tenant.json` policy approved by
+   `DECISION-039` (added because the new rule would otherwise newly fire
+   against `strong_tenant.json`, regressing `test_strong_tenant_scores_high`
+   and `test_break_glass_evaluable_with_ids`). No other fixture change is
+   in scope.
 
 ## Required checks
 
@@ -118,11 +125,17 @@ additive change to `graph.normalize_policy` to stop dropping
   `termsOfUse` must be strictly additive.
 - Passing an `operator: "OR"` policy where Terms of Use is merely one
   alternative control among several — this is the exact false-pass Codex's
-  round-1 plan review identified (F-003) and must not regress.
+  round-1 plan review identified (F-003) and must not regress. **Verified**:
+  `test_terms_of_use_flagged_when_only_an_or_alternative` directly covers
+  this case.
+- Any fixture change that would perturb an existing rule's pass/fail state —
+  triggered once (same class as `ISSUE-0015`'s round-0 finding), resolved
+  before implementation was committed via `DECISION-039` rather than
+  silently made.
 
-## Not yet started
+## Round history
 
-No branch has been created and no Codex review has run. Per `AGENTS.md`, this
-issue may not begin until: (1) a roadmap version/milestone covering it is
-drafted and approved by the human, and (2) the human separately authorizes
-starting this specific issue.
+| Round | Reviewed SHA | Outcome | Findings |
+|---|---|---|---|
+
+Round 0 not yet reviewed by Codex.

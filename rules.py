@@ -206,6 +206,40 @@ def _check_no_overly_broad_block(policies: list[dict], ctx: dict) -> tuple[str, 
     return (FAIL, _names(hits)) if hits else (PASS, [])
 
 
+def _check_terms_of_use(policies: list[dict], ctx: dict) -> tuple[str, list[str]]:
+    # Meaningfully-scoped, same exclusion discipline as mfa-all-users/mfa-admins:
+    # an all-users policy with a whole excluded group/role is not broad coverage,
+    # and an admin-role policy that excludes the very roles it targets is not
+    # either. Terms of Use must actually be REQUIRED, not merely one alternative
+    # among several grant controls: Graph's operator is "AND" (all controls
+    # required) or "OR" (any one satisfies), so an "OR" policy with other
+    # builtInControls present lets Terms of Use be skipped entirely — a false
+    # pass Codex's round-1 plan review flagged (F-003) and this must not regress.
+    def meaningfully_scoped(p: dict) -> bool:
+        c = _cond(p)
+        all_users = (
+            "All" in c.get("includeUsers", [])
+            and not c.get("excludeGroups")
+            and not c.get("excludeRoles")
+        )
+        admin_roles = ADMIN_ROLE_TEMPLATE_IDS.intersection(c.get("includeRoles", []))
+        admin_scope = bool(admin_roles) and not admin_roles.intersection(c.get("excludeRoles", []))
+        return all_users or admin_scope
+
+    def requires_terms_of_use(p: dict) -> bool:
+        grant = p.get("grantControls") or {}
+        if not grant.get("termsOfUse"):
+            return False
+        built_in = grant.get("builtInControls") or []
+        return not built_in or grant.get("operator") == "AND"
+
+    hits = _any(
+        policies,
+        lambda p: _enabled(p) and meaningfully_scoped(p) and requires_terms_of_use(p),
+    )
+    return (PASS, _names(hits)) if hits else (FAIL, [])
+
+
 RULES: list[Rule] = [
     Rule(
         "block-legacy-auth", "Legacy authentication is blocked", "high", 20,
@@ -276,6 +310,16 @@ RULES: list[Rule] = [
         "(not just the default All/AllTrusted).",
         ["state", "conditions.includeLocations", "conditions.excludeLocations"],
         _check_location_restriction,
+    ),
+    Rule(
+        "terms-of-use-required", "Terms of Use is required for meaningfully-scoped access", "low", 5,
+        "Requiring Terms of Use acceptance for broad or admin access establishes an "
+        "auditable record of accepted usage/security obligations before access is granted.",
+        "Add Terms of Use as a required grant control (operator AND alongside any other "
+        "control, or alone) on an enabled all-users or admin-role policy.",
+        ["state", "conditions.includeUsers", "conditions.includeRoles", "conditions.excludeGroups",
+         "conditions.excludeRoles", "grantControls"],
+        _check_terms_of_use,
     ),
 ]
 

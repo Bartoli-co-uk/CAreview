@@ -97,6 +97,7 @@ class GraphClientTests(unittest.TestCase):
         p = graph.normalize_policy(raw)
         self.assertEqual(p["conditions"]["includeUsers"], [])
         self.assertEqual(p["grantControls"]["builtInControls"], [])
+        self.assertEqual(p["grantControls"]["termsOfUse"], [])
         self.assertEqual(p["sessionControls"], [])
         self.assertEqual(graph.normalize_policy("not-a-dict")["id"], "")
 
@@ -105,7 +106,23 @@ class GraphClientTests(unittest.TestCase):
         self.assertEqual(p["displayName"], "")
         self.assertEqual(p["conditions"]["includeUsers"], [])
         self.assertEqual(p["grantControls"]["builtInControls"], [])
+        self.assertEqual(p["grantControls"]["termsOfUse"], [])
         self.assertEqual(p["sessionControls"], [])
+        self.assertEqual(set(p["grantControls"]), {"operator", "builtInControls", "termsOfUse"})
+
+    def test_normalize_round_trips_terms_of_use(self) -> None:
+        raw = {
+            "id": "x",
+            "grantControls": {
+                "operator": "AND",
+                "builtInControls": ["mfa"],
+                "termsOfUse": ["11111111-1111-1111-1111-111111111111"],
+            },
+        }
+        p = graph.normalize_policy(raw)
+        self.assertEqual(p["grantControls"]["termsOfUse"], ["11111111-1111-1111-1111-111111111111"])
+        self.assertEqual(p["grantControls"]["builtInControls"], ["mfa"])
+        self.assertEqual(p["grantControls"]["operator"], "AND")
 
     def test_non_graph_next_link_rejected_without_sending_token(self) -> None:
         page1 = {"value": [POLICY_RAW], "@odata.nextLink": "https://evil.example.com/steal"}

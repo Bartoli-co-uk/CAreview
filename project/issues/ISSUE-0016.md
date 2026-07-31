@@ -1,12 +1,16 @@
 # ISSUE-0016: Analyzer rule — Terms of Use requirement present
 
-**Status:** `PLANNED` — drafted for human review; not yet authorized to start
+**Status:** `COMPLETE` (merged, with an accepted sandbox execution-evidence
+residual) — the human reviewed the round-2 zero-finding `BLOCKED` outcome
+(see round history below) and chose to accept the sandbox residual and
+merge (`DECISION-040`)
 **Milestone:** `M4` — bound by roadmap v6 (analyzer rule-set expansion); `M4` itself is `PLANNED`, not started
-**Approved roadmap:** `ROADMAP.md` version `6`, `APPROVED` (`DECISION-034`, binds `68655cc7b1e0a63db3d6b37debf834c126bb60e0`) — binds this issue to `M4`. `AGENTS.md` still requires a separate human decision to start this specific issue
-**Dependencies:** `None` (independent of `ISSUE-0015`; may be sequenced after it or in parallel once both are authorized)
-**Branch:** `ai/ISSUE-0016-terms-of-use-rule` (not yet created)
-**Starting SHA:** `not yet created`
-**Candidate SHA:** `Not created`
+**Approved roadmap:** `ROADMAP.md` version `6`, `APPROVED` (`DECISION-034`, binds `68655cc7b1e0a63db3d6b37debf834c126bb60e0`) — binds this issue to `M4`
+**Start authorization:** `DECISION-038`
+**Dependencies:** `None` (independent of `ISSUE-0015`; sequenced after it as the second `M4` issue delivered)
+**Branch:** `ai/ISSUE-0016-terms-of-use-rule`
+**Starting SHA:** `bb01fabd6e6984ee89bc3b56ab56ed2f81000c5e`
+**Candidate SHA:** this commit — the launcher records the full HEAD SHA at review time; see the round table below for each round's exact reviewed SHA
 
 ## Objective
 
@@ -69,6 +73,8 @@ additive change to `graph.normalize_policy` to stop dropping
 
 - `graph.py`, `rules.py`, `README.md`, `tests/test_graph.py`,
   `tests/test_analyzer.py`
+- `tests/fixtures/strong_tenant.json` — added by scope amendment
+  `DECISION-039`, scoped to exactly one additive policy (see below)
 
 ## Acceptance criteria
 
@@ -84,8 +90,12 @@ additive change to `graph.normalize_policy` to stop dropping
    `test_every_rule_has_metadata`).
 4. `README.md`'s "What it checks" table and rule-count/total-weight sentence
    match `rules.py` exactly.
-5. No existing rule's pass/fail state changes on the current fixtures (no
-   fixture file changes are needed for this issue).
+5. No existing rule's pass/fail state changes on the current fixtures,
+   **except** the one additive `strong_tenant.json` policy approved by
+   `DECISION-039` (added because the new rule would otherwise newly fire
+   against `strong_tenant.json`, regressing `test_strong_tenant_scores_high`
+   and `test_break_glass_evaluable_with_ids`). No other fixture change is
+   in scope.
 
 ## Required checks
 
@@ -118,11 +128,45 @@ additive change to `graph.normalize_policy` to stop dropping
   `termsOfUse` must be strictly additive.
 - Passing an `operator: "OR"` policy where Terms of Use is merely one
   alternative control among several — this is the exact false-pass Codex's
-  round-1 plan review identified (F-003) and must not regress.
+  round-1 plan review identified (F-003) and must not regress. **Verified**:
+  `test_terms_of_use_flagged_when_only_an_or_alternative` directly covers
+  this case.
+- Any fixture change that would perturb an existing rule's pass/fail state —
+  triggered once (same class as `ISSUE-0015`'s round-0 finding), resolved
+  before implementation was committed via `DECISION-039` rather than
+  silently made.
 
-## Not yet started
+## Round history
 
-No branch has been created and no Codex review has run. Per `AGENTS.md`, this
-issue may not begin until: (1) a roadmap version/milestone covering it is
-drafted and approved by the human, and (2) the human separately authorizes
-starting this specific issue.
+| Round | Reviewed SHA | Outcome | Findings |
+|---|---|---|---|
+| 0 | `bfa12f76053b4816e66c36541f3ac578b8f2509e` | `BLOCKED` | F-001 (medium, sandbox-only: all three required checks failed to complete in the review sandbox — denied `__pycache__`/socket/tempdir access; the focused 38 graph/analyzer tests passed and no implementation defect was found); F-002 (low, advisory: `README.md`'s usage-section test count was stale at 188, fixed in round 1 to 195) — see `project/reviews/issues/ISSUE-0016-bfa12f76053b-codex.json` |
+| 1 | `3b2020bc30d0dbaf879950e12de36b3baa1b8e17` | `BLOCKED` | F-001 (medium, sandbox-only, same as round 0); F-002 (medium, REQUIRED: `CURRENT.md`'s "Roadmap"/"Roadmap approval" rows were still v5-shaped with no v6/`DECISION-034` mention, and its "Active issue"/"Latest implementation handoff"/"Open blockers" rows still described round 0 as awaiting review even though round 1 had already been committed; this issue file's own Candidate SHA field also still said "round 0") — see `project/reviews/issues/ISSUE-0016-3b2020bc30d0-codex.json` |
+
+Round 0's F-002 was fixed in round 1 (README count corrected). Round 1's
+F-002 (governance-record staleness) is fixed in round 2 (this commit):
+`CURRENT.md`'s roadmap/round-tracking rows resynchronized, and this file's
+Candidate SHA switched to the same non-round-numbered "this commit"
+convention `ISSUE-0015` used, so it cannot go stale between rounds again.
+F-001 in both rounds is the same sandbox execution-evidence class already
+accepted repeatedly in this project (most recently `ISSUE-0015`,
+`DECISION-037`); all three required checks were independently run in this
+task's own environment with real passing results at every round (see
+`project/handoffs/ISSUE-0016-handoff.md`).
+
+| 2 | `5a63f84c7a58611b1e7185f202cf131d7def2de3` | `BLOCKED` | Zero content findings (`findings: []`, one BLOCKER entry that is itself the sandbox-only F-001). All three required checks were independently run in this task's own environment with real passing results: compile exit 0, `python3 -m unittest discover -s tests` → 195 passed, `python3 scripts/validate_repo.py` → passed (67 required files) — see `project/handoffs/ISSUE-0016-handoff.md`. See `project/reviews/issues/ISSUE-0016-5a63f84c7a58-codex.json` |
+
+**This was the second and final repair round `AGENTS.md` permits for an
+issue.** Per that bounded-repair rule, this Claude task stopped there
+rather than attempting a third fix, and presented the round-2 zero-finding
+outcome to the human for the advance/merge decision, the same way
+`ISSUE-0014` and `ISSUE-0015` did.
+
+## Advance/merge decision
+
+The human reviewed round 2's zero-finding `BLOCKED` outcome and the real,
+independently-run check results and chose to accept the sandbox
+execution-evidence residual and merge, the same disposition used
+repeatedly for this class of finding elsewhere in this project (most
+recently `ISSUE-0015`, `DECISION-037`). `DECISION-040` records the exact
+binding. `ai/ISSUE-0016-terms-of-use-rule` is merged to `main`.

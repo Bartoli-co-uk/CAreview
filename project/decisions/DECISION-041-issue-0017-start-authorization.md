@@ -21,7 +21,7 @@ merged (`DECISION-040`).
 
 - Artifact/action: start `ISSUE-0017` implementation work on a new branch
 - Target: `ai/ISSUE-0017-admin-signin-frequency-rule`, based on `main` at
-  `4812954` (tip after `ISSUE-0016`'s merge)
+  `48129547a68239e8f733ce6b50b6a63407a35256` (tip after `ISSUE-0016`'s merge)
 - Scope: authorizes starting and implementing `ISSUE-0017` only, within the
   exact scope, allowed paths, and acceptance criteria already recorded in
   `project/issues/ISSUE-0017.md`. Does not pre-approve its advance/merge

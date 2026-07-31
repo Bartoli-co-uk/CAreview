@@ -2,7 +2,7 @@
 
 **Claude issue task:** `ISSUE-0017 admin-signin-frequency-rule implementation`
 **Approved issue:** `project/issues/ISSUE-0017.md` at this commit (bound to `M4`, roadmap v6, `DECISION-034`; start authorized by `DECISION-041`)
-**Starting SHA:** `4812954` (tip after `ISSUE-0016`'s merge)
+**Starting SHA:** `48129547a68239e8f733ce6b50b6a63407a35256` (tip after `ISSUE-0016`'s merge)
 **Candidate SHA:** this commit — the launcher records the full HEAD SHA at review time
 **Created at:** `2026-07-31`
 
@@ -86,10 +86,10 @@ handoff is not test authority.
 
 ## Review request
 
-- Base SHA: `4812954`
+- Base SHA: `48129547a68239e8f733ce6b50b6a63407a35256`
 - Head SHA: this commit (the launcher records the full HEAD SHA)
-- Review command: `./scripts/run-codex-review.sh issue ISSUE-0017 4812954 <HEAD-SHA>`
-- PowerShell: `.\scripts\run-codex-review.ps1 issue ISSUE-0017 4812954 <HEAD-SHA>`
+- Review command: `./scripts/run-codex-review.sh issue ISSUE-0017 48129547a68239e8f733ce6b50b6a63407a35256 <HEAD-SHA>`
+- PowerShell: `.\scripts\run-codex-review.ps1 issue ISSUE-0017 48129547a68239e8f733ce6b50b6a63407a35256 <HEAD-SHA>`
 - Areas needing special attention: the `persistentBrowser.mode == "never"`
   exactness (not `!= "always"`) and the all-users-minus-`excludeRoles`
   union-coverage computation are the two places most likely to hide a

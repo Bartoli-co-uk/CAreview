@@ -1,12 +1,13 @@
 # ISSUE-0017: Analyzer rule — admin-scoped sign-in frequency / no persistent browser
 
-**Status:** `PLANNED` — drafted for human review; not yet authorized to start
+**Status:** `REVIEWING`
 **Milestone:** `M4` — bound by roadmap v6 (analyzer rule-set expansion); `M4` itself is `PLANNED`, not started
-**Approved roadmap:** `ROADMAP.md` version `6`, `APPROVED` (`DECISION-034`, binds `68655cc7b1e0a63db3d6b37debf834c126bb60e0`) — binds this issue to `M4`. `AGENTS.md` still requires a separate human decision to start this specific issue
-**Dependencies:** `None` (independent of `ISSUE-0015`/`ISSUE-0016`; may be sequenced after them or in parallel once all are authorized)
-**Branch:** `ai/ISSUE-0017-admin-signin-frequency-rule` (not yet created)
-**Starting SHA:** `not yet created`
-**Candidate SHA:** `Not created`
+**Approved roadmap:** `ROADMAP.md` version `6`, `APPROVED` (`DECISION-034`, binds `68655cc7b1e0a63db3d6b37debf834c126bb60e0`) — binds this issue to `M4`
+**Start authorization:** `DECISION-041`
+**Dependencies:** `None` (independent of `ISSUE-0015`/`ISSUE-0016`; sequenced after them as the third `M4` issue delivered)
+**Branch:** `ai/ISSUE-0017-admin-signin-frequency-rule`
+**Starting SHA:** `4812954` (tip after `ISSUE-0016`'s merge)
+**Candidate SHA:** round 0 is this commit — the launcher records the full HEAD SHA
 
 ## Objective
 
@@ -162,9 +163,9 @@ the same `identity/conditionalAccess/policies` call CAreview already makes.
   single-policy check (would reopen the same gap Codex previously flagged
   for `mfa-admins`, historically tracked as F-003).
 
-## Not yet started
+## Round history
 
-No branch has been created and no Codex review has run. Per `AGENTS.md`, this
-issue may not begin until: (1) a roadmap version/milestone covering it is
-drafted and approved by the human, and (2) the human separately authorizes
-starting this specific issue.
+| Round | Reviewed SHA | Outcome | Findings |
+|---|---|---|---|
+
+Round 0 not yet reviewed by Codex.

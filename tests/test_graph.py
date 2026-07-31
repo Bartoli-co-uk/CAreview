@@ -93,12 +93,22 @@ class GraphClientTests(unittest.TestCase):
 
     def test_normalize_handles_malformed_nested_objects(self) -> None:
         # Non-dict nested fields must not crash normalization.
-        raw = {"id": "x", "conditions": ["oops"], "grantControls": "bad", "sessionControls": 7}
+        raw = {
+            "id": "x",
+            "conditions": ["oops"],
+            "grantControls": "bad",
+            "sessionControls": {"signInFrequency": "bad", "persistentBrowser": ["oops"]},
+        }
         p = graph.normalize_policy(raw)
         self.assertEqual(p["conditions"]["includeUsers"], [])
         self.assertEqual(p["grantControls"]["builtInControls"], [])
         self.assertEqual(p["grantControls"]["termsOfUse"], [])
         self.assertEqual(p["sessionControls"], [])
+        self.assertEqual(
+            p["signInFrequency"],
+            {"enabled": False, "type": "", "value": None, "frequencyInterval": ""},
+        )
+        self.assertEqual(p["persistentBrowser"], {"enabled": False, "mode": ""})
         self.assertEqual(graph.normalize_policy("not-a-dict")["id"], "")
 
     def test_normalize_handles_missing_fields(self) -> None:
@@ -109,6 +119,31 @@ class GraphClientTests(unittest.TestCase):
         self.assertEqual(p["grantControls"]["termsOfUse"], [])
         self.assertEqual(p["sessionControls"], [])
         self.assertEqual(set(p["grantControls"]), {"operator", "builtInControls", "termsOfUse"})
+        self.assertEqual(
+            p["signInFrequency"],
+            {"enabled": False, "type": "", "value": None, "frequencyInterval": ""},
+        )
+        self.assertEqual(p["persistentBrowser"], {"enabled": False, "mode": ""})
+
+    def test_normalize_round_trips_signin_frequency_and_persistent_browser(self) -> None:
+        raw = {
+            "id": "x",
+            "sessionControls": {
+                "signInFrequency": {
+                    "isEnabled": True,
+                    "type": "hours",
+                    "value": 2,
+                    "frequencyInterval": "timeBased",
+                },
+                "persistentBrowser": {"isEnabled": True, "mode": "never"},
+            },
+        }
+        p = graph.normalize_policy(raw)
+        self.assertEqual(
+            p["signInFrequency"],
+            {"enabled": True, "type": "hours", "value": 2, "frequencyInterval": "timeBased"},
+        )
+        self.assertEqual(p["persistentBrowser"], {"enabled": True, "mode": "never"})
 
     def test_normalize_round_trips_terms_of_use(self) -> None:
         raw = {

@@ -81,5 +81,18 @@
       "applications": {"includeApplications": ["All"]}
     },
     "sessionControls": {"signInFrequency": {"isEnabled": true, "value": 8}}
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000008",
+    "displayName": "Restrict finance app access by location",
+    "state": "enabled",
+    "conditions": {
+      "users": {"includeGroups": ["55555555-5555-5555-5555-555555555555"]},
+      "applications": {"includeApplications": ["00000000-0000-0000-0000-0000000000fa"]},
+      "locations": {
+        "includeLocations": ["All"],
+        "excludeLocations": ["44444444-4444-4444-4444-444444444444"]
+      }
+    }
   }
 ]

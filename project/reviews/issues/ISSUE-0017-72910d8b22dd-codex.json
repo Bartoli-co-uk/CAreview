@@ -1,0 +1,132 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-31T18:50:37Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fb982-35a8-7fa2-aab0-c7c7544cbbc9"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "48129547a68239e8f733ce6b50b6a63407a35256",
+    "evidence": [
+      {
+        "detail": "Detached checkout HEAD exactly matches the launcher-supplied target SHA; the base-to-target diff was available and contained no uncommitted changes.",
+        "reference": "72910d8b22dd74d664036d74c0d909e1d6a32c6a",
+        "source": "check"
+      },
+      {
+        "detail": "The diff modifies the six implementation paths allowed by ISSUE-0017 plus its authorized decision, issue, handoff, prior-review, roadmap, and current-status records.",
+        "reference": "48129547a68239e8f733ce6b50b6a63407a35256..72910d8b22dd74d664036d74c0d909e1d6a32c6a",
+        "source": "diff"
+      },
+      {
+        "detail": "The round-1 implementation now requires persistentBrowser.enabled to be exactly true and mode to be exactly \"never\"; its regression test covers an explicitly disabled control carrying stale mode \"never\".",
+        "reference": "rules.py:243",
+        "source": "file"
+      },
+      {
+        "detail": "Focused analyzer and graph tests completed successfully: `python3 -m unittest tests.test_graph tests.test_analyzer` ran 49 tests with exit 0.",
+        "reference": "python3 -m unittest tests.test_graph tests.test_analyzer",
+        "source": "command"
+      },
+      {
+        "detail": "The complete required test command ran 206 tests but exited 1 with 76 server-test errors because the review sandbox denied loopback socket binding.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "command"
+      },
+      {
+        "detail": "The required compile command exited 1 because the read-only sandbox denied creation of `__pycache__`.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "command"
+      },
+      {
+        "detail": "Governance validation exited 1 because no writable temporary directory was available to its launcher smoke tests.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "command"
+      },
+      {
+        "detail": "`git diff --check` reported no whitespace errors.",
+        "reference": "git diff --check 48129547a68239e8f733ce6b50b6a63407a35256 72910d8b22dd74d664036d74c0d909e1d6a32c6a",
+        "source": "command"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "BLOCKER",
+        "confidence": "high",
+        "evidence": [
+          "Expected: all three required checks must execute successfully against the exact candidate before an issue review can pass.",
+          "Observed: the full suite exited 1 with 76 PermissionError failures when server tests attempted loopback binds; compile exited 1 when bytecode output was denied; governance validation exited 1 because no usable temporary directory existed.",
+          "The committed handoff reports locally obtained passing results—206 tests, compile exit 0, and governance validation passing—but repository rules require independent verification and explicitly treat author claims as non-authoritative."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 125,
+            "path": "project/handoffs/ISSUE-0017-handoff.md"
+          }
+        ],
+        "remediation": "Rerun the exact required commands against target commit 72910d8b22dd74d664036d74c0d909e1d6a32c6a in an approved environment that permits bytecode/temp-file creation and loopback socket binding, then supply the real commit-bound output to a fresh review. If the known sandbox limitation is instead accepted, that requires an explicit human decision; the reviewer cannot infer acceptance.",
+        "severity": "medium",
+        "title": "Required verification cannot be independently completed in the review sandbox",
+        "verification": "Confirm exit 0 from `python3 -m py_compile $(git ls-files '*.py')`, `python3 -m unittest discover -s tests` with all 206 tests passing, and `python3 scripts/validate_repo.py` against the exact target SHA."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: committed issue and handoff records accurately identify the current round and its evidence.",
+          "Observed: the issue header still says `Candidate SHA: round 0 is this commit`, although the reviewed target is explicitly the round-1 repair.",
+          "Observed: the handoff's primary implementation summary still describes qualification as requiring only `persistentBrowser.mode == \"never\"`, and its main acceptance/check tables still report 205 tests; the later round-1 appendix correctly adds the enabled requirement and reports 206 tests. These internally contradictory records make the current candidate evidence stale even though the appendix describes the repair."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 10,
+            "path": "project/issues/ISSUE-0017.md"
+          },
+          {
+            "line": 11,
+            "path": "project/handoffs/ISSUE-0017-handoff.md"
+          },
+          {
+            "line": 23,
+            "path": "project/handoffs/ISSUE-0017-handoff.md"
+          },
+          {
+            "line": 54,
+            "path": "project/handoffs/ISSUE-0017-handoff.md"
+          },
+          {
+            "line": 65,
+            "path": "project/handoffs/ISSUE-0017-handoff.md"
+          }
+        ],
+        "remediation": "Update the issue candidate identity and the handoff's primary outcome, changed-files description, acceptance mapping, and verification table so they consistently describe round 1: persistentBrowser.enabled must be true, the candidate is the round-1 commit, and the suite contains 206 tests. Preserve prior-round results only in clearly labeled history.",
+        "severity": "medium",
+        "title": "Issue and handoff records remain partly stale after the round-1 repair",
+        "verification": "Inspect the repaired records and confirm every current-candidate summary agrees with the round-1 appendix, source, test count, and exact target SHA; then run governance validation and obtain a fresh review because the documentation change creates a new candidate."
+      }
+    ],
+    "limitations": [
+      "The read-only review environment cannot create bytecode or temporary directories and cannot bind loopback sockets, so the required compile, governance, and complete test checks could not succeed independently.",
+      "No live-tenant authentication or Microsoft Graph call was performed; ISSUE-0017 does not require one and introduces no new endpoint or permission.",
+      "The checkout presents the target as a detached, shallow/grafted commit, but both supplied commit objects and the exact base-to-target diff were available and matched the launcher identities."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "72910d8b22dd74d664036d74c0d909e1d6a32c6a",
+    "schema_version": "1.0",
+    "summary": "The round-1 code repair is correct under source inspection and all 49 focused graph/analyzer tests pass, including the disabled persistent-browser regression. The review is nevertheless BLOCKED because the three mandatory checks could not all execute successfully in this sandbox and the committed issue/handoff records contain stale round-0 descriptions and test counts. Residual risk is limited to the unverified full-suite/governance/compile evidence and the documented lack of live-tenant validation; no additional product-code defect was identified.",
+    "target_id": "ISSUE-0017"
+  },
+  "test_only": false
+}

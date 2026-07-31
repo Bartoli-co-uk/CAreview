@@ -278,5 +278,142 @@ class AnalyzerTests(unittest.TestCase):
                 )
 
 
+ADMIN_ROLES = sorted(rules.ADMIN_ROLE_TEMPLATE_IDS)
+
+
+def _admin_signin_policy(
+    *,
+    include_roles: list[str] | None = None,
+    include_users: list[str] | None = None,
+    exclude_roles: list[str] | None = None,
+    signin_frequency_enabled: bool = True,
+    frequency_interval: str = "everyTime",
+    freq_type: str = "",
+    freq_value: int | None = None,
+    persistent_browser_mode: str | None = "never",
+    persistent_browser_present: bool = True,
+    persistent_browser_enabled: bool | None = None,
+    display_name: str = "Admin sign-in frequency",
+) -> dict:
+    users: dict = {}
+    if include_users is not None:
+        users["includeUsers"] = include_users
+    if include_roles is not None:
+        users["includeRoles"] = include_roles
+    if exclude_roles is not None:
+        users["excludeRoles"] = exclude_roles
+
+    session_controls: dict = {
+        "signInFrequency": {
+            "isEnabled": signin_frequency_enabled,
+            "frequencyInterval": frequency_interval,
+            "type": freq_type,
+            "value": freq_value,
+        },
+    }
+    if persistent_browser_present:
+        is_enabled = (
+            persistent_browser_enabled
+            if persistent_browser_enabled is not None
+            else persistent_browser_mode is not None
+        )
+        pb: dict = {"isEnabled": is_enabled}
+        if persistent_browser_mode is not None:
+            pb["mode"] = persistent_browser_mode
+        session_controls["persistentBrowser"] = pb
+
+    return graph.normalize_policy({
+        "id": display_name.lower().replace(" ", "-"),
+        "displayName": display_name,
+        "state": "enabled",
+        "conditions": {"users": users},
+        "sessionControls": session_controls,
+    })
+
+
+class AdminSignInFrequencyTests(unittest.TestCase):
+    def test_signin_frequency_disabled_fails(self) -> None:
+        p = _admin_signin_policy(
+            include_roles=ADMIN_ROLES,
+            signin_frequency_enabled=False,
+        )
+        ids = {f["id"] for f in analyzer.analyze([p])["findings"]}
+        self.assertIn("admin-signin-frequency", ids)
+
+    def test_every_time_with_never_persistent_browser_passes(self) -> None:
+        p = _admin_signin_policy(include_roles=ADMIN_ROLES)
+        ids = {f["id"] for f in analyzer.analyze([p])["findings"]}
+        self.assertNotIn("admin-signin-frequency", ids)
+
+    def test_hours_within_threshold_with_never_persistent_browser_passes(self) -> None:
+        p = _admin_signin_policy(
+            include_roles=ADMIN_ROLES,
+            frequency_interval="timeBased",
+            freq_type="hours",
+            freq_value=2,
+        )
+        ids = {f["id"] for f in analyzer.analyze([p])["findings"]}
+        self.assertNotIn("admin-signin-frequency", ids)
+
+    def test_persistent_browser_always_still_fails(self) -> None:
+        p = _admin_signin_policy(include_roles=ADMIN_ROLES, persistent_browser_mode="always")
+        ids = {f["id"] for f in analyzer.analyze([p])["findings"]}
+        self.assertIn("admin-signin-frequency", ids)
+
+    def test_persistent_browser_absent_still_fails(self) -> None:
+        # F-001 (Codex round-2): a missing persistentBrowser control is not
+        # evidence persistence is prohibited, so it must not qualify.
+        p = _admin_signin_policy(include_roles=ADMIN_ROLES, persistent_browser_present=False)
+        ids = {f["id"] for f in analyzer.analyze([p])["findings"]}
+        self.assertIn("admin-signin-frequency", ids)
+
+    def test_persistent_browser_empty_mode_still_fails(self) -> None:
+        # F-001 (Codex round-2): present but with no mode set is also not "never".
+        p = _admin_signin_policy(include_roles=ADMIN_ROLES, persistent_browser_mode="")
+        ids = {f["id"] for f in analyzer.analyze([p])["findings"]}
+        self.assertIn("admin-signin-frequency", ids)
+
+    def test_persistent_browser_disabled_with_stale_never_mode_still_fails(self) -> None:
+        # F-001 (Codex issue-review round 0): a persistentBrowser control
+        # explicitly disabled but carrying a stale mode: "never" must not
+        # qualify — a disabled control enforces nothing, so its mode value
+        # is not evidence that persistence is prohibited.
+        p = _admin_signin_policy(
+            include_roles=ADMIN_ROLES,
+            persistent_browser_mode="never",
+            persistent_browser_enabled=False,
+        )
+        ids = {f["id"] for f in analyzer.analyze([p])["findings"]}
+        self.assertIn("admin-signin-frequency", ids)
+
+    def test_all_users_policy_excluding_one_admin_role_fails_for_that_role(self) -> None:
+        excluded_role = ADMIN_ROLES[0]
+        p = _admin_signin_policy(include_users=["All"], exclude_roles=[excluded_role])
+        ids = {f["id"] for f in analyzer.analyze([p])["findings"]}
+        self.assertIn("admin-signin-frequency", ids)
+
+    def test_non_qualifying_overlapping_policy_does_not_subtract_coverage(self) -> None:
+        covering = _admin_signin_policy(
+            include_roles=ADMIN_ROLES, display_name="Covers all admin roles",
+        )
+        overlapping_non_qualifying = _admin_signin_policy(
+            include_roles=[ADMIN_ROLES[0]],
+            signin_frequency_enabled=False,
+            display_name="Non-qualifying overlap",
+        )
+        ids = {
+            f["id"]
+            for f in analyzer.analyze([covering, overlapping_non_qualifying])["findings"]
+        }
+        self.assertNotIn("admin-signin-frequency", ids)
+
+    def test_union_of_two_qualifying_policies_covers_all_roles(self) -> None:
+        half = len(ADMIN_ROLES) // 2
+        first = _admin_signin_policy(include_roles=ADMIN_ROLES[:half], display_name="First half")
+        second = _admin_signin_policy(include_roles=ADMIN_ROLES[half:], display_name="Second half")
+        ids = {f["id"] for f in analyzer.analyze([first, second])["findings"]}
+        self.assertNotIn("admin-signin-frequency", ids)
+
+
 if __name__ == "__main__":
     unittest.main()

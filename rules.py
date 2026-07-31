@@ -240,6 +240,58 @@ def _check_terms_of_use(policies: list[dict], ctx: dict) -> tuple[str, list[str]
     return (PASS, _names(hits)) if hits else (FAIL, [])
 
 
+def _qualifies_for_admin_signin_frequency(p: dict) -> bool:
+    # Qualifying = enabled, short/continuous re-auth (everyTime, or 1-4 hours —
+    # human-confirmed threshold) AND persistentBrowser.mode == "never" EXACTLY.
+    # A missing/disabled/empty-string mode is not evidence persistence is
+    # prohibited, only that it wasn't configured either way (Codex round-2
+    # F-001) — so `!= "always"` would wrongly qualify those cases.
+    if not _enabled(p):
+        return False
+    sif = p.get("signInFrequency") or {}
+    if not sif.get("enabled"):
+        return False
+    frequency_ok = sif.get("frequencyInterval") == "everyTime" or (
+        sif.get("type") == "hours"
+        and isinstance(sif.get("value"), int)
+        and 1 <= sif.get("value") <= 4
+    )
+    if not frequency_ok:
+        return False
+    # The control must itself be ENABLED, not merely carry a stale mode:
+    # "never" left over from a disabled configuration (Codex issue-review
+    # round 0, F-001) — a disabled control is not enforcing anything, so its
+    # mode value is not evidence of "no persistent browser session".
+    pb = p.get("persistentBrowser") or {}
+    return pb.get("enabled") is True and pb.get("mode") == "never"
+
+
+def _effectively_covered_admin_roles(p: dict) -> set[str]:
+    # An "All" includeUsers policy covers every admin role MINUS any it
+    # excludes; a role-scoped policy covers only the admin roles it includes,
+    # again minus any it excludes.
+    c = _cond(p)
+    exclude_roles = set(c.get("excludeRoles", []))
+    if "All" in c.get("includeUsers", []):
+        return ADMIN_ROLE_TEMPLATE_IDS - exclude_roles
+    return ADMIN_ROLE_TEMPLATE_IDS.intersection(c.get("includeRoles", [])) - exclude_roles
+
+
+def _check_admin_signin_frequency(policies: list[dict], ctx: dict) -> tuple[str, list[str]]:
+    # Deliberately more precise than mfa-admins's simpler pattern (Codex round-1
+    # F-004): union role coverage across ALL qualifying policies, so a
+    # non-qualifying overlapping policy (e.g. frequency disabled) never
+    # subtracts coverage a qualifying policy already established.
+    qualifying = _any(policies, _qualifies_for_admin_signin_frequency)
+    covered: set[str] = set()
+    for p in qualifying:
+        covered |= _effectively_covered_admin_roles(p)
+    if covered == ADMIN_ROLE_TEMPLATE_IDS:
+        hits = [p for p in qualifying if _effectively_covered_admin_roles(p)]
+        return PASS, _names(hits)
+    return FAIL, _names(qualifying) if qualifying else []
+
+
 RULES: list[Rule] = [
     Rule(
         "block-legacy-auth", "Legacy authentication is blocked", "high", 20,
@@ -320,6 +372,20 @@ RULES: list[Rule] = [
         ["state", "conditions.includeUsers", "conditions.includeRoles", "conditions.excludeGroups",
          "conditions.excludeRoles", "grantControls"],
         _check_terms_of_use,
+    ),
+    Rule(
+        "admin-signin-frequency", "Administrators must re-authenticate frequently with no persistent browser",
+        "medium", 10,
+        "Privileged sessions that persist indefinitely or re-authenticate only rarely widen the window "
+        "an attacker can ride a stolen admin session; every built-in admin role must be covered by an "
+        "enabled policy requiring sign-in frequency of everyTime (or 1-4 hours) with persistentBrowser "
+        "set to never.",
+        "Add or update an enabled policy scoped to (or covering, via an unexcluded all-users policy) "
+        "every built-in admin role, requiring session sign-in frequency everyTime or 1-4 hours, with "
+        "persistent browser sessions set to never.",
+        ["state", "conditions.includeUsers", "conditions.includeRoles", "conditions.excludeRoles",
+         "signInFrequency", "persistentBrowser"],
+        _check_admin_signin_frequency,
     ),
 ]
 

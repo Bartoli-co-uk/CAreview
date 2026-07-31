@@ -1,12 +1,17 @@
 # ISSUE-0017: Analyzer rule — admin-scoped sign-in frequency / no persistent browser
 
-**Status:** `PLANNED` — drafted for human review; not yet authorized to start
+**Status:** `COMPLETE` (merged, with an accepted sandbox execution-evidence
+residual) — the human reviewed the round-2 `BLOCKED` outcome (no
+product-code defect; see round history below) and chose to accept the
+residual, authorize the metadata-only `ROADMAP.md`/`README.md` follow-up,
+and merge (`DECISION-042`)
 **Milestone:** `M4` — bound by roadmap v6 (analyzer rule-set expansion); `M4` itself is `PLANNED`, not started
-**Approved roadmap:** `ROADMAP.md` version `6`, `APPROVED` (`DECISION-034`, binds `68655cc7b1e0a63db3d6b37debf834c126bb60e0`) — binds this issue to `M4`. `AGENTS.md` still requires a separate human decision to start this specific issue
-**Dependencies:** `None` (independent of `ISSUE-0015`/`ISSUE-0016`; may be sequenced after them or in parallel once all are authorized)
-**Branch:** `ai/ISSUE-0017-admin-signin-frequency-rule` (not yet created)
-**Starting SHA:** `not yet created`
-**Candidate SHA:** `Not created`
+**Approved roadmap:** `ROADMAP.md` version `6`, `APPROVED` (`DECISION-034`, binds `68655cc7b1e0a63db3d6b37debf834c126bb60e0`) — binds this issue to `M4`
+**Start authorization:** `DECISION-041`
+**Dependencies:** `None` (independent of `ISSUE-0015`/`ISSUE-0016`; sequenced after them as the third `M4` issue delivered)
+**Branch:** `ai/ISSUE-0017-admin-signin-frequency-rule`
+**Starting SHA:** `48129547a68239e8f733ce6b50b6a63407a35256`
+**Candidate SHA:** this commit — the launcher records the full HEAD SHA at review time; see the round table below for each round's exact reviewed SHA
 
 ## Objective
 
@@ -162,9 +167,71 @@ the same `identity/conditionalAccess/policies` call CAreview already makes.
   single-policy check (would reopen the same gap Codex previously flagged
   for `mfa-admins`, historically tracked as F-003).
 
-## Not yet started
+## Round history
 
-No branch has been created and no Codex review has run. Per `AGENTS.md`, this
-issue may not begin until: (1) a roadmap version/milestone covering it is
-drafted and approved by the human, and (2) the human separately authorizes
-starting this specific issue.
+| Round | Reviewed SHA | Outcome | Findings |
+|---|---|---|---|
+| 0 | `079f5c72cb27c2e525b59d70c6bc5e3d0ee9a7f6` | `CHANGES_REQUIRED` | F-001 (medium, real defect): `_qualifies_for_admin_signin_frequency` checked only `persistentBrowser.mode == "never"`, ignoring `persistentBrowser.enabled` — a disabled control with a stale `mode: "never"` falsely qualified. Fixed in round 1: both `enabled is True` and `mode == "never"` are now required, with a new regression test. |
+| 1 | `72910d8b22dd74d664036d74c0d909e1d6a32c6a` | `BLOCKED` | F-001 (medium, sandbox-only: same accepted execution-evidence limitation class as prior issues). F-002 (medium, real: issue/handoff records left internally contradictory after the round-1 source fix — candidate-SHA header and handoff primary sections still round-0-shaped). Both fixed in round 2 (record accuracy only; no further source change). |
+| 2 | `2a55a56ce2551260102104c3718429f8ce6b2e62` | `BLOCKED` | F-001 (medium, sandbox-only: same accepted class). F-002 (medium, real, **unresolved**: `ROADMAP.md`'s `M4` status/delivery-status prose was never updated past the round-0 commit — it still says only the round-0 candidate exists and its initial review is awaited, though rounds 1-2 had already landed). F-003 (low, advisory, pre-existing, unrelated to this issue's own changes: `README.md`'s usage-section prose says "188 Python unit tests," now 18 behind the true count). No product-code defect at any round. |
+
+This was the second and final permitted issue repair round (`AGENTS.md`); no
+third repair may be attempted regardless of finding severity. Per that
+bounded-repair rule, this Claude task stops here and presents the findings
+to the human — see "Human decision required" below.
+
+## Human decision required
+
+Round 2's remaining findings, none of which are a product-code defect:
+
+- **F-001** (medium, sandbox-only): the review sandbox cannot independently
+  complete `python3 -m py_compile`, the full `unittest discover` run, or
+  `scripts/validate_repo.py` (denied bytecode writes, loopback sockets, and
+  a writable temp directory respectively). This is the same accepted
+  execution-evidence limitation class as `ISSUE-0014` (`DECISION-031`),
+  `ISSUE-0015` (`DECISION-037`), and `ISSUE-0016` (`DECISION-040`). All
+  three checks were independently run in this task's own environment at
+  every round with real passing results (206 tests, compile exit 0,
+  governance validation passed — see the handoff's round tables).
+- **F-002** (medium, real, unresolved): `ROADMAP.md`'s `M4` delivery-status
+  prose (two locations, lines 14 and 27) was updated once, in the initial
+  round-0 commit, to say `ISSUE-0017` is `IN PROGRESS` and its round-0
+  review is awaited — but was never touched again in rounds 1 or 2, so it
+  now understates the true state (two repair rounds have landed, the
+  budget is exhausted, and this round's own review is what surfaced the
+  gap). No repair round remains to fix it directly.
+- **F-003** (low, advisory, pre-existing): `README.md`'s usage-section
+  prose says "188 Python unit tests" — stale independent of this issue
+  (the count was already behind before `ISSUE-0017` started; this issue's
+  own "What it checks" table/weight sentence, the one README section its
+  own acceptance criteria govern, is correct and current).
+
+**Options for the human:**
+1. **Accept F-001 as the same residual class already accepted for
+   `ISSUE-0014`/`ISSUE-0015`/`ISSUE-0016`**, authorize a follow-up,
+   metadata-only commit to fix `ROADMAP.md` (F-002) and, optionally,
+   `README.md`'s stale count (F-003), and authorize merging
+   `ai/ISSUE-0017-admin-signin-frequency-rule` to `main` — the same
+   disposition `DECISION-037`/`DECISION-040` gave the equivalent residual
+   for `ISSUE-0015`/`ISSUE-0016`. A metadata-only commit does not itself
+   need a fresh Codex review (no product source changes), consistent with
+   `AGENTS.md`'s "metadata-only report/status update... does not make the
+   metadata commit itself reviewed" language — it is corrective record
+   hygiene, not a new implementation round.
+2. **Decline to merge** and instead direct a different disposition (e.g.
+   hold the branch, request a different scope for the follow-up fix, or
+   re-open a fresh issue-scoped task with its own new repair budget rather
+   than a same-task metadata commit).
+3. **Ask for something else** — e.g. an independent re-run of the three
+   required checks in a different environment before deciding.
+
+## Advance/merge decision
+
+The human reviewed round 2's `BLOCKED` outcome (no product-code defect)
+and the real, independently-run check results and chose option 1: accept
+the sandbox execution-evidence residual, authorize the metadata-only
+`ROADMAP.md` (F-002) and `README.md` (F-003) follow-up, and merge — the
+same disposition used repeatedly for this class of finding elsewhere in
+this project (most recently `ISSUE-0016`, `DECISION-040`). `DECISION-042`
+records the exact binding. `ai/ISSUE-0017-admin-signin-frequency-rule` is
+merged to `main`.

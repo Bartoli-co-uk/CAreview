@@ -136,6 +136,47 @@ def _as_dict(value: object) -> dict:
     return value if isinstance(value, dict) else {}
 
 
+_SIGN_IN_FREQUENCY_TYPES = {"days", "hours"}
+_SIGN_IN_FREQUENCY_INTERVALS = {"timeBased", "everyTime"}
+_PERSISTENT_BROWSER_MODES = {"always", "never"}
+
+
+def _enum_or_empty(value: object, allowed: set[str]) -> str:
+    """Coerce a Graph enum-shaped string field to one of ``allowed``, else ``""``."""
+    return value if isinstance(value, str) and value in allowed else ""
+
+
+def _sign_in_frequency(raw_session: dict) -> dict:
+    """Normalize ``sessionControls.signInFrequency`` (ISSUE-0017).
+
+    Same enabled-detection as the existing ``session_controls`` list
+    (``_control_enabled`` on the raw, uncoerced value) so a missing or
+    non-dict control defaults to disabled rather than the "present object
+    with neither field" enabled-by-default case.
+    """
+    raw = raw_session.get("signInFrequency")
+    obj = _as_dict(raw)
+    value = obj.get("value")
+    if isinstance(value, bool) or not isinstance(value, int):
+        value = None
+    return {
+        "enabled": _control_enabled(raw),
+        "type": _enum_or_empty(obj.get("type"), _SIGN_IN_FREQUENCY_TYPES),
+        "value": value,
+        "frequencyInterval": _enum_or_empty(obj.get("frequencyInterval"), _SIGN_IN_FREQUENCY_INTERVALS),
+    }
+
+
+def _persistent_browser(raw_session: dict) -> dict:
+    """Normalize ``sessionControls.persistentBrowser`` (ISSUE-0017)."""
+    raw = raw_session.get("persistentBrowser")
+    obj = _as_dict(raw)
+    return {
+        "enabled": _control_enabled(raw),
+        "mode": _enum_or_empty(obj.get("mode"), _PERSISTENT_BROWSER_MODES),
+    }
+
+
 def normalize_policy(raw: object) -> dict:
     """Reduce a raw Graph CA policy to the internal data contract.
 
@@ -194,6 +235,8 @@ def normalize_policy(raw: object) -> dict:
             "termsOfUse": _str_list(grant.get("termsOfUse")),
         },
         "sessionControls": session_controls,
+        "signInFrequency": _sign_in_frequency(session),
+        "persistentBrowser": _persistent_browser(session),
     }
 
 

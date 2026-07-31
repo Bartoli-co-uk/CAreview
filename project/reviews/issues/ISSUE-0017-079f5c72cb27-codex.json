@@ -1,0 +1,107 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-31T18:44:34Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fb97c-ca7e-7832-8fdd-b10d1ecbe2c1"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "48129547a68239e8f733ce6b50b6a63407a35256",
+    "evidence": [
+      {
+        "detail": "git rev-parse HEAD returned the launcher-bound target SHA; git rev-parse of the base returned the launcher-bound base SHA; git status --short was empty.",
+        "reference": "079f5c72cb27c2e525b59d70c6bc5e3d0ee9a7f6",
+        "source": "command"
+      },
+      {
+        "detail": "The base-to-target diff changes 11 files with 471 insertions and 30 deletions. Product changes are limited to graph.py, rules.py, README.md, tests/test_graph.py, tests/test_analyzer.py, and tests/fixtures/strong_tenant.json; the remaining changes are governance records. git diff --check completed successfully.",
+        "reference": "48129547a68239e8f733ce6b50b6a63407a35256..079f5c72cb27c2e525b59d70c6bc5e3d0ee9a7f6",
+        "source": "diff"
+      },
+      {
+        "detail": "The approved issue requires a disabled persistentBrowser control to disqualify a policy and requires persistentBrowser.mode == \"never\" exactly.",
+        "reference": "project/issues/ISSUE-0017.md",
+        "source": "file"
+      },
+      {
+        "detail": "Targeted graph and analyzer tests completed successfully: 48 tests ran, exit 0.",
+        "reference": "tests/test_graph.py",
+        "source": "check"
+      },
+      {
+        "detail": "Independent reproduction normalized {isEnabled: false, mode: \"never\"} to {enabled: false, mode: \"never\"}, but analyzer evaluation returned pass for admin-signin-frequency when that policy covered every admin role.",
+        "reference": "rules.py:262",
+        "source": "command"
+      },
+      {
+        "detail": "All 13 tracked Python files were independently parsed with ast.parse successfully. This is weaker than the required py_compile command because the read-only sandbox prevents bytecode writes.",
+        "reference": "graph.py",
+        "source": "check"
+      },
+      {
+        "detail": "The full backend suite discovered 205 tests but ended with 76 errors because the sandbox prohibited loopback socket binding in tests/test_server.py; the failures were environmental and not assertions in the changed rule tests.",
+        "reference": "tests/test_server.py:55",
+        "source": "limitation"
+      },
+      {
+        "detail": "Governance validation could not complete because the read-only sandbox provided no writable temporary directory; tempfile.TemporaryDirectory raised FileNotFoundError.",
+        "reference": "scripts/validate_repo.py:375",
+        "source": "limitation"
+      },
+      {
+        "detail": "The committed handoff records author-observed exit-0 results for py_compile, 205 tests, and governance validation, but repository rules require reviewers to treat author claims as claims rather than independent check evidence.",
+        "reference": "project/handoffs/ISSUE-0017-handoff.md",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "Expected: project/issues/ISSUE-0017.md states that a disabled persistentBrowser control disqualifies a policy, even when another part looks compliant.",
+          "Observed: graph.py preserves both enabled=false and mode=\"never\", but _qualifies_for_admin_signin_frequency checks only pb.get(\"mode\") == \"never\" and ignores pb.get(\"enabled\").",
+          "A direct reproduction using a full-admin-role policy with signInFrequency enabled/everyTime and persistentBrowser {isEnabled: false, mode: \"never\"} produced admin-signin-frequency status \"pass\".",
+          "The existing tests cover absent, empty-mode, and mode=always controls, but not the disabled-with-mode-never representation that exposes this false pass."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 262,
+            "path": "rules.py"
+          },
+          {
+            "line": 336,
+            "path": "tests/test_analyzer.py"
+          }
+        ],
+        "remediation": "Require the normalized persistentBrowser control to be enabled as well as having mode == \"never\" (for example, pb.get(\"enabled\") is True and pb.get(\"mode\") == \"never\"). Add a regression test whose raw control is {\"isEnabled\": false, \"mode\": \"never\"} and assert that the rule fails.",
+        "severity": "medium",
+        "title": "Disabled persistent-browser control can satisfy the rule",
+        "verification": "Run the new disabled-with-never regression test, all admin-signin-frequency cases, the full backend test suite, py_compile, and governance validation against the repaired candidate commit."
+      }
+    ],
+    "limitations": [
+      "The required full backend suite could not be independently completed because this review sandbox denies loopback socket binding; 129 tests passed and 76 server tests errored during setup.",
+      "The exact py_compile check could not be run without writing bytecode. AST parsing all tracked Python sources succeeded but is not equivalent evidence.",
+      "Governance validation could not complete because no writable temporary directory was available.",
+      "Frontend checks were not run because ISSUE-0017 does not require them and no frontend files changed.",
+      "No live Microsoft Graph or tenant validation was performed; the issue explicitly scopes the change to offline normalization and analysis of already-fetched data."
+    ],
+    "mode": "issue",
+    "outcome": "CHANGES_REQUIRED",
+    "reviewed_sha": "079f5c72cb27c2e525b59d70c6bc5e3d0ee9a7f6",
+    "schema_version": "1.0",
+    "summary": "The candidate implements the requested normalization fields, coverage union, documentation, fixture, and nine rule scenarios, and the targeted 48 graph/analyzer tests pass. One medium-severity correctness defect blocks acceptance: a persistentBrowser control explicitly marked disabled still qualifies when its stale mode is \"never\", contrary to the approved issue and causing a false posture pass. Full-suite, exact compile, and governance evidence also remain independently unverifiable in the read-only sandbox.",
+    "target_id": "ISSUE-0017"
+  },
+  "test_only": false
+}

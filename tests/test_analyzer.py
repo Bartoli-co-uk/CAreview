@@ -292,6 +292,7 @@ def _admin_signin_policy(
     freq_value: int | None = None,
     persistent_browser_mode: str | None = "never",
     persistent_browser_present: bool = True,
+    persistent_browser_enabled: bool | None = None,
     display_name: str = "Admin sign-in frequency",
 ) -> dict:
     users: dict = {}
@@ -311,7 +312,12 @@ def _admin_signin_policy(
         },
     }
     if persistent_browser_present:
-        pb: dict = {"isEnabled": persistent_browser_mode is not None}
+        is_enabled = (
+            persistent_browser_enabled
+            if persistent_browser_enabled is not None
+            else persistent_browser_mode is not None
+        )
+        pb: dict = {"isEnabled": is_enabled}
         if persistent_browser_mode is not None:
             pb["mode"] = persistent_browser_mode
         session_controls["persistentBrowser"] = pb
@@ -364,6 +370,19 @@ class AdminSignInFrequencyTests(unittest.TestCase):
     def test_persistent_browser_empty_mode_still_fails(self) -> None:
         # F-001 (Codex round-2): present but with no mode set is also not "never".
         p = _admin_signin_policy(include_roles=ADMIN_ROLES, persistent_browser_mode="")
+        ids = {f["id"] for f in analyzer.analyze([p])["findings"]}
+        self.assertIn("admin-signin-frequency", ids)
+
+    def test_persistent_browser_disabled_with_stale_never_mode_still_fails(self) -> None:
+        # F-001 (Codex issue-review round 0): a persistentBrowser control
+        # explicitly disabled but carrying a stale mode: "never" must not
+        # qualify — a disabled control enforces nothing, so its mode value
+        # is not evidence that persistence is prohibited.
+        p = _admin_signin_policy(
+            include_roles=ADMIN_ROLES,
+            persistent_browser_mode="never",
+            persistent_browser_enabled=False,
+        )
         ids = {f["id"] for f in analyzer.analyze([p])["findings"]}
         self.assertIn("admin-signin-frequency", ids)
 

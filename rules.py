@@ -258,8 +258,12 @@ def _qualifies_for_admin_signin_frequency(p: dict) -> bool:
     )
     if not frequency_ok:
         return False
+    # The control must itself be ENABLED, not merely carry a stale mode:
+    # "never" left over from a disabled configuration (Codex issue-review
+    # round 0, F-001) — a disabled control is not enforcing anything, so its
+    # mode value is not evidence of "no persistent browser session".
     pb = p.get("persistentBrowser") or {}
-    return pb.get("mode") == "never"
+    return pb.get("enabled") is True and pb.get("mode") == "never"
 
 
 def _effectively_covered_admin_roles(p: dict) -> set[str]:

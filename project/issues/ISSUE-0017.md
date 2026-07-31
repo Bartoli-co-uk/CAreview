@@ -167,5 +167,6 @@ the same `identity/conditionalAccess/policies` call CAreview already makes.
 
 | Round | Reviewed SHA | Outcome | Findings |
 |---|---|---|---|
+| 0 | `079f5c72cb27c2e525b59d70c6bc5e3d0ee9a7f6` | `CHANGES_REQUIRED` | F-001 (medium, real defect): `_qualifies_for_admin_signin_frequency` checked only `persistentBrowser.mode == "never"`, ignoring `persistentBrowser.enabled` — a disabled control with a stale `mode: "never"` falsely qualified. Fixed in round 1: both `enabled is True` and `mode == "never"` are now required, with a new regression test. |
 
-Round 0 not yet reviewed by Codex.
+Round 1 candidate committed; awaiting fresh Codex re-review.

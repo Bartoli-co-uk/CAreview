@@ -95,3 +95,37 @@ handoff is not test authority.
   union-coverage computation are the two places most likely to hide a
   subtle logic error — a reviewer should re-derive both from `rules.py`
   rather than trust this handoff's claim.
+
+## Round 1 repair
+
+Round 0's fresh Codex issue review
+(`project/reviews/issues/ISSUE-0017-079f5c72cb27-codex.json`) returned
+`CHANGES_REQUIRED` with one real, medium-severity defect:
+
+- **F-001**: `_qualifies_for_admin_signin_frequency` checked only
+  `persistentBrowser.mode == "never"` and ignored
+  `persistentBrowser.enabled`. A policy whose `persistentBrowser` control
+  was explicitly disabled (`isEnabled: false`) but carried a stale
+  `mode: "never"` from a prior configuration falsely qualified — contrary
+  to `ISSUE-0017.md`'s own requirement that a disabled control disqualifies
+  a policy "even if some other part of it looks compliant." Fixed by
+  requiring `pb.get("enabled") is True and pb.get("mode") == "never"`
+  (`rules.py`), with a new regression test
+  (`test_persistent_browser_disabled_with_stale_never_mode_still_fails`)
+  asserting the disabled/stale-`"never"` case still fails.
+
+The review's other observations (76 `test_server.py` errors from the
+sandbox denying loopback socket binding; `py_compile`/governance-validation
+unavailable without a writable temp directory) are the same sandbox
+execution-evidence limitation class already accepted repeatedly in this
+project (most recently `ISSUE-0016`, `DECISION-040`), not a repair item —
+all three required checks were independently run in this task's own
+environment with real passing results below.
+
+### Round 1 verification (real, run in this task's environment)
+
+| Check | Exact command | Actual result/exit |
+|---|---|---|
+| Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 |
+| Tests | `python3 -m unittest discover -s tests` | 206 passed, exit 0 |
+| Governance | `python3 scripts/validate_repo.py` | passed (67 required files checked) |

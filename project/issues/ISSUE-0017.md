@@ -6,7 +6,7 @@
 **Start authorization:** `DECISION-041`
 **Dependencies:** `None` (independent of `ISSUE-0015`/`ISSUE-0016`; sequenced after them as the third `M4` issue delivered)
 **Branch:** `ai/ISSUE-0017-admin-signin-frequency-rule`
-**Starting SHA:** `48129547a68239e8f733ce6b50b6a63407a35256` (tip after `ISSUE-0016`'s merge)
+**Starting SHA:** `48129547a68239e8f733ce6b50b6a63407a35256`
 **Candidate SHA:** round 0 is this commit — the launcher records the full HEAD SHA
 
 ## Objective

@@ -151,8 +151,14 @@ accepted repeatedly in this project (most recently `ISSUE-0015`,
 task's own environment with real passing results at every round (see
 `project/handoffs/ISSUE-0016-handoff.md`).
 
-**This is the second and final repair round `AGENTS.md` permits for an
-issue.** If round 2's fresh review is again blocked solely by the same
-sandbox execution-evidence class (no new content finding), this Claude task
-will stop and present the outcome to the human, the same way `ISSUE-0014`
-and `ISSUE-0015` did.
+| 2 | `5a63f84c7a58611b1e7185f202cf131d7def2de3` | `BLOCKED` | Zero content findings (`findings: []`, one BLOCKER entry that is itself the sandbox-only F-001). All three required checks were independently run in this task's own environment with real passing results: compile exit 0, `python3 -m unittest discover -s tests` → 195 passed, `python3 scripts/validate_repo.py` → passed (67 required files) — see `project/handoffs/ISSUE-0016-handoff.md`. See `project/reviews/issues/ISSUE-0016-5a63f84c7a58-codex.json` |
+
+**This was the second and final repair round `AGENTS.md` permits for an
+issue.** Per that bounded-repair rule, this Claude task stopped there
+rather than attempting a third fix, and presented the round-2 zero-finding
+outcome to the human for the advance/merge decision, the same way
+`ISSUE-0014` and `ISSUE-0015` did.
+
+## Advance/merge decision
+
+Pending — see round 2's outcome above.

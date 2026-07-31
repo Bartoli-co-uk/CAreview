@@ -135,8 +135,11 @@ this round.
 | Tests | `python3 -m unittest discover -s tests` | 195 passed, exit 0 |
 | Governance | `python3 scripts/validate_repo.py` | passed (67 required files checked) |
 
-This is the second and final permitted issue repair round. If round 2's
-fresh review is blocked solely by the same sandbox execution-evidence
-class with no new content finding, this outcome will be presented to the
-human for the advance/merge decision, the same way `ISSUE-0014` and
-`ISSUE-0015` were.
+This was the second and final permitted issue repair round. The round-2
+fresh Codex review
+(`project/reviews/issues/ISSUE-0016-5a63f84c7a58-codex.json`) returned
+`BLOCKED` with zero content findings — its sole blocker is the review
+sandbox's execution-evidence limitations, the same class already accepted
+repeatedly in this project (most recently `ISSUE-0015`, `DECISION-037`).
+Presented to the human for the advance/merge decision; not self-declared
+as passing.

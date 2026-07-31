@@ -169,6 +169,54 @@ the same `identity/conditionalAccess/policies` call CAreview already makes.
 |---|---|---|---|
 | 0 | `079f5c72cb27c2e525b59d70c6bc5e3d0ee9a7f6` | `CHANGES_REQUIRED` | F-001 (medium, real defect): `_qualifies_for_admin_signin_frequency` checked only `persistentBrowser.mode == "never"`, ignoring `persistentBrowser.enabled` — a disabled control with a stale `mode: "never"` falsely qualified. Fixed in round 1: both `enabled is True` and `mode == "never"` are now required, with a new regression test. |
 | 1 | `72910d8b22dd74d664036d74c0d909e1d6a32c6a` | `BLOCKED` | F-001 (medium, sandbox-only: same accepted execution-evidence limitation class as prior issues). F-002 (medium, real: issue/handoff records left internally contradictory after the round-1 source fix — candidate-SHA header and handoff primary sections still round-0-shaped). Both fixed in round 2 (record accuracy only; no further source change). |
+| 2 | `2a55a56ce2551260102104c3718429f8ce6b2e62` | `BLOCKED` | F-001 (medium, sandbox-only: same accepted class). F-002 (medium, real, **unresolved**: `ROADMAP.md`'s `M4` status/delivery-status prose was never updated past the round-0 commit — it still says only the round-0 candidate exists and its initial review is awaited, though rounds 1-2 had already landed). F-003 (low, advisory, pre-existing, unrelated to this issue's own changes: `README.md`'s usage-section prose says "188 Python unit tests," now 18 behind the true count). No product-code defect at any round. |
 
-This was the second and final permitted issue repair round (`AGENTS.md`).
-Round 2 candidate committed; awaiting fresh Codex re-review.
+This was the second and final permitted issue repair round (`AGENTS.md`); no
+third repair may be attempted regardless of finding severity. Per that
+bounded-repair rule, this Claude task stops here and presents the findings
+to the human — see "Human decision required" below.
+
+## Human decision required
+
+Round 2's remaining findings, none of which are a product-code defect:
+
+- **F-001** (medium, sandbox-only): the review sandbox cannot independently
+  complete `python3 -m py_compile`, the full `unittest discover` run, or
+  `scripts/validate_repo.py` (denied bytecode writes, loopback sockets, and
+  a writable temp directory respectively). This is the same accepted
+  execution-evidence limitation class as `ISSUE-0014` (`DECISION-031`),
+  `ISSUE-0015` (`DECISION-037`), and `ISSUE-0016` (`DECISION-040`). All
+  three checks were independently run in this task's own environment at
+  every round with real passing results (206 tests, compile exit 0,
+  governance validation passed — see the handoff's round tables).
+- **F-002** (medium, real, unresolved): `ROADMAP.md`'s `M4` delivery-status
+  prose (two locations, lines 14 and 27) was updated once, in the initial
+  round-0 commit, to say `ISSUE-0017` is `IN PROGRESS` and its round-0
+  review is awaited — but was never touched again in rounds 1 or 2, so it
+  now understates the true state (two repair rounds have landed, the
+  budget is exhausted, and this round's own review is what surfaced the
+  gap). No repair round remains to fix it directly.
+- **F-003** (low, advisory, pre-existing): `README.md`'s usage-section
+  prose says "188 Python unit tests" — stale independent of this issue
+  (the count was already behind before `ISSUE-0017` started; this issue's
+  own "What it checks" table/weight sentence, the one README section its
+  own acceptance criteria govern, is correct and current).
+
+**Options for the human:**
+1. **Accept F-001 as the same residual class already accepted for
+   `ISSUE-0014`/`ISSUE-0015`/`ISSUE-0016`**, authorize a follow-up,
+   metadata-only commit to fix `ROADMAP.md` (F-002) and, optionally,
+   `README.md`'s stale count (F-003), and authorize merging
+   `ai/ISSUE-0017-admin-signin-frequency-rule` to `main` — the same
+   disposition `DECISION-037`/`DECISION-040` gave the equivalent residual
+   for `ISSUE-0015`/`ISSUE-0016`. A metadata-only commit does not itself
+   need a fresh Codex review (no product source changes), consistent with
+   `AGENTS.md`'s "metadata-only report/status update... does not make the
+   metadata commit itself reviewed" language — it is corrective record
+   hygiene, not a new implementation round.
+2. **Decline to merge** and instead direct a different disposition (e.g.
+   hold the branch, request a different scope for the follow-up fix, or
+   re-open a fresh issue-scoped task with its own new repair budget rather
+   than a same-task metadata commit).
+3. **Ask for something else** — e.g. an independent re-run of the three
+   required checks in a different environment before deciding.

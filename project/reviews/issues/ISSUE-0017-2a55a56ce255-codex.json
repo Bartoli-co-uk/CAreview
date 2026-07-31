@@ -1,0 +1,154 @@
+{
+  "authoritative": true,
+  "metadata": {
+    "cli_version": "codex-cli 0.145.0",
+    "event_stream_captured": true,
+    "executable": "codex",
+    "executable_sha256": "1da3f4e0e96028b8a771814293c3033dafd1971f943f6c7e79b0897fe705f590",
+    "generated_at": "2026-07-31T18:55:59Z",
+    "isolated_checkout": true,
+    "model": "codex-cli-default",
+    "provider": "codex",
+    "thread_id": "019fb986-e938-7671-a61d-e4a7e36d24dc"
+  },
+  "report_schema": "claudex-review-envelope/1.0",
+  "review": {
+    "base_sha": "48129547a68239e8f733ce6b50b6a63407a35256",
+    "evidence": [
+      {
+        "detail": "HEAD exactly matched the launcher target; the working tree was clean and detached at the reviewed commit.",
+        "reference": "git rev-parse HEAD; git status --short --branch",
+        "source": "command"
+      },
+      {
+        "detail": "The exact base-to-target diff contains 13 changed files with 815 insertions and 31 deletions. Product changes are confined to the six issue-authorized implementation paths; additional changes are governance, handoff, status, and prior-review records.",
+        "reference": "git diff --stat 48129547a68239e8f733ce6b50b6a63407a35256..2a55a56ce2551260102104c3718429f8ce6b2e62",
+        "source": "diff"
+      },
+      {
+        "detail": "The rule requires enabled short-frequency reauthentication, an enabled persistent-browser control with mode exactly `never`, and the specified union-of-effective-role-coverage calculation.",
+        "reference": "rules.py:243",
+        "source": "file"
+      },
+      {
+        "detail": "Normalization adds the two required top-level fields while preserving the existing `sessionControls` list shape and defensively coercing malformed nested values.",
+        "reference": "graph.py:139",
+        "source": "file"
+      },
+      {
+        "detail": "Targeted non-socket tests completed successfully: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_graph tests.test_analyzer tests.test_auth tests.test_ui_safety` ran 125 tests with exit 0.",
+        "reference": "targeted unittest command",
+        "source": "check"
+      },
+      {
+        "detail": "The required full test command ran 206 tests but ended with 76 errors because the sandbox denied loopback socket binding in `tests/test_server.py`.",
+        "reference": "python3 -m unittest discover -s tests",
+        "source": "check"
+      },
+      {
+        "detail": "The required compile command could not write `__pycache__` and failed with `[Errno 1] Operation not permitted`.",
+        "reference": "python3 -m py_compile $(git ls-files '*.py')",
+        "source": "check"
+      },
+      {
+        "detail": "Governance validation could not create a temporary directory and failed with `FileNotFoundError: No usable temporary directory found`.",
+        "reference": "python3 scripts/validate_repo.py",
+        "source": "check"
+      },
+      {
+        "detail": "The committed handoff reports successful author-side results for all required checks at the current candidate: compile exit 0, 206 tests passed, and governance validation passed with 67 required files checked. Repository rules make these claims non-authoritative until independently confirmed.",
+        "reference": "project/handoffs/ISSUE-0017-handoff.md:165",
+        "source": "file"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "The approved issue requires the full unittest suite, Python compilation, and governance validation to pass.",
+          "The full suite ended with 76 socket-permission errors; compilation failed because bytecode output was denied; governance validation failed because no writable temporary directory was available.",
+          "AGENTS.md requires BLOCKED when required evidence cannot be independently verified and expressly says author claims are not evidence by themselves.",
+          "Expected: all three required checks complete successfully against target 2a55a56ce2551260102104c3718429f8ce6b2e62. Observed: none completed successfully in this review environment, although 125 targeted non-socket tests passed."
+        ],
+        "id": "F-001",
+        "locations": [
+          {
+            "line": 130,
+            "path": "project/issues/ISSUE-0017.md"
+          },
+          {
+            "line": 63,
+            "path": "project/handoffs/ISSUE-0017-handoff.md"
+          }
+        ],
+        "remediation": "Provide independently captured, commit-bound successful output for all three required commands from an environment that permits bytecode/temp-directory writes and loopback test sockets, then present the result to the human under the exhausted repair-budget procedure. No product source change is indicated by this finding.",
+        "severity": "medium",
+        "title": "Required candidate checks cannot be independently completed",
+        "verification": "At exact SHA 2a55a56ce2551260102104c3718429f8ce6b2e62, run the three commands in project/issues/ISSUE-0017.md and retain their complete command, output, and exit status; confirm 206 tests pass, compilation exits 0, and governance validation exits 0."
+      },
+      {
+        "blocking": true,
+        "classification": "REQUIRED",
+        "confidence": "high",
+        "evidence": [
+          "ROADMAP.md still states that only the round-0 candidate is committed and the initial Codex review is awaited.",
+          "The issue record, handoff, and CURRENT.md instead record round 0 and round 1 reviews, a round-2 candidate, and a pending round-2 re-review.",
+          "Expected: durable current-state records consistently identify the current gate and candidate history. Observed: the canonical roadmap is two review rounds stale despite the round-2 repair being described as a governance-record accuracy repair.",
+          "CURRENT.md states both permitted repairs are exhausted, so this unresolved finding requires presentation to the human rather than an automatic third repair."
+        ],
+        "id": "F-002",
+        "locations": [
+          {
+            "line": 14,
+            "path": "ROADMAP.md"
+          },
+          {
+            "line": 27,
+            "path": "ROADMAP.md"
+          }
+        ],
+        "remediation": "Present the stale-roadmap finding to the human because the two permitted repair rounds are exhausted. If the human explicitly authorizes a metadata correction, update both stale roadmap passages to reflect the round-2 candidate and pending fresh re-review, then obtain any review required by that authorization.",
+        "severity": "medium",
+        "title": "Canonical roadmap still reports the obsolete round-0 review state",
+        "verification": "Compare ROADMAP.md, project/issues/ISSUE-0017.md, project/handoffs/ISSUE-0017-handoff.md, and project/status/CURRENT.md; all must consistently describe the same current review round, exhausted repair budget, and next permitted action."
+      },
+      {
+        "blocking": false,
+        "classification": "ADVISORY",
+        "confidence": "high",
+        "evidence": [
+          "README.md says the repository has 188 Python unit tests.",
+          "The required test discovery found 206 tests, matching the current handoff.",
+          "Expected: documentation counts remain current when behavior and tests change together. Observed: the README count is 18 tests behind the discovered suite."
+        ],
+        "id": "F-003",
+        "locations": [
+          {
+            "line": 395,
+            "path": "README.md"
+          }
+        ],
+        "remediation": "At the next human-authorized documentation update, change the Python unit-test count from 188 to 206 or replace the brittle exact count with wording that does not become stale.",
+        "severity": "low",
+        "title": "README retains a stale Python test count",
+        "verification": "Run `python3 -m unittest discover -s tests` in a capable environment and confirm the README statement matches the discovered count."
+      }
+    ],
+    "limitations": [
+      "The read-only sandbox denied loopback socket binding, bytecode writes, and creation of temporary directories, preventing independent completion of all required checks.",
+      "The checkout is shallow/grafted: the supplied base and target objects were available and their exact diff was inspectable, but intermediate repair commit objects such as 72910d8b22dd74d664036d74c0d909e1d6a32c6a were unavailable for direct comparison.",
+      "No network access was used; external Microsoft Graph schema or benchmark claims were not independently refreshed. The approved issue fixes the threshold and field semantics, and this review evaluated implementation against those repository requirements.",
+      "Residual product risk remains around untested malformed/boundary combinations beyond the specified cases, although normalization is defensive and all 125 runnable targeted tests passed.",
+      "The repair budget is exhausted according to project/status/CURRENT.md, so unresolved findings require an exact human decision and cannot enter another automatic repair round."
+    ],
+    "mode": "issue",
+    "outcome": "BLOCKED",
+    "reviewed_sha": "2a55a56ce2551260102104c3718429f8ce6b2e62",
+    "schema_version": "1.0",
+    "summary": "BLOCKED. The product implementation matches the approved effective-coverage algorithm in inspected code, and 125 runnable targeted tests pass. However, the review environment cannot independently complete any of the three mandatory checks, and the canonical roadmap remains two review rounds stale after the final permitted repair. The exhausted repair budget requires these results to be presented to the human. A low-severity README test-count discrepancy also remains.",
+    "target_id": "ISSUE-0017"
+  },
+  "test_only": false
+}

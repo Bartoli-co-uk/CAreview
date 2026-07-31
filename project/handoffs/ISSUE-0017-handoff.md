@@ -173,3 +173,33 @@ findings:
 This was the second and final permitted issue repair round (`AGENTS.md`).
 No `graph.py`/`rules.py`/test-assertion source changed in this round —
 governance-record accuracy only.
+
+## Round 2 fresh review: BLOCKED, repair budget exhausted, presented to the human
+
+Round 2's fresh Codex issue review
+(`project/reviews/issues/ISSUE-0017-2a55a56ce255-codex.json`, candidate
+`2a55a56ce2551260102104c3718429f8ce6b2e62`) returned `BLOCKED` with three
+findings, none a product-code defect:
+
+- **F-001** (medium, sandbox-only): same accepted execution-evidence
+  limitation class as every prior round and prior issue.
+- **F-002** (medium, real, unresolved): `ROADMAP.md`'s `M4` delivery-status
+  prose was updated in the round-0 commit but never touched again in
+  rounds 1-2, so it now understates the true state (repair budget
+  exhausted, this round's own review is what surfaced the gap).
+- **F-003** (low, advisory, pre-existing): `README.md`'s usage-section
+  "188 Python unit tests" line is stale, independent of this issue.
+
+Per `AGENTS.md`'s bounded-repair rule, this was the second and final
+permitted repair round; no third repair may be attempted regardless of
+finding severity. This Claude task stops here and presents the findings to
+the human — see `project/issues/ISSUE-0017.md`'s "Human decision required"
+section for the exact options.
+
+### Round 2 review verification (real, run in this task's environment, unchanged by this review)
+
+| Check | Exact command | Actual result/exit |
+|---|---|---|
+| Compile | `python3 -m py_compile $(git ls-files '*.py')` | exit 0 |
+| Tests | `python3 -m unittest discover -s tests` | 206 passed, exit 0 |
+| Governance | `python3 scripts/validate_repo.py` | passed (67 required files checked) |
